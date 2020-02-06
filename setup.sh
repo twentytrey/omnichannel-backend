@@ -12,5 +12,6 @@ mkdir -p "./ops/members"
 mkdir -p "./ops/language"
 mkdir -p "./ops/currency"
 mkdir -p "./ops/countryandstate"
-pip install Flask flask-restful flask-jwt-extended flask-cors psycopg2-binary passlib paystack python-barcode numpy pandas matplotlib scipy Pillow imageio
+pip install Flask flask-restful flask-jwt-extended flask-cors psycopg2-binary passlib paystack python-barcode numpy pandas matplotlib scipy Pillow imageio python-dotenv
+
 pip freeze > requirements.txt
