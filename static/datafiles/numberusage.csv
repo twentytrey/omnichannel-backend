@@ -1,0 +1,6 @@
+numbrusg_id,code,language_id,description
+1,default,,Default Number Usage
+2,unitPrice,,Unit Price Number Usage
+3,listPrice,,List Price Number Usage
+4,text,,Text Number Usage
+5,textUnitPrice,,Unit Price Textual Display

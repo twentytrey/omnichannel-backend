@@ -30,11 +30,26 @@ app.config.from_object(config.Config)
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.',1)[1] in app.config['ALLOWED_EXTENSIONS']
 
+from ops.language.language import LanguageDefault
+from ops.currency.currency import CurrencyDefaults
+from ops.currency.currency import NumberUsageDefaults
+@app.before_first_request
+def initializedefaults():
+    ld=LanguageDefault('langdefaults.csv')
+    if ld.isfilled:pass
+    elif ld.isfilled==False:ld.save()
+    cd=CurrencyDefaults('allcurrencycodes.csv')
+    if cd.isfilled:pass
+    elif cd.isfilled==False:cd.save()
+    nd=NumberUsageDefaults('numberusage.csv')
+    if nd.isfilled():pass
+    elif nd.isfilled()==False:nd.save()
+
 jwt=JWTManager(app)
 
 @app.route("/")
 def hello():
-    return "welcome to pronov server"
+    return "ProNov RESTful API Server"
 
 if __name__=='__main__':
     app.run(threaded=True)
