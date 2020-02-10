@@ -164,3 +164,47 @@ class DefaultPasswordPolicy:
             [Plcypwddsc(*d).save() for d in descriptions]
 
 
+class DefaultAccountPolicy:
+    def __init__(self):
+        self.plcyacclck_id=self.getlockout()
+        self.plcypasswd_id=self.getpassword()
+        self.language_id=self.getdefaultlang()
+        self.description='Default Account Policy'
+    
+    def isfilled(self):
+        cursor.execute("select count(plcyacct_id) from plcyaccdsc where description='Default Account Policy'")
+        return cursor.fetchone()[0]
+    
+    def getlockout(self):
+        cursor.execute("select plcyacclck_id from plcylckdsc where description='Default Lockout Policy'")
+        return cursor.fetchone()[0]
+    
+    def getpassword(self):
+        cursor.execute("select plcypasswd_id from plcypwddsc where description='Default Password Policy'")
+        return cursor.fetchone()[0]
+    
+    def getdefaultlang(self):
+        cursor.execute("select language_id from languageds where description='English (Nigeria)'")
+        return cursor.fetchone()[0]
+    
+    def save(self):
+        try:
+            cursor.execute("""insert into plcyacct(plcyacclck_id,plcypasswd_id)values(%s,%s)returning plcyacct_id""",
+            (self.plcyacclck_id,self.plcypasswd_id,));con.commit();return cursor.fetchone()[0]
+        except (Exception, psycopg2.DatabaseError) as e:
+            if con is not None:con.rollback()
+            raise EntryException(str(e).strip().split('\n')[0])
+    
+    def savedescription(self):
+        try:
+            plcyacct_id=self.save()
+            cursor.execute("""insert into plcyaccdsc(plcyacct_id,language_id,description)values(%s,%s,%s)
+            on conflict(plcyacct_id,language_id)do update set plcyacct_id=%s,language_id=%s,description=%s
+            returning plcyacct_id""",(plcyacct_id,self.language_id,self.description,plcyacct_id,self.language_id,
+            self.description,));con.commit();return cursor.fetchone()[0]
+        except (Exception, psycopg2.DatabaseError) as e:
+            if con is not None:con.rollback()
+            raise EntryException(str(e).strip().split('\n')[0])
+
+# print(DefaultAccountPolicy().savedescription())
+# print(DefaultAccountPolicy().isfilled())

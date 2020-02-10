@@ -36,6 +36,7 @@ from ops.currency.currency import CurrencyDefaults
 from ops.currency.currency import NumberUsageDefaults
 from ops.authentication.authentication import DefaultPasswordPolicy
 from ops.authentication.authentication import DefaultLockoutPolicy
+from ops.authentication.authentication import DefaultAccountPolicy
 @app.before_first_request
 def initializedefaults():
     ld=LanguageDefault('langdefaults.csv')
@@ -53,6 +54,9 @@ def initializedefaults():
     dlp=DefaultLockoutPolicy('defaultlockoutpolicy.csv')
     if dlp.isfilled():pass
     elif dlp.isfilled()==False:dlp.save()
+    dap=DefaultAccountPolicy()
+    if dap.isfilled():pass
+    elif dap.isfilled()==False:dap.savedescription()
 
 jwt=JWTManager(app)
 
