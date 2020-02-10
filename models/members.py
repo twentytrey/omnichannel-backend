@@ -1,11 +1,15 @@
 from db_con import createcon
-con,cursor=createcon("jno","tiniraph","localhost","5432")
+con,cursor=createcon("retail","jmso","localhost","5432")
 con.autocommit=True
 from functions import build_constraint
 
 class Members:
     """the members data model shows the relationship between database tables
     that contain information about users,organizational entities,user groups and roles."""
+    def revokedtoken(self):
+        cursor.execute("""create table token_revoked(token_id serial, jti varchar not null)""")
+        cursor.execute("create index idx_revtk on token_revoked(jti)")
+
     def role(self):
         "this table stores roles defined in te system."
         cursor.execute("""create table role(
@@ -535,6 +539,7 @@ class Members:
 
 if __name__=="__main__":
     m=Members()
+    m.revokedtoken()
     # m.role()
     # m.roledesc()
     # m.mbrrole()

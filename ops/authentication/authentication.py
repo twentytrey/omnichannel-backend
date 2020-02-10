@@ -1,6 +1,8 @@
 from .db_con import createcon
 # from db_con import createcon
-import psycopg2
+import psycopg2,os
+import pandas as pd
+import numpy as np
 con,cursor=createcon('retail','jmso','localhost','5432')
 
 class EntryException(Exception):
@@ -88,7 +90,7 @@ class Plcypasswd:
     def save(self):
         try:
             cursor.execute("""insert into plcypasswd(minpasswdlength,minalphabetic,minnumeric,maxinstances,maxconsecutivetype,
-            maxlifetime,matchuserid,reusepassword)values(%s,%s,%s,%s,%s,%s,%s,%s)returning plcylasswd_id""",(self.minpasswdlength,
+            maxlifetime,matchuserid,reusepassword)values(%s,%s,%s,%s,%s,%s,%s,%s)returning plcypasswd_id""",(self.minpasswdlength,
             self.minalphabetic,self.minnumeric,self.maxinstances,self.maxconsecutivetype,self.maxlifetime,self.matchuserid,
             self.reusepassword,));con.commit();return cursor.fetchone()[0]
         except (Exception, psycopg2.DatabaseError) as e:
@@ -105,10 +107,60 @@ class Plcypwddsc:
         try:
             cursor.execute("""insert into plcypwddsc(plcypasswd_id,language_id,description)values(%s,%s,%s)
             on conflict(plcypasswd_id,language_id)do update set plcypasswd_id=%s,language_id=%s,description=%s
-            returning plcypasswd_id""",(self.plcypasswd_id,self.language_id,self.description,));con.commit()
-            return cursor.fetchone()[0]
+            returning plcypasswd_id""",(self.plcypasswd_id,self.language_id,self.description,self.plcypasswd_id,
+            self.language_id,self.description,));con.commit();return cursor.fetchone()[0]
         except (Exception, psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
 
-        
+class DefaultLockoutPolicy:
+    def __init__(self,fname):
+        self.fname=fname
+    
+    def isfilled(self):
+        cursor.execute("""select count(plcyacclck.plcyacclck_id)from plcyacclck left join
+        plcylckdsc on plcyacclck.plcyacclck_id=plcylckdsc.plcyacclck_id""");res=cursor.fetchone()[0]
+        if res <= 0:return False
+        elif res > 0:return True
+    
+    def defaultlang(self):
+        cursor.execute("select language_id from languageds where description='English (Nigeria)'")
+        return cursor.fetchone()[0]
+
+    def save(self):
+        basedir=os.path.abspath(os.path.dirname(__file__))
+        fileurl=os.path.join(os.path.join(os.path.split(os.path.split(basedir)[0])[0],"static/datafiles"),self.fname)
+        if os.path.isfile(fileurl):
+            df=pd.read_csv(fileurl)
+            df['language_id']=pd.Series([self.defaultlang()]*df.shape[0])
+            policies=df.values[:,[0,1]];pids=[Plcyacclck(*p).save() for p in policies]
+            df['plcyacclck_id']=pd.Series(pids)
+            descriptions=df.values[:,[4,2,3]];[Plcylckdsc(*d).save() for d in descriptions]
+
+class DefaultPasswordPolicy:
+    def __init__(self,fname):
+        self.fname=fname
+    
+    def isfilled(self):
+        cursor.execute("""select count(plcypasswd.plcypasswd_id) from plcypasswd left join plcypwddsc
+        on plcypasswd.plcypasswd_id=plcypwddsc.plcypasswd_id""");res=cursor.fetchone()[0]
+        if res <= 0:return False
+        elif res > 0:return True
+    
+    def defaultlang(self):
+        cursor.execute("select language_id from languageds where description='English (Nigeria)'")
+        return cursor.fetchone()[0]
+
+    def save(self):
+        basedir=os.path.abspath(os.path.dirname(__file__))
+        fileurl=os.path.join(os.path.join(os.path.split(os.path.split(basedir)[0])[0],"static/datafiles"),self.fname)
+        if os.path.isfile(fileurl):
+            df=pd.read_csv(fileurl)
+            df['language_id']=pd.Series([self.defaultlang()]*df.shape[0])
+            policies=df.values[:,[0,1,2,3,4,5,6,7]]
+            pids=[Plcypasswd(*p).save() for p in policies]
+            df['plcypasswd_id']=pd.Series(pids)
+            descriptions=df.values[:,[10,8,9]]
+            [Plcypwddsc(*d).save() for d in descriptions]
+
+

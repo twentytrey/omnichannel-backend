@@ -7,6 +7,27 @@ class EntryException(Exception):
     def __init__(self,message):
         self.message=message
 
+class RevokedToken:
+    def __init__(self,token):
+        self.token=token
+    
+    def add(self):
+        try:
+            cursor.execute("""insert into token_revoked(jti)values(%s)returning token_id""",(self.token,))
+            con.commit();return cursor.fetchone()[0]
+        except (Exception, psycopg2.DatabaseError) as e:
+            if con is not None:con.rollback()
+            raise EntryException(str(e).strip().split('\n')[0])
+    
+    def isbanned(self):
+        try:
+            cursor.execute("select jti from token_revoked where jti=%s",(self.token,))
+            res=cursor.fetchone()
+            if res == None:return False
+            elif res != None:return True
+        except (Exception) as e:
+            raise EntryException(str(e).strip().split('\n')[0])
+
 class Member:
     def __init__(self,membertype,memberstate=None):
         self.membertype=membertype
