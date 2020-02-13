@@ -37,6 +37,7 @@ from ops.currency.currency import NumberUsageDefaults
 from ops.authentication.authentication import DefaultPasswordPolicy
 from ops.authentication.authentication import DefaultLockoutPolicy
 from ops.authentication.authentication import DefaultAccountPolicy
+from ops.members.members import RoleDefaults
 @app.before_first_request
 def initializedefaults():
     ld=LanguageDefault('langdefaults.csv')
@@ -57,6 +58,9 @@ def initializedefaults():
     dap=DefaultAccountPolicy()
     if dap.isfilled():pass
     elif dap.isfilled()==False:dap.savedescription()
+    rd=RoleDefaults('rolesdescriptions.csv')
+    if rd.isfilled():pass
+    elif rd.isfilled()==False:rd.save()
 
 jwt=JWTManager(app)
 
@@ -70,9 +74,23 @@ def banstatus(decryptedtoken):
 def expired_token_callback():
     return jsonify({"status":401,"msg":"access token expired"}),401
 
+@jwt.user_claims_loader
+def add_claims_to_token(user):
+    return {'roles':user.roles,'user_id':user.member_id,'employer':user.employer,
+    'language':user.language_id,'profile':user.profiletype}
+
+@jwt.user_identity_loader
+def user_identity_loader(user):
+    return user.logonid
+
 @app.route("/")
 def hello():
     return "ProNov RESTful API Server"
+
+import resource
+api.add_resource(resource.default_password_policy,"/api/v1.0/default_password_policy",endpoint="default_password_policy")
+api.add_resource(resource.create_organization,"/api/v1.0/create_organization",endpoint="create_organization")
+api.add_resource(resource.login_organization,"/api/v1.0/login_organization",endpoint="login_organization")
 
 if __name__=='__main__':
     app.run(threaded=True)

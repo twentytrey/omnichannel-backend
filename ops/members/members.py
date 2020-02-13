@@ -2,6 +2,10 @@ from .db_con import createcon
 # from db_con import createcon
 import psycopg2
 con,cursor=createcon('retail','jmso','localhost','5432')
+import pandas as pd
+import numpy as np
+import os
+from ops import CurrencyHelper
 
 class EntryException(Exception):
     def __init__(self,message):
@@ -25,7 +29,7 @@ class RevokedToken:
             res=cursor.fetchone()
             if res == None:return False
             elif res != None:return True
-        except (Exception) as e:
+        except (Exception, psycopg2.DatabaseError) as e:
             raise EntryException(str(e).strip().split('\n')[0])
 
 class Member:
@@ -33,19 +37,16 @@ class Member:
         self.membertype=membertype
         self.memberstate=memberstate
     
-    def has_member(self,mid):
-        try:
-            cursor.execute("""select count(member_id) from member where member_id=%s""",
-            (mid,));res=cursor.fetchone()
-            if len(res) > 0:return True
-            elif len(res) <=0: return False
-        except (Exception) as e:
-            if con is not None:con.rollback()
-            raise EntryException(str(e).strip().split('\n')[0])
-    
+    @staticmethod
+    def user_exists(logonid):
+        cursor.execute("select users_id from userreg where logonid=%s",(logonid,))
+        res=cursor.fetchall()
+        if len(res) > 0:return True
+        elif len(res) <= 0:return False
+
     def save(self):
         try:
-            cursor.execute("""insert into member(member_id,type,state)values(%s,%s)
+            cursor.execute("""insert into member(type,state)values(%s,%s)
             returning member_id""",(self.membertype,self.memberstate,))
             con.commit();return cursor.fetchone()[0]
         except (Exception, psycopg2.DatabaseError) as e:
@@ -59,7 +60,7 @@ class Orgentity:
     status=0):
         self.orgentity_id=orgentity_id
         self.legalid=legalid
-        self.orgentitytype=orgentityname
+        self.orgentitytype=orgentitytype
         self.orgentityname=orgentityname
         self.businesscategory=businesscategory
         self.description=description
@@ -73,16 +74,6 @@ class Orgentity:
         self.taxpayerid=taxpayerid
         self.field3=field3
         self.status=status
-    
-    def has_org(self,oid):
-        try:
-            cursor.execute("""select count(orgentity_id)from orgentity where
-            orgentity_id=%s""",(oid,));res=cursor.fetchone()
-            if len(res) > 0:return True
-            elif len(res) <= 0:return False
-        except (Exception) as e:
-            if con is not None:con.rollback()
-            raise EntryException(str(e).strip().split('\n')[0])
 
     def save(self):
         try:
@@ -213,6 +204,16 @@ class Userreg:
         except (Exception, psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
+    
+    @staticmethod
+    def getpassword(logonid):
+        try:
+            cursor.execute("select logonpassword from userreg where logonid=%s",(logonid,))
+            res=cursor.fetchone()
+            if res != None:return res[0]
+            elif res==None:return None
+        except(Exception,psycopg2.DatabaseError) as e:
+            raise EntryException(str(e).strip().split('\n')[0])
 
 class Mbrrole:
     def __init__(self,member_id,role_id,orgentity_id):
@@ -223,23 +224,31 @@ class Mbrrole:
     def save(self):
         try:
             cursor.execute("""insert into mbrrole(member_id,role_id,orgentity_id)values(%s,%s,%s)on conflict(member_id,role_id,orgentity_id)
-            do update set member_id=%s,role_id=%s,orgrntity_id=%s returning member_id""",(self.member_id,self.role_id,self.orgentity_id,
+            do update set member_id=%s,role_id=%s,orgentity_id=%s returning member_id""",(self.member_id,self.role_id,self.orgentity_id,
             self.member_id,self.role_id,self.orgentity_id,));con.commit();return cursor.fetchone()[0]
-        except (Exception) as e:
+        except (Exception, psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
+
+# Mbrrole(1,3,1).save()
 
 class Role:
     def __init__(self,name,description=None):
         self.name=name
         self.description=description
-    
+
+    @staticmethod
+    def read_roles(language_id):
+        cursor.execute("""select role.role_id,role.name,roledesc.displayname,roledesc.description from role 
+        left join roledesc on role.role_id=roledesc.role_id where roledesc.language_id=%s""",(language_id,))
+        keys=['role_id','name','displayname','description'];return [dict(zip(keys,z)) for z in cursor.fetchall()]
+
     def save(self):
         try:
             cursor.execute("""insert into role(name,description)values(%s,%s)on conflict(name)do update set
             name=%s,description=%s returning role_id""",(self.name,self.description,self.name,self.description,))
             con.commit();return cursor.fetchone()[0]
-        except (Exception) as e:
+        except (Exception, psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
 
@@ -256,7 +265,7 @@ class Roledesc:
             on conflict(role_id,language_id)do update set role_id=%s,language_id=%s,displayname=%s,description=%s
             returning role_id""",(self.role_id,self.language_id,self.displayname,self.description,self.role_id,self.language_id,
             self.displayname,self.description,));con.commit();return cursor.fetchone()[0]
-        except (Exception) as e:
+        except (Exception, psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
 
@@ -271,7 +280,7 @@ class Mbrgrpusg:
             cursor.execute("""insert into mbrgrpusg(mbrgrptype_id,mbrgrp_id,field1)values(%s,%s,%s)on conflict(mbrgrptype_id,
             mbrgrp_id,field1)do update set mbrgrptype_id=%s,mbrgrp_id=%s,field1=%s returning mbrgrptype_id""",(self.mbrgrptype_id,
             self.mbrgrp_id,self.field1,self.mbrgrptype_id,self.mbrgrp_id,self.field1,));con.commit();return cursor.fetchone()[0]
-        except (Exception) as e:
+        except (Exception, psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
 
@@ -297,7 +306,7 @@ class Mgpcondele:
             self.name,self.type,self.parent,self.sequence,self.variable,self.operator,self.value,self.condname,self.negate,
             self.mbrgrp_id,self.name,self.type,self.parent,self.sequence,self.variable,self.operator,self.value,self.condname,
             self.negate,));con.commit();return cursor.fetchone()[0]
-        except (Exception) as e:
+        except (Exception, psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
 
@@ -312,7 +321,7 @@ class Mbrgrptype:
             cursor.execute("""insert into mbrgrptype(name,properties,description)values(%s,%s,%s)on conflict(name)
             do update set name=%s,properties=%s,description=%s returning mbrgrptype_id""",(self.name,self.properties,self.description,
             self.name,self.properties,self.description,));con.commit();return cursor.fetchone()[0]
-        except (Exception) as e:
+        except (Exception, psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
 
@@ -327,7 +336,7 @@ class Mgpcondelenvp:
             cursor.execute("""insert into mgpcondelenvp(mgpcondele_id,name,value)values(%s,%s,%s)
             returning mgpcondelenvp_id""",(self.mgpcondele_id,self.name,self.value,self.mgpcondele_id,self.name,self.value,))
             con.commit();return cursor.fetchone()[0]
-        except (Exception) as e:
+        except (Exception, psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
 
@@ -341,7 +350,7 @@ class Users:
         self.profiletype=profiletype
         self.language_id=language_id
         self.field1=field1
-        self.setccurr=setccurr
+        self.setccurr=CurrencyHelper(self.language_id).intsymbol
         self.field3=field3
         self.field2=field2
         self.lastorder=lastorder
@@ -362,7 +371,7 @@ class Users:
             (self.users_id,self.dn,self.registertype,self.profiletype,self.language_id,self.field1,self.setccurr,self.field3,self.field2,self.lastorder,self.registration,self.lastsession,self.registrationupdate,self.registrationcancel,self.prevlastsession,self.personalizationid,
             self.users_id,self.dn,self.registertype,self.profiletype,self.language_id,self.field1,self.setccurr,self.field3,self.field2,self.lastorder,self.registration,self.lastsession,self.registrationupdate,self.registrationcancel,self.prevlastsession,self.personalizationid,))
             con.commit();return cursor.fetchone()[0]
-        except (Exception) as e:
+        except (Exception, psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
 
@@ -379,7 +388,7 @@ class Mbrgrpcond:
             on conflict(mbrgrp_id)do update set mbrgrp_id=%s,conditions=%s,field1=%s,field2=%s returning mbrgrp_id""",
             (self.mbrgrp_id,self.conditions,self.field1,self.field2,self.mbrgrp_id,self.conditions,self.field1,self.field2,))
             con.commit();return cursor.fetchone()[0]
-        except (Exception) as e:
+        except (Exception, psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
 
@@ -397,7 +406,7 @@ class Mbrgrpmbr:
             on conflict(member_id,mbrgrp_id)do update set member_id=%s,mbrgrp_id=%s,field1=%s,customerid=%s,exclude=%s
             returning member_id""",(self.member_id,self.mbrgrp_id,self.field1,self.customerid,self.exclude,self.member_id,
             self.mbrgrp_id,self.field1,self.customerid,self.exclude,));con.commit();return cursor.fetchone()[0]
-        except (Exception) as e:
+        except (Exception, psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
 
@@ -412,7 +421,7 @@ class Mbrrel:
             cursor.execute("""insert into mbrrel(descendant_id,ancestor_id,sequence)values(%s,%s,%s)on conflict(descendant_id,ancestor_id)
             do update set descendant_id=%s,ancestor_id=%s returning descendant_id""",(self.descendant_id,self.ancestor_id,self.sequence,
             self.descendant_id,self.ancestor_id,self.sequence,));con.commit();return cursor.fetchone()[0]
-        except (Exception) as e:
+        except (Exception, psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
 
@@ -429,7 +438,7 @@ class Addrbook:
             on conflict(addrbook_id,member_id)do update set member_id=%s,type=%s,displayname=%s,description=%s
             returning addrbook_id""",(self.member_id,self.type,self.displayname,self.description,
             self.member_id,self.type,self.displayname,self.description,));con.commit();return cursor.fetchone()[0]
-        except (Exception) as e:
+        except (Exception, psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
 
@@ -439,10 +448,13 @@ class Address:
     middlename=None,businesstitle=None,phone1=None,fax1=None,phone2=None,address1=None,fax2=None,address2=None,city=None,
     state=None,country=None,zipcode=None,email1=None,email2=None,phone1type=None,phone2type=None,bestcallingtime=None,
     packagesuppression=None,lastcreate=None,officeaddress=None,selfaddress=0,field1=None,field2=None,taxgeocode=None,
-    shippinggeocode=None,mobilephone1=None,mobilephone1cntry=None):
+    shippinggeocode=None,mobilephone1=None,mobilephone1cntry=None,address3=None,publishphone1=None,publishphone2=None):
         self.addrbook_id=addrbook_id
         self.member_id=member_id
         self.nickname=nickname
+        self.address3=address3
+        self.publishphone1=publishphone1
+        self.publishphone2=publishphone2
         self.addresstype=addresstype
         self.orgunitname=orgunitname
         self.field3=field3
@@ -503,7 +515,7 @@ class Address:
             self.address2,self.address3,self.city,self.state,self.country,self.zipcode,self.email1,self.email2,self.phone1type,self.phone2type,self.publishphone1,self.publishphone2,
             self.bestcallingtime,self.packagesuppression,self.lastcreate,self.officeaddress,self.selfaddress,self.field1,self.field2,self.taxgeocode,self.shippinggeocode,self.mobilephone1,
             self.mobilephone1cntry,));con.commit();return cursor.fetchone()[0]
-        except (Exception) as e:
+        except (Exception, psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
 
@@ -524,7 +536,7 @@ class Mbrattrval:
             stringvalue,datetimevalue)values(%s,%s,%s,%s,%s,%s,%s,%s)returning mbrattrval_id""",(self.storeent_id,self.member_id,
             self.attrtype_id,self.mbrattr_id,self.floatvalue,self.integervalue,self.stringvalue,self.datetimevalue,))
             con.commit();return cursor.fetchone()[0]
-        except (Exception) as e:
+        except (Exception, psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
 
@@ -539,7 +551,7 @@ class Mbrattr:
             cursor.execute("""insert into mbrattr(attrtype_id,name,description)values(%s,%s,%s)on conflict(name)
             do update set attrtype_id=%s,name=%s,description=%s returning mbrattr_id""",(self.attrtype_id,self.name,
             self.description,self.attrtype_id,self.name,self.description,));con.commit();return cursor.fetchone()[0]
-        except (Exception) as e:
+        except (Exception, psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
 
@@ -555,6 +567,60 @@ class Attrtype:
             on conflict(attrtype_id)do update set attrtype_id=%s,description=%s,oid=%s returning attrtype_id""",
             (self.attrtype_id,self.description,self.oid,self.attrtype_id,self.description,self.oid,))
             con.commit();return cursor.fetchone()[0]
-        except (Exception) as e:
+        except (Exception, psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
+
+class RoleDefaults:
+    def __init__(self,fname):
+        self.fname=fname
+    
+    def isfilled(self):
+        cursor.execute("select count(role.role_id)from role left join roledesc on role.role_id=roledesc.role_id")
+        res=cursor.fetchone()[0]
+        if res > 0:return True
+        elif res <= 0:return False
+
+    def defaultlang(self):
+        cursor.execute("select language_id from languageds where description='English (Nigeria)'")
+        return cursor.fetchone()[0]
+    
+    def save(self):
+        basedir=os.path.abspath(os.path.dirname(__file__))
+        fileurl=os.path.join(os.path.join(os.path.split(os.path.split(basedir)[0])[0],"static/datafiles"),self.fname)
+        if os.path.isfile(fileurl):
+            df=pd.read_csv(fileurl)
+            df['language_id']=pd.Series([self.defaultlang()]*df.shape[0])
+            roles=df.values[:,[1,2]];roleids=[Role(*r).save() for r in roles]
+            df['role_id']=pd.Series(roleids);descriptions=df.values[:,[0,5,3,2]]
+            [Roledesc(*d).save() for d in descriptions]
+
+class UserSign:
+    def __init__(self,logonid):
+        self.logonid=logonid
+        self.member_id=self.getmemberid()
+        self.roles=self.getroles()
+        self.employer=self.getemployer()
+        self.language_id=self.getlangpref()
+        self.profiletype=self.getprofiletype()
+    
+    def getmemberid(self):
+        cursor.execute("select users_id from userreg where logonid=%s",(self.logonid,))
+        return cursor.fetchone()[0]
+    
+    def getroles(self):
+        cursor.execute("""with mbrrole as(select role_id from mbrrole where member_id=%s)
+        select role.name from role inner join mbrrole on mbrrole.role_id=role.role_id""",
+        (self.member_id,));return [x for (x,) in cursor.fetchall()]
+    
+    def getemployer(self):
+        cursor.execute("select org_id from busprof where users_id=%s",(self.member_id,))
+        return cursor.fetchone()[0]
+    
+    def getlangpref(self):
+        cursor.execute("select language_id from users where users_id=%s",(self.member_id,))
+        return cursor.fetchone()[0]
+
+    def getprofiletype(self):
+        cursor.execute("select profiletype from users where users_id=%s",(self.member_id,))
+        return cursor.fetchone()[0]

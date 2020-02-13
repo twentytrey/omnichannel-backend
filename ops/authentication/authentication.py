@@ -52,6 +52,14 @@ class Plcyacct:
         self.plcyacclck_id=plcyacclck_id
         self.plcypasswd_id=plcypasswd_id
     
+    @staticmethod
+    def read_default():
+        cursor.execute("""select plcyacct.plcyacct_id,plcyacct.plcyacclck_id,plcyacct.plcypasswd_id,plcyaccdsc.description
+        from plcyacct left join plcyaccdsc on plcyacct.plcyacct_id=plcyaccdsc.plcyacct_id where plcyaccdsc.language_id=1 and 
+        plcyaccdsc.description='Default Account Policy'""");res=cursor.fetchone()
+        keys=['plcyacct_id','plcyacclck_id','plcypasswd_id','description']
+        return dict(zip(keys,res))
+    
     def save(self):
         try:
             cursor.execute("""insert into plcyacct(plcyacclck_id,plcypasswd_id)values(%s,%s)returning plcyacct_id""",
@@ -87,6 +95,14 @@ class Plcypasswd:
         self.matchuserid=matchuserid
         self.reusepassword=reusepassword
     
+    @staticmethod
+    def readdefault():
+        cursor.execute("""select plcypasswd.minpasswdlength,plcypasswd.minalphabetic,plcypasswd.minnumeric,
+        plcypasswd.maxinstances,plcypasswd.maxconsecutivetype,plcypasswd.maxlifetime,plcypasswd.matchuserid,
+        plcypasswd.reusepassword from plcypasswd left join plcypwddsc on plcypasswd.plcypasswd_id=plcypwddsc.plcypasswd_id
+        where plcypwddsc.description='Default Password Policy'""");res=cursor.fetchone();keys=['minpasswdlength','minalphabetic',
+        'minnumeric','maxinstances','maxconsecutivetype','maxlifetime','matchuserid','reusepassword'];return dict(zip(keys,res))
+    
     def save(self):
         try:
             cursor.execute("""insert into plcypasswd(minpasswdlength,minalphabetic,minnumeric,maxinstances,maxconsecutivetype,
@@ -96,6 +112,8 @@ class Plcypasswd:
         except (Exception, psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
+
+# print(Plcypasswd.read())
 
 class Plcypwddsc:
     def __init__(self,plcypasswd_id,language_id,description=None):

@@ -1,0 +1,21 @@
+learn python automation
+
+initialize
+	member
+	orgentity
+	orgcode
+	users
+	userreg
+	mbrrole
+	busprof
+if user.exists:return 'user already exists'
+else:enter accordingly above
+
+membertype,memberstate,orgentitytype,registertype,profiletype,orgentityname,logonid,logonpassword
+
+membertype,memberstate
+orgentity_id,orgentitytype,orgentityname,dn
+users_id,registertype,dn,registration,
+users_id,logonid,plcyacct_id,logonpassword,passwordcreation
+member_id,role_id,orgentity_id
+users_id,org_id,
