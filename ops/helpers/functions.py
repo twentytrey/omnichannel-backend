@@ -24,6 +24,14 @@ def defaultlanguage():
     cursor.execute("select language_id from languageds where description='English (Nigeria)'")
     return cursor.fetchone()[0]
 
+def humanize_date(d):
+	if d==None:return None
+	else:return d.strftime("%d %b, %Y")
+
+def textualize_datetime(d):
+	if d is None:return None
+	else:return d.strftime("%Y-%m-%d %H:%M:%S")
+
 class CurrencyHelper:
     def __init__(self,language_id):
         self.language_id=language_id

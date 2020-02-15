@@ -2,7 +2,7 @@ from flask_restful import Resource,reqparse
 from passlib.hash import pbkdf2_sha256 as sha256
 from flask_jwt_extended import (create_access_token,create_refresh_token,jwt_required,jwt_refresh_token_required,get_jwt_identity,get_raw_jwt,get_jwt_claims)
 from flask_jwt_extended.exceptions import RevokedTokenError
-from ops.members.members import Member,Orgentity,Users,Userreg,Mbrrole,Busprof,EntryException,Role,UserSign
+from ops.members.members import Member,Orgentity,Users,Userreg,Mbrrole,Busprof,EntryException,Role,UserSign,Userprof,Address
 from ops.helpers.functions import timestamp_forever,timestamp_now,defaultlanguage
 from ops.authentication.authentication import Plcyacct,Plcypasswd
 
@@ -21,7 +21,7 @@ class create_organization(Resource):
         self.parser.add_argument("logonid",help="compulsory field",required=True)
         self.parser.add_argument("logonpassword",help="compulsory field",required=True)
         super(create_organization,self).__init__()
-    
+
     @staticmethod
     def generate_hash(password):return sha256.hash(password)
 
@@ -77,6 +77,30 @@ class login_organization(Resource):
                 access_token=create_access_token(identity=usersign)
                 refresh_token=create_refresh_token(identity=usersign)
                 return {"msg":"Successfully logged in as {0}".format(logonid),"access_token":access_token,
-                "refresh_token":refresh_token,"user_id":usersign.member_id,"employer":usersign.employer},200
+                "refresh_token":refresh_token,"user_id":usersign.member_id,"employer":usersign.employer,
+                "roles":usersign.roles,"language_id":usersign.language_id,"profile":usersign.profiletype},200
             else:return {"msg":"Error: Incorrect username or password"},422
 
+class UserIdentity(Resource):
+    @jwt_required
+    def get(self):
+        current_user=get_jwt_identity()
+        useridentity=get_jwt_claims()
+        return dict(current_user=current_user,user=useridentity),200
+
+class read_organization(Resource):
+    def __init__(self):
+        self.parser=reqparse.RequestParser()
+        self.parser.add_argument("logonid",help="compulsory field",required=True)
+        super(read_organization,self).__init__()
+    
+    @jwt_required
+    def post(self):
+        data=self.parser.parse_args()
+        logonid=data['logonid']
+        try:
+            return {"member":Member.readmember(logonid),"orgentity":Orgentity.readorgentity(logonid),
+            "users":Users.readusers(logonid),"busprof":Busprof.readbusprof(logonid),"userprof":Userprof.readuserprof(logonid),
+            "address":Address.readaddress(logonid),"userreg":Userreg.readuserreg(logonid)},200
+        except EntryException as e:
+            return {"msg":"Error reading organization data. Error {0}".format(e.message)},422

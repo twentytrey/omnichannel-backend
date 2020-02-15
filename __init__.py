@@ -8,7 +8,7 @@ import os,datetime
 from logging import Formatter,FileHandler
 from werkzeug.utils import secure_filename
 import config
-from ops.members.members import RevokedToken
+from ops.members.members import RevokedToken,EntryException
 
 class ErrorFriendlyApi(Api):
     def error_router(self,original_handler,e):
@@ -68,7 +68,10 @@ jwt=JWTManager(app)
 def banstatus(decryptedtoken):
     jti=decryptedtoken['jti']
     r=RevokedToken(jti)
-    return r.isbanned()
+    try:
+        return r.isbanned()
+    except EntryException as e:
+        return jsonify({"status":422,"msg":"Error checking token status"}),422
 
 @jwt.expired_token_loader
 def expired_token_callback():
@@ -91,6 +94,9 @@ import resource
 api.add_resource(resource.default_password_policy,"/api/v1.0/default_password_policy",endpoint="default_password_policy")
 api.add_resource(resource.create_organization,"/api/v1.0/create_organization",endpoint="create_organization")
 api.add_resource(resource.login_organization,"/api/v1.0/login_organization",endpoint="login_organization")
+api.add_resource(resource.UserIdentity,"/api/v1.0/useridentity",endpoint="useridentity")
+api.add_resource(resource.read_organization,"/api/v1.0/read_organization",endpoint="read_organization")
+
 
 if __name__=='__main__':
     app.run(threaded=True)
