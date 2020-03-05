@@ -1,5 +1,5 @@
 from db_con import createcon
-con,cursor=createcon("jno","tiniraph","localhost","5432")
+con,cursor=createcon("retail","jmso","localhost","5432")
 con.autocommit=True
 from functions import build_constraint
 
@@ -192,13 +192,13 @@ class Attrdict:
 
 if __name__=="__main__":
     a=Attrdict()
-    # a.attr()
-    # a.attrdesc()
-    # a.attrdict()
-    # a.attrdictgrp()
-    # a.attrdictgrpattrel()
-    # a.attrdictgrpdesc()
-    # a.attrdictgrprel()
-    # a.attrval()
-    # a.attrvaldesc()
-    # a.catentryattr()
+    a.attr()
+    a.attrdesc()
+    a.attrdict()
+    a.attrdictgrp()
+    a.attrdictgrpattrel()
+    a.attrdictgrpdesc()
+    a.attrdictgrprel()
+    a.attrval()
+    a.attrvaldesc()
+    a.catentryattr()

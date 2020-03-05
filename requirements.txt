@@ -19,7 +19,6 @@ pandas==1.0.0
 passlib==1.7.2
 paystack==1.5.0
 Pillow==7.0.0
-pkg-resources==0.0.0
 psycopg2-binary==2.8.4
 PyJWT==1.7.1
 pyparsing==2.4.6

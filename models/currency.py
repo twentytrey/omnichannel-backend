@@ -1,5 +1,5 @@
 from db_con import createcon
-con,cursor=createcon("jno","tiniraph","localhost","5432")
+con,cursor=createcon("retail","jmso","localhost","5432")
 con.autocommit=True
 from functions import build_constraint
 

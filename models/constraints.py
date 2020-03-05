@@ -1,14 +1,14 @@
 # from .db_con import createcon
 from db_con import createcon
-con,cursor=createcon("jno","tiniraph","localhost","5432")
+con,cursor=createcon("retail","jmso","localhost","5432")
 con.autocommit=True
 from functions import build_constraint
 
 # LANGUAGE
 # cursor.execute(build_constraint("languageds","f_416","language_id","language","language_id"))
-# cursor.execute(build_constraint("langpair","f_413","language_id","language","language_id")) TODO
-# cursor.execute(build_constraint("langpair","f_414","language_id_alt","language","language_id")) TODO
-# cursor.execute(build_constraint("langpair","f_415","storeent_id","storeent","storeent_id")) TODO
+# cursor.execute(build_constraint("langpair","f_413","language_id","language","language_id"))
+# cursor.execute(build_constraint("langpair","f_414","language_id_alt","language","language_id"))
+# cursor.execute(build_constraint("langpair","f_415","storeent_id","storeent","storeent_id"))
 # cursor.execute(build_constraint("stateprov","f_758","language_id","language","language_id"))
 # cursor.execute(build_constraint("country","f_257","language_id","language","language_id"))
 
@@ -556,7 +556,7 @@ from functions import build_constraint
 # cursor.execute(build_constraint("ordioffer","f_525","offer_id","offer","offer_id"))
 # cursor.execute(build_constraint("ordioffer","f_526","orderitems_id","orderitems","orderitems_id"))
 
-# ORDER PROCESSING
+# # ORDER PROCESSING
 # cursor.execute(build_constraint("ordpaymthd","f_535","rma_id","rma","rma_id"))
 # cursor.execute(build_constraint("ordpaymthd","f_536","policy_id","policy","policy_id"))
 # cursor.execute(build_constraint("ordpaymthd","f_537","paysummary_id","paysummary","paysummary_id"))
@@ -908,7 +908,7 @@ from functions import build_constraint
 # cursor.execute(build_constraint("attrdictgrpattrel","f_3564","attrdictgrp_id","attrdictgrp","attrdictgrp_id"))
 # cursor.execute(build_constraint("attrdictgrpattrel","f_3565","attr_id","attr","attr_id"))
 
-# ACCOUNTING
+# ACCOUNTING 
 # cursor.execute(build_constraint("superclass","a_001","member_id","member","member_id"))
 # cursor.execute(build_constraint("superclassdsc","a_002","superclass_id","superclass","superclass_id"))
 # cursor.execute(build_constraint("superclassdsc","a_003","language_id","language","language_id"))

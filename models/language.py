@@ -1,6 +1,6 @@
 # from .db_con import createcon
 from db_con import createcon
-con,cursor=createcon("jno","tiniraph","localhost","5432")
+con,cursor=createcon("retail","jmso","localhost","5432")
 con.autocommit=True
 from functions import build_constraint
 
@@ -77,8 +77,8 @@ class Language:
 
 if __name__=="__main__":
     l=Language()
-    # l.language()
-    # l.languageds()
-    # l.langpair TODO
-    # l.country()
-    # l.stateprov()
+    l.language()
+    l.languageds()
+    l.langpair()
+    l.country()
+    l.stateprov()
