@@ -1,4 +1,6 @@
 import datetime,time,psycopg2,locale
+from decimal import Decimal
+BASE_URL="http://127.0.0.1:5000"
 
 def createcon(dbname,user,host,port):
     try:
@@ -32,6 +34,14 @@ def textualize_datetime(d):
 	if d is None:return None
 	else:return d.strftime("%Y-%m-%d %H:%M:%S")
 
+def regularize(imageurl):
+	if imageurl==None:return None
+    # http://127.0.0.1:5000//static/profileuploads/paul-morris-116514-unsplash.jpg
+    # http://127.0.0.1:5000//static/profileuploads/paul-morris-116514-unsplash.jpg
+    # http://127.0.0.1:5000/static/profileuploads/paul-morris-116514-unsplash.jpg
+	elif imageurl.startswith('static/'):return '{0}/{1}'.format(BASE_URL,imageurl)
+	else:return imageurl
+
 class CurrencyHelper:
     def __init__(self,language_id):
         self.language_id=language_id
@@ -52,7 +62,10 @@ class CurrencyHelper:
     
     def getcurrsymbol(self):
         return locale.localeconv()['currency_symbol']
+    
+    def formatamount(self,amount):
+        def f(d):return '{0:n}'.format(d)
+        return f(Decimal(str(amount)))
 
 # c=CurrencyHelper(1)
-# print(c.currsymbol)
-# print(c.intsymbol)
+# print(c.formatamount(2000))

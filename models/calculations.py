@@ -318,7 +318,7 @@ class CalculationMethod:
             identifier integer not null default 1,
             primary key(calrule_id)
         )""")
-        cursor.execute("create unique index i0000058 on calrule(calcode_id,identifier)")
+        cursor.execute("create unique index i0000058 on calrule(calcode_id,field2)")
         cursor.execute("create index i0000504 on calrule(taxcgry_id)")
         cursor.execute("create index i0000505 on calrule(calmethod_id)")
         cursor.execute("create index i0000506 on calrule(calmethod_id_qfy)")

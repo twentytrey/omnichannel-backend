@@ -20,16 +20,25 @@ class Language:
         self.encoding=encoding
         self.mimecharset=mimecharset
     
+    @staticmethod
+    def languages():
+        cursor.execute("""select language.language_id,language.localename::text,language.language::text,language.country::text,
+        language.variant::text,language.encoding,language.mimeset,languageds.description from language left join languageds
+        on language.language_id=languageds.language_id""");return [dict(language_id=x[0],localename=x[1],language=x[2],
+        country=x[3],variant=x[4],encoding=x[5],mimeset=x[6],description=x[7]) for x in cursor.fetchall()]
+    
     def save(self):
         try:
-            cursor.execute("""insert into language(language_id,localename,language,country,variant,encoding,mimecharset)
+            cursor.execute("""insert into language(language_id,localename,language,country,variant,encoding,mimeset)
             values(%s,%s,%s,%s,%s,%s,%s)on conflict(language_id)do update set language_id=%s,localename=%s,language=%s,
-            country=%s,variant=%s,encoding=%s,mimecharset=%s returning language_id""",(self.language_id,self.localename,
+            country=%s,variant=%s,encoding=%s,mimeset=%s returning language_id""",(self.language_id,self.localename,
             self.language,self.country,self.variant,self.encoding,self.mimecharset,self.language_id,self.localename,
             self.language,self.country,self.variant,self.encoding,self.mimecharset,));con.commit();return cursor.fetchone()[0]
         except (Exception, psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
+
+# print(Language.languages())
 
 class Languageds:
     def __init__(self,language_id,description,language_id_desc=None):
@@ -83,4 +92,3 @@ class LanguageDefault:
             descriptions=df.values[:,[0,7,8]]
             lids=[Languageds(*d).save() for d in descriptions]
 
-# print(LanguageDefault('langdefaults.csv').isfilled())

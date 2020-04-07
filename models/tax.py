@@ -11,7 +11,7 @@ class Tax:
         """the table represents a taxtype. for example, sales tax
         and shipping tax are two types of taxes."""
         cursor.execute("""create table taxtype(
-            taxtype_id serial not null,
+            taxtype_id integer not null,
             txcdscheme_id integer,
             sequence float not null default 0,
             primary key(taxtype_id)

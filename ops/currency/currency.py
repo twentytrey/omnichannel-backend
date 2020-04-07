@@ -109,6 +109,13 @@ class Setcurr:
         self.setcexp=setcexp
         self.setcnote=setcnote
     
+    @staticmethod
+    def listcurrencies(lid):
+        cursor.execute("""select setcurr.setccurr,setcurr.setccode,setcurr.setcexp,setcurrdsc.description 
+        from setcurr left join setcurrdsc on setcurr.setccurr=setcurrdsc.setccurr 
+        where setcurrdsc.language_id=%s""",(lid,))
+        return [dict(setccurr=x[0],setccode=x[1],setcexp=x[2],description=x[3]) for x in cursor.fetchall()]
+    
     def save(self):
         try:
             cursor.execute("""insert into setcurr(setccurr,setccode,setcexp,setcnote)values(%s,%s,%s,%s)

@@ -1,0 +1,84 @@
+storeent_id,calusage_id,taskname,description,subclass,name
+,7,calculationframework.initializecalculationusage.initializeadjustment,,,Initialize Adjustment
+,5,calculationframework.initializecalculationusage.initializecouponusage,,,Initialize Coupon Usage
+,3,calculationframework.initializecalculationusage.initializesalestax,,,Initialize Sales Tax
+,2,calculationframework.initializecalculationusage.initializeshipping,,,Initialize Shipping
+,1,calculationframework.initializecalculationusage.initializecalculationusage,,,Initialize Calculation Usage
+,4,calculationframework.initializecalculationusage.initializeshippingtax,,,Initialize Shipping Tax
+,1,calculationframework.applycalculationusage.applycalculationusage,,,Apply Calculation Usage
+,5,calculationframework.applycalculationusage.applycouponusage,,,Apply Coupon Usage
+,2,calculationframework.applycalculationusage.applyshipping,,,Apply Shipping
+,3,calculationframework.applycalculationusage.applytaxcalculationusage,,,Apply Tax Calculation
+,7,calculationframework.summarizecalculationusage.summarizeadjustment,,,Summarize Adjustment
+,5,calculationframework.summarizecalculationusage.summarizecouponusage,,,Summarize Coupon Usage
+,3,calculationframework.summarizecalculationusage.summarizesalestax,,,Summarize Sales Tax
+,4,calculationframework.summarizecalculationusage.summarizeshippingtax,,,Summarize Shipping Tax
+,1,calculationframework.summarizecalculationusage.summarizecalculationusage,,,Summarize Discount
+,2,calculationframework.summarizecalculationusage.summarizeshipping,,,Summarize Shipping
+,5,calculationframework.finalizecalculationusage.finalizecouponusage,,,Finalize Coupon Usage
+,1,calculationframework.finalizecalculationusage.finalizecalculationusage,,,Finalize Calculation
+,2,calculationframework.finalizecalculationusage.finalizecalculationusage,,,Finalize Calculation
+,3,calculationframework.finalizecalculationusage.finalizecalculationusage,,,Finalize Calculation
+,4,calculationframework.finalizecalculationusage.finalizecalculationusage,,,Finalize Calculation
+,6,calculationframework.finalizecalculationusage.finalizecalculationusage,,,Finalize Calculation
+,1,calculationframework.calculationcodecombine.calculationcodecombine,,,Calculation Code Combination
+,3,calculationframework.calculationcodecombine.taxcalculationcodecombine,,,Tax Calculation Code Combination
+,2,calculationframework.calculationcodecombine.calculationcodecombine,,,Calculation Code Combination
+,4,calculationframework.calculationcodecombine.calculationcodecombine,,,Calculation Code Combination
+,5,calculationframework.calculationcodecombine.calculationcodecombine,,,Calculation Code Combination
+,6,calculationframework.calculationcodecombine.calculationcodecombine,,,Calculation Code Combination
+,7,calculationframework.calculationcodecombine.calculationcodecombine,,,Calculation Code Combination
+,1,calculationframework.calculationcodequalify.calculationcodequalify,,,Calculation Code Qualification
+,2,calculationframework.calculationcodequalify.calculationcodequalify,,,Calculation Code Qualification
+,3,calculationframework.calculationcodequalify.calculationcodequalify,,,Calculation Code Qualification
+,4,calculationframework.calculationcodequalify.calculationcodequalify,,,Calculation Code Qualification
+,5,calculationframework.calculationcodequalify.calculationcodequalify,,,Calculation Code Qualification
+,6,calculationframework.calculationcodequalify.calculationcodequalify,,,Calculation Code Qualification
+,7,calculationframework.calculationcodequalify.calculationcodequalify,,,Calculation Code Qualification
+,1,calculationframework.calculationcodecalculate.calculationcodecalculate,,,Calculation Code Calculate
+,2,calculationframework.calculationcodecalculate.calculationcodecalculate,,,Calculation Code Calculate
+,3,calculationframework.calculationcodecalculate.calculationcodecalculate,,,Calculation Code Calculate
+,4,calculationframework.calculationcodecalculate.calculationcodecalculate,,,Calculation Code Calculate
+,5,calculationframework.calculationcodecalculate.calculationcodecalculate,,,Calculation Code Calculate
+,6,calculationframework.calculationcodecalculate.calculationcodecalculate,,,Calculation Code Calculate
+,7,calculationframework.calculationcodecalculate.calculationcodecalculate,,,Calculation Code Calculate
+,5,calculationframework.calculationcodeapply.calculationcodeapply,,,Calculation Code Apply
+,1,calculationframework.calculationcodeapply.discountcalculationcodeapply,,,Discount Calculation Code Apply
+,3,calculationframework.calculationcodeapply.salestaxcalculationcodeapply,,,Sales Tax Calculation Code Apply
+,2,calculationframework.calculationcodeapply.shippingcalculationcodeapply,,,Shipping Calculation Code Apply
+,4,calculationframework.calculationcodeapply.shippingtaxcalculationcodeapply,,,Shipping Tax Calculation Code Apply
+,6,calculationframework.calculationcodeapply.calculationcodeapply,,,Calculation Code Apply
+,7,calculationframework.calculationcodeapply.calculationcodeapply,,,Calculation Code Apply
+,1,calculationframework.calculationrulecombine.calculationrulecombine,,,Calculation Rule Combine
+,2,calculationframework.calculationrulecombine.calculationrulecombine,,,Calculation Rule Combine
+,3,calculationframework.calculationrulecombine.calculationrulecombine,,,Calculation Rule Combine
+,4,calculationframework.calculationrulecombine.calculationrulecombine,,,Calculation Rule Combine
+,5,calculationframework.calculationrulecombine.calculationrulecombine,,,Calculation Rule Combine
+,6,calculationframework.calculationrulecombine.calculationrulecombine,,,Calculation Rule Combine
+,7,calculationframework.calculationrulecombine.calculationrulecombine,,,Calculation Rule Combine
+,4,calculationframework.calculationrulequalify.calculationrulequalify,,,Calculation Rule Qualify
+,1,calculationframework.calculationrulequalify.discountcalculationrulequalify,,,Discount Calculation Rule Qualify
+,2,calculationframework.calculationrulequalify.shippingcalculationrulequalify,,,Shipping Calculation Rule Qualify
+,3,calculationframework.calculationrulequalify.taxcalculationrulequalify,,,Tax Calculation Rule Qualify
+,5,calculationframework.calculationrulequalify.calculationrulequalify,,,Calculation Rule Qualify
+,6,calculationframework.calculationrulequalify.calculationrulequalify,,,Calculation Rule Qualify
+,7,calculationframework.calculationrulequalify.calculationrulequalify,,,Calculation Rule Qualify
+,1,calculationframework.calculationrulecalculate.calculationrulecalculate,,,Calculation Rule Calculate
+,2,calculationframework.calculationrulecalculate.calculationrulecalculate,,,Calculation Rule Calculate
+,3,calculationframework.calculationrulecalculate.calculationrulecalculate,,,Calculation Rule Calculate
+,4,calculationframework.calculationrulecalculate.calculationrulecalculate,,,Calculation Rule Calculate
+,5,calculationframework.calculationrulecalculate.calculationrulecalculate,,,Calculation Rule Calculate
+,6,calculationframework.calculationrulecalculate.calculationrulecalculate,,,Calculation Rule Calculate
+,7,calculationframework.calculationrulecalculate.calculationrulecalculate,,,Calculation Rule Calculate
+,7,calculationframework.calculationscalelookup.netpricecalculationscalelookup,,,Net Price Calculation Scale Lookup
+,1,calculationframework.calculationscalelookup.nondiscountedpricecalculationscale,,,Non-Discouned Price Calculation Scale Lookup
+,3,calculationframework.calculationscalelookup.taxablenetpricecalculationscalelookup,,,Taxable Net Price Calculation Scale Lookup
+,4,calculationframework.calculationscalelookup.taxablenetpriceplusshippingcalculationscalelookup,,,Taxable Net Price Plus Shipping Calculation Scale Lookup
+,3,calculationframework.calculationscalelookup.taxableunitpricecalculationscalelookup,,,Taxable Unit Price Calculation Scale Lookup
+,7,calculationframework.calculationscalelookup.unitpricecalculationscalelookup,,,Unit Price Calculation Scale Lookup
+,2,calculationframework.calculationscalelookup.unitshippingcalculationscalelookup,,,Unit Shipping Calculation Scale Lookup
+,3,calculationframework.calculationrange.percentagecalculationrange,,,Percentage Calculation Range
+,2,calculationframework.calculationrange.perunitamountcalculationrange,,,Per Unit Amount Calculation Range
+,7,calculationframework.calculationrange.fixedamountcalculationrange,,,Fixed Amount Calculation Range
+,2,calculationframework.calculationscalelookup.quantitycalculationscalelookup,,,Quantity Calculation Scale Lookup
+,2,calculationframework.calculationscalelookup.quantityspreadbynetpricecalculationscalelookup,,,Quantity Spread By Net Price Calculation Scale Lookup

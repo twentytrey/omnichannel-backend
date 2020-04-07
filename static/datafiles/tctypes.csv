@@ -1,0 +1,21 @@
+tctype_id,tcsubtype_id,language_id,description
+AddressBook,AddressBook,1,Address Book
+FulfillmentCenter,FulfillmentCenter,1,Fulfillment Center
+OrderApproval,OrderApproval,1,Order Approval
+Payment,Payment,1,Payment
+CustomizedPriceList,CustomizedPriceList,1,Customized Price List
+CatalogWithAdjustment,CatalogWithAdjustment,1,Catalog With Adjustment
+PriceListWithAdjustment,PriceListWithAdjustment,1,Price List With Adjustment
+PriceListWithSelectiveAdjustment,PriceListWithSelectiveAdjustment,1,Price List With Selective Adjustment
+CatalogWithFiltering,CatalogWithFiltering,1,Catalog With Fitlering
+CustomizedProductSetExclusion,CustomizedProductSetExclusion,1,Customized Product Set Exclusion
+CustomizedProductSetInclusion,CustomizedProductSetInclusion,1,Customized Product Set Inclusion
+ProductSetExclusion,ProductSetExclusion,1,Product Set Exclusion
+ProductSetInclusion,ProductSetInclusion,1,Product Set Inclusion
+ReturnPayment,ReturnPayment,1,Return Payment
+ReturnCharge,ReturnCharge,1,Return Charge
+RightToBuyAmount,RightToBuyAmount,1,Right To Buy Amount
+ShippingMode,ShippingMode,1,Shipping Mode
+ShipToAddress,ShipToAddress,1,Ship To Address
+ShippingCharge,ShippingCharge,1,Shipping Charge
+ShippingChargeAdjustment,ShippingChargeAdjustment,1,Shipping Charge Adjustment

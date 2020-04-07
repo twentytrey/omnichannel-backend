@@ -31,7 +31,7 @@ class Jurisdiction:
             markfordelete integer not null default 0,
             primary key(jurstgroup_id)
         )""")
-        cursor.execute("create unique index i0000143 on jurstgroup(code,storeent_id,subclass)")
+        cursor.execute("create unique index i0000143 on jurstgroup(code,storeent_id,subclass,description)")
         cursor.execute("create index i0000602 on jurstgroup(storeent_id)")
         # CONSTRAINT
     

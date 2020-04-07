@@ -560,7 +560,7 @@ class Catentry:
         cursor.execute("create index i0000145 on listprice(currency,catentry_id,listprice)")
         cursor.execute("create index i0000604 on listprice(catentry_id)")
         # CONSTRAINTS:
-    
+        
     def catentship(self):
         """each row of this table contains information about how a product represented
         by a catalog entry is packaged. the information can be used to determine prices,

@@ -785,7 +785,7 @@ from functions import build_constraint
 # cursor.execute(build_constraint("storeentds","f_794","storeent_id","storeent","storeent_id"))
 # cursor.execute(build_constraint("storembrgrp","f_801","mbrgrp_id","mbrgrp","mbrgrp_id"))
 # cursor.execute(build_constraint("storembrgrp","f_802","store_id","store","store_id"))
-# cursor.execute(build_constraint("storegrp","f_795","storegrp_id","storeent","storeent_id"))
+cursor.execute(build_constraint("storegrp","f_795","storegrp_id","orgentity","orgentity_id"))
 # cursor.execute(build_constraint("store","f_772","rtnffmctr_id","ffmcenter","ffmcenter_id"))
 # cursor.execute(build_constraint("store","f_773","storecgry_id","storecgry","storecgry_id"))
 # cursor.execute(build_constraint("store","f_774","storegrp_id","storegrp","storegrp_id"))

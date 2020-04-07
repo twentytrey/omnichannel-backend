@@ -11,3 +11,4 @@ role_id,name,description,displayname,description,language_id
 ,product_editor,Manages Catalog and Related Data,Product Editor,Manages Catalog and Related Data,
 ,sales_editor,Manages Sales,Sales Editor,Manages Sales,
 ,app_sales_rep,Sells Product on behalf of store,Sales Representative,Sells Product on behalf of store,
+,vendor,Source of merchandise.,Vendor,Source of merchandise.,

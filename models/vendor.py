@@ -11,7 +11,7 @@ class Vendor:
         or all the stores in a store group. generally to provide inventory"""
         cursor.execute("""create table vendor(
             vendor_id bigint not null,
-            buyer_id bigint not null,
+            buyer_id bigint,
             lastupdate timestamp,
             markfordelete integer not null default 0,
             vendorname varchar(254),

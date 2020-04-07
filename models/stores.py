@@ -210,7 +210,7 @@ class Stores:
             email2 varchar(254),
             fax1 varchar(32),
             fax2 varchar(32),
-            field1 varchar(64),
+            field1 varchar(254),
             field2 varchar(64),
             field3 varchar(64),
             phone1 varchar(32),

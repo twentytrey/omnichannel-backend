@@ -1,0 +1,9 @@
+trdtype_id,description,language_id,description
+0,Account,1,Acount
+1,Contract,1,Contract
+2,RFQReq,1,RFQ Request
+3,RFQResp,1,RFQ Response
+4,RFQResult,1,RFQ Result
+5,Exchange,1,Exchange
+6,Auction,1,Auction
+7,ReverseAuction,1,Reverse Auction

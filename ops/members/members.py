@@ -4,8 +4,8 @@ import psycopg2
 con,cursor=createcon('retail','jmso','localhost','5432')
 import pandas as pd
 import numpy as np
-import os
-from ops import CurrencyHelper,humanize_date
+import os,re
+from ops import CurrencyHelper,humanize_date,timestamp_forever,timestamp_now
 
 class EntryException(Exception):
     def __init__(self,message):
@@ -44,17 +44,42 @@ class Member:
         res=cursor.fetchall()
         if len(res) > 0:return True
         elif len(res) <= 0:return False
+    
+    @staticmethod
+    def approve_member(mid):
+        try:
+            cursor.execute("update member set state=1 where member_id=%s returning member_id",
+            (mid,));con.commit();return cursor.fetchone()[0]
+        except(Exception,psycopg2.DatabaseError) as e:
+            if con is not None:con.rollback()
+            raise EntryException(str(e).strip().split('\n')[0])
+    
+    @staticmethod
+    def suspend_member(mid):
+        try:
+            cursor.execute("update member set state=0 where member_id=%s returning member_id",
+            (mid,));con.commit();return cursor.fetchone()[0]
+        except(Exception,psycopg2.DatabaseError) as e:
+            if con is not None:con.rollback()
+            raise EntryException(str(e).strip().split('\n')[0])
+
+    @staticmethod
+    def mapmemberstates(mstate):
+        states=[(0,'Pending Approval'),(1,'Approved'),(2,'Rejected'),(3,'Pending Email Activation')]
+        if mstate==None:return None
+        else:return [state[1] for state in states if state[0]==mstate][0]
 
     @staticmethod
     def mapmembertypes(mtype):
-        return {'O':'Organizational Entity','U':'User','G':'Member Group'}[mtype]
+        if mtype==None:return None
+        else:return {'O':'Organizational Entity','U':'User','G':'Member Group'}[mtype]
     
     @staticmethod
     def readmember(mid):
         try:
-            cursor.execute("select type::text,state from member where member_id=%s",(mid,))
-            res=cursor.fetchone();return dict(zip(['type','member_id','typestring'],
-            (res[0],res[1],Member.mapmembertypes(res[0]))))
+            cursor.execute("select member_id,type::text,state from member where member_id=%s",(mid,))
+            res=cursor.fetchone();return dict(zip(['member_id','type','state','typestring','statestring'],
+            (res[0],res[1],res[2],Member.mapmembertypes(res[1]),Member.mapmemberstates(res[2]))))
         except (Exception, psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
@@ -91,15 +116,23 @@ class Orgentity:
         self.status=status
     
     @staticmethod
+    def maporgentitytype(otype):
+        return {"O":"Organization","OU":"Organization Unit","AD":"Authorization Domain"}[otype]
+
+    @staticmethod
     def readorgentity(oid):
         try:
-            cursor.execute("""select legalid,orgentitytype::text,orgentityname,businesscategory,
+            cursor.execute("""select orgentity_id,legalid,orgentitytype::text,orgentityname,businesscategory,
             description,adminfirstname,adminmiddlename,adminlastname,preferreddelivery,field1,
             field2,dn,taxpayerid,field3,status from orgentity where orgentity_id=%s""",(oid,))
-            res=cursor.fetchone();return dict(zip(['legalid','orgentitytype','orgentityname',
-            'businesscategory','description','adminfirstname','adminmiddlename','adminlastname',
-            'preferreddelivery','field1','field2','dn','taxpayerid','field3','status'],res))
-        except (Exception, psycopg2.DatabaseError) as e:
+            res=cursor.fetchone()
+            if res==None:
+                data=dict(zip(['orgentity_id','legalid','orgentitytype','orgentityname','businesscategory','description','adminfirstname','adminmiddlename','adminlastname','preferreddelivery','field1','field2','dn','taxpayerid','field3','status','orgtypestring'],[None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,]))
+            elif res != None:
+                data=dict(zip(['orgentity_id','legalid','orgentitytype','orgentityname','businesscategory','description','adminfirstname','adminmiddlename','adminlastname','preferreddelivery','field1','field2','dn','taxpayerid','field3','status'],res))
+                data.update({"orgtypestring":Orgentity.maporgentitytype(res[2])})
+            return data
+        except (Exception) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
 
@@ -115,6 +148,19 @@ class Orgentity:
         except (Exception, psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
+    
+    def update(self):
+        try:
+            cursor.execute("""update orgentity set orgentitytype=%s,legalid=%s,orgentityname=%s,taxpayerid=%s,
+            businesscategory=%s,description=%s,adminfirstname=%s,adminmiddlename=%s,adminlastname=%s where orgentity_id=%s
+            returning orgentity_id""",(self.orgentitytype,self.legalid,self.orgentityname,self.taxpayerid,self.businesscategory,
+            self.description,self.adminfirstname,self.adminmiddlename,self.adminlastname,self.orgentity_id,));con.commit()
+            return cursor.fetchone()[0]
+        except(Exception,psycopg2.DatabaseError) as e:
+            if con is not None:con.rollback()
+            raise EntryException(str(e).strip().split('\n')[0])
+
+# print(Orgentity.readorgentity(2))
 
 class Busprof:
     def __init__(self,users_id,employeeid=None,org_id=None,orgunit_id=None,employeetype=None,
@@ -140,6 +186,17 @@ class Busprof:
             'orgentityname','orgunit_id','employeetype','departmentnum','alternateid','manager','secretary',
             'requisitionerid'],res))
         except (Exception, psycopg2.DatabaseError) as e:
+            if con is not None:con.rollback()
+            raise EntryException(str(e).strip().split('\n')[0])
+    
+    def update(self):
+        try:
+            cursor.execute("""update busprof set users_id=%s,employeeid=%s,org_id=%s,orgunit_id=%s,employeetype=%s,
+            departmentnum=%s,alternateid=%s,manager=%s,secretary=%s,requisitionerid=%s where users_id=%s returning users_id""",
+            (self.users_id,self.employeeid,self.org_id,self.orgunit_id,self.employeetype,self.departmentnum,
+            self.alternateid,self.manager,self.secretary,self.requisitionerid,self.users_id,));con.commit()
+            return cursor.fetchone()[0]
+        except(Exception,psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
 
@@ -174,6 +231,16 @@ class Userprof:
         self.rcvsmsnotification=rcvsmsnotification
     
     @staticmethod
+    def isfilled(uid):
+        cursor.execute("select count(users_id)from userprof where users_id=%s",(uid,))
+        return cursor.fetchone()[0]
+    
+    @staticmethod
+    def mappreferredcomm(pcid):
+        return {"P1":"First Phone Number","P2":"Second Phone Number","E1":"First Email Address",
+        "E2":"Second Email Address"}[pcid]
+    
+    @staticmethod
     def readuserprof(uid):
         try:
             cursor.execute("""select photo,description,displayname,preferredcomm,preferreddelivery,
@@ -181,8 +248,20 @@ class Userprof:
             (uid,));res=cursor.fetchone()
             if res==None:return dict(photo=None,description=None,displayname=None,preferredcomm=None,
             preferreddelivery=None,preferredmeasure=None,field1=None,taxpayerid=None,field2=None,
-            rcvsmsnotification=None)
+            rcvsmsnotification=None,preferredcommstring=None)
+            elif res != None:return dict(photo=res[0],description=res[1],displayname=res[2],preferredcomm=res[3],
+            preferreddelivery=res[4],preferredmeasure=res[5],field1=res[6],taxpayerid=res[7],field2=res[8],
+            rcvsmsnotification=res[9],preferredcommstring=Userprof.mappreferredcomm(res[3]))
         except (Exception, psycopg2.DatabaseError) as e:
+            if con is not None:con.rollback()
+            raise EntryException(str(e).strip().split('\n')[0])
+
+    def update(self):
+        try:
+            cursor.execute("""update userprof set photo=%s,description=%s,displayname=%s,preferredcomm=%s,
+            rcvsmsnotification=%s where users_id=%s returning users_id""",(self.photo,self.description,self.displayname,
+            self.preferredcomm,self.rcvsmsnotification,self.users_id,));con.commit();return cursor.fetchone()[0]
+        except(Exception,psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
     
@@ -244,6 +323,25 @@ class Userreg:
         self.salt=salt
         self.passwordcreation=passwordcreation
         self.passwordinvalid=passwordinvalid
+
+    @staticmethod
+    def logoniswhat(logonid):
+        mailmatch=re.match(r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)",logonid,re.I)
+        phonematch=re.match(r"^[0]\d{10}$",logonid,re.I)
+        if mailmatch != None:return "email"
+        elif phonematch != None:return "phone"
+    
+    def update(self):
+        try:
+            cursor.execute("""update userreg set status=%s,plcyacct_id=%s,logonid=%s,logonpassword=%s,passwordexpired=%s,
+            challengequestion=%s,challengeanswer=%s,timeout=%s,salt=%s,passwordcreation=%s,passwordinvalid=%s where users_id=%s
+            returning users_id""",
+            (self.status,self.plcyacct_id,self.logonid,self.logonpassword,self.passwordexpired,self.challengequestion,
+            self.challengeanswer,self.timeout,self.salt,self.passwordcreation,self.passwordinvalid,self.users_id,))
+            con.commit();return cursor.fetchone()[0]
+        except(Exception,psycopg2.DatabaseError) as e:
+            if con is not None:con.rollback()
+            raise EntryException(str(e).strip().split('\n')[0])
     
     @staticmethod
     def readuserreg(uid):
@@ -286,7 +384,15 @@ class Mbrrole:
         self.member_id=member_id
         self.role_id=role_id
         self.orgentity_id=orgentity_id
-    
+
+    @staticmethod
+    def read(mid):
+        cursor.execute("""select mbrrole.member_id,mbrrole.role_id,mbrrole.orgentity_id,userprof.displayname,
+        roledesc.displayname,orgentity.orgentityname from mbrrole left join userprof on mbrrole.member_id=
+        userprof.users_id left join roledesc on roledesc.role_id=mbrrole.role_id left join orgentity on 
+        orgentity.orgentity_id=mbrrole.orgentity_id where mbrrole.member_id=%s""",(mid,));res=cursor.fetchall()
+        return [dict(zip(['member_id','role_id','orgentity_id','username','rolename','organization'],r))for r in res]
+
     def save(self):
         try:
             cursor.execute("""insert into mbrrole(member_id,role_id,orgentity_id)values(%s,%s,%s)on conflict(member_id,role_id,orgentity_id)
@@ -295,7 +401,7 @@ class Mbrrole:
         except (Exception, psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
-
+# print(Mbrrole.read(1))
 class Role:
     def __init__(self,name,description=None):
         self.name=name
@@ -330,6 +436,22 @@ class Roledesc:
             returning role_id""",(self.role_id,self.language_id,self.displayname,self.description,self.role_id,self.language_id,
             self.displayname,self.description,));con.commit();return cursor.fetchone()[0]
         except (Exception, psycopg2.DatabaseError) as e:
+            if con is not None:con.rollback()
+            raise EntryException(str(e).strip().split('\n')[0])
+
+class Roleasnprm:
+    def __init__(self,assigning_role_id,orgentity_id,assignable_role_id=None):
+        self.assigning_role_id=int(assigning_role_id)
+        self.orgentity_id=int(orgentity_id)
+        self.assignable_role_id=int(assignable_role_id)
+    
+    def save(self):
+        try:
+            cursor.execute("""insert into roleasnprm(assigning_role_id,orgentity_id,assignable_role_id)values(%s,%s,%s)
+            on conflict(assigning_role_id,orgentity_id,assignable_role_id)do update set assigning_role_id=%s,orgentity_id=%s,
+            assignable_role_id=%s returning roleasnprm_id""",(self.assigning_role_id,self.orgentity_id,self.assignable_role_id,
+            self.assigning_role_id,self.orgentity_id,self.assignable_role_id,));con.commit();return cursor.fetchone()[0]
+        except(Exception,psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
 
@@ -437,16 +559,32 @@ class Users:
     @staticmethod
     def readusers(uid):
         try:
-            cursor.execute("""select dn,registertype::text,profiletype::text,language_id,field1,setccurr,field3,field2,lastorder,registration,
-            lastsession,registrationupdate,registrationcancel,prevlastsession,personalizationid from users where users_id=%s""",
-            (uid,));res=cursor.fetchone();res=dict(zip(['dn','registertype','profiletype','language_id','field1',
-            'setccurr','field3','field2','lastorder','registration','lastsession','registrationupdate','registrationcancel',
-            'prevlastsession','personalizationid'],res));res['registertype']=Users.mapregproftypes(res['registertype'])
-            res['profiletype']=Users.mapprofiletypes(res['profiletype']);res['lastorder']=humanize_date(res['lastorder'])
-            res["registration"]=humanize_date(res["registration"]);res["lastsession"]=humanize_date(res["lastsession"])
-            res["registrationupdate"]=humanize_date(res["registrationupdate"]);res["registrationcancel"]=humanize_date(res["registrationcancel"])
+            cursor.execute("""select dn,registertype::text,profiletype::text,language_id,field1,setccurr,field3,
+            field2,lastorder,registration,lastsession,registrationupdate,registrationcancel,prevlastsession,
+            personalizationid from users where users_id=%s""",(uid,));res=cursor.fetchone()
+            res=dict(zip(['dn','registertype','profiletype','language_id','field1',
+            'setccurr','field3','field2','lastorder','registration','lastsession',
+            'registrationupdate','registrationcancel','prevlastsession','personalizationid'],res))
+            res['registertypestring']=Users.mapregproftypes(res['registertype'])
+            res['profiletypestring']=Users.mapprofiletypes(res['profiletype'])
+            res['lastorder']=humanize_date(res['lastorder'])
+            res["registration"]=humanize_date(res["registration"])
+            res["lastsession"]=humanize_date(res["lastsession"])
+            res["registrationupdate"]=humanize_date(res["registrationupdate"])
+            res["registrationcancel"]=humanize_date(res["registrationcancel"])
             return res
         except (Exception, psycopg2.DatabaseError) as e:
+            if con is not None:con.rollback()
+            raise EntryException(str(e).strip().split('\n')[0])
+    
+    def update(self):
+        try:
+            cursor.execute("""update users set dn=%s,registertype=%s,profiletype=%s,language_id=%s,field1=%s,
+            setccurr=%s,field3=%s,field2=%s,lastorder=%s,registrationupdate=%s,prevlastsession=%s,personalizationid=%s
+            where users_id=%s returning users_id""",(self.dn,self.registertype,self.profiletype,self.language_id,self.field1,
+            self.setccurr,self.field3,self.field2,self.lastorder,timestamp_now(),self.prevlastsession,self.personalizationid,
+            self.users_id,));con.commit();return cursor.fetchone()[0]
+        except(Exception,psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
     
@@ -521,9 +659,24 @@ class Addrbook:
         self.type=adbtype
         self.description=description
     
+    @staticmethod
+    def readaddrbook(mid):
+        cursor.execute("""select addrbook_id,type,displayname,description from addrbook where
+        member_id=%s""",(mid,));res=cursor.fetchone();return dict(zip(["addrbook_id","type","displayname",
+        "description"],res))
+
+    def update(self):
+        try:
+            cursor.execute("""update addrbook set type=%s,displayname=%s,description=%s where member_id=%s 
+            returning addrbook_id""",(self.type,self.displayname,self.description,self.member_id,))
+            con.commit();return cursor.fetchone()[0]
+        except (Exception, psycopg2.DatabaseError) as e:
+            if con is not None:con.rollback()
+            raise EntryException(str(e).strip().split('\n')[0])
+    
     def save(self):
         try:
-            cursor.execute("""insert into addrbook(member_id,type,displayname,description)vaules(%s,%s,%s,%s)
+            cursor.execute("""insert into addrbook(member_id,type,displayname,description)values(%s,%s,%s,%s)
             on conflict(addrbook_id,member_id)do update set member_id=%s,type=%s,displayname=%s,description=%s
             returning addrbook_id""",(self.member_id,self.type,self.displayname,self.description,
             self.member_id,self.type,self.displayname,self.description,));con.commit();return cursor.fetchone()[0]
@@ -537,7 +690,8 @@ class Address:
     middlename=None,businesstitle=None,phone1=None,fax1=None,phone2=None,address1=None,fax2=None,address2=None,city=None,
     state=None,country=None,zipcode=None,email1=None,email2=None,phone1type=None,phone2type=None,bestcallingtime=None,
     packagesuppression=None,lastcreate=None,officeaddress=None,selfaddress=0,field1=None,field2=None,taxgeocode=None,
-    shippinggeocode=None,mobilephone1=None,mobilephone1cntry=None,address3=None,publishphone1=None,publishphone2=None):
+    shippinggeocode=None,mobilephone1=None,mobilephone1cntry=None,address3=None,publishphone1=None,publishphone2=None,
+    address_id=None):
         self.addrbook_id=addrbook_id
         self.member_id=member_id
         self.nickname=nickname
@@ -582,46 +736,81 @@ class Address:
         self.shippinggeocode=shippinggeocode
         self.mobilephone1=mobilephone1
         self.mobilephone1cntry=mobilephone1cntry
+        self.address_id=address_id
     
     @staticmethod
     def readaddress(mid):
         try:
-            cursor.execute("""select addresstype,member_id,addrbook_id,orgunitname,field3,billingcode,billingcodetype,status,
-            orgname,isprimary,lastname,persontitle,firstname,middlename,businesstitle,phone1,fax1,phone2,address1,fax2,nickname,
-            address2,address3,city,state,country,zipcode,email1,email2,phone1type,phone2type,publishphone1,publishphone2,bestcallingtime,
-            packagesuppression,lastcreate,officeaddress,selfaddress,field1,field2,taxgeocode,shippinggeocode,mobilephone1,mobilephone1cntry
-            from address where member_id=%s""",(mid,));res=cursor.fetchone()
-            if res==None:return dict(addresstype=None,member_id=None,addrbook_id=None,orgunitname=None,field3=None,billingcode=None,
-            billingcodetype=None,status=None,orgname=None,isprimary=None,lastname=None,persontitle=None,firstname=None,middlename=None,
-            businesstitle=None,phone1=None,fax1=None,phone2=None,address1=None,fax2=None,nickname=None,address2=None,address3=None,city=None,
-            state=None,country=None,zipcode=None,email1=None,email2=None,phone1type=None,phone2type=None,publishphone1=None,publishphone2=None,
-            bestcallingtime=None,packagesuppression=None,lastcreate=None,officeaddress=None,selfaddress=None,field1=None,field2=None,taxgeocode=None,
+            cursor.execute("""select address_id,addresstype::text,member_id,addrbook_id,orgunitname,field3,billingcode,billingcodetype,
+            status,orgname,isprimary,lastname,persontitle,firstname,middlename,businesstitle,phone1,fax1,phone2,address1,fax2,
+            nickname,address2,address3,city,state,country,zipcode,email1,email2,phone1type,phone2type,publishphone1,
+            publishphone2,bestcallingtime,packagesuppression,lastcreate,officeaddress,selfaddress,field1,field2,taxgeocode,
+            shippinggeocode,mobilephone1,mobilephone1cntry from address where member_id=%s""",(mid,));res=cursor.fetchone()
+            if res==None:return dict(address_id=None,addresstype=None,member_id=None,addrbook_id=None,orgunitname=None,
+            field3=None,billingcode=None,billingcodetype=None,status=None,orgname=None,isprimary=None,lastname=None,
+            persontitle=None,firstname=None,middlename=None,businesstitle=None,phone1=None,fax1=None,phone2=None,address1=None,
+            fax2=None,nickname=None,address2=None,address3=None,city=None,state=None,country=None,zipcode=None,email1=None,
+            email2=None,phone1type=None,phone2type=None,publishphone1=None,publishphone2=None,bestcallingtime=None,
+            packagesuppression=None,lastcreate=None,officeaddress=None,selfaddress=None,field1=None,field2=None,taxgeocode=None,
             shippinggeocode=None,mobilephone1=None,mobilephone1cntry=None)
+            elif res != None:return dict(address_id=res[0],addresstype=res[1],member_id=res[2],addrbook_id=res[3],orgunitname=res[4],
+            field3=res[5],billingcode=res[6],billingcodetype=res[7],status=res[8],orgname=res[9],isprimary=res[10],lastname=res[11],
+            persontitle=res[12],firstname=res[13],middlename=res[14],businesstitle=res[15],phone1=res[16],fax1=res[17],phone2=res[18],
+            address1=res[19],fax2=res[20],nickname=res[21],address2=res[22],address3=res[23],city=res[24],state=res[25],country=res[26],
+            zipcode=res[27],email1=res[28],email2=res[29],phone1type=res[30],phone2type=res[31],publishphone1=res[32],publishphone2=res[33],
+            bestcallingtime=res[34],packagesuppression=res[35],lastcreate=res[36],officeaddress=res[37],selfaddress=res[38],
+            field1=res[39],field2=res[40],taxgeocode=res[41],shippinggeocode=res[42],mobilephone1=res[43],mobilephone1cntry=res[44])
         except (Exception, psycopg2.DatabaseError) as e:
+            if con is not None:con.rollback()
+            raise EntryException(str(e).strip().split('\n')[0])
+
+    def update(self):
+        try:
+            cursor.execute("""update address set addresstype=%s,member_id=%s,addrbook_id=%s,orgunitname=%s,field3=%s,
+            billingcode=%s,billingcodetype=%s,status=%s,orgname=%s,isprimary=%s,lastname=%s,persontitle=%s,firstname=%s,
+            middlename=%s,businesstitle=%s,phone1=%s,fax1=%s,phone2=%s,address1=%s,fax2=%s,nickname=%s,address2=%s,
+            address3=%s,city=%s,state=%s,country=%s,zipcode=%s,email1=%s,email2=%s,phone1type=%s,phone2type=%s,publishphone1=%s,
+            publishphone2=%s,bestcallingtime=%s,packagesuppression=%s,lastcreate=%s,officeaddress=%s,selfaddress=%s,
+            field1=%s,field2=%s,taxgeocode=%s,shippinggeocode=%s,mobilephone1=%s,mobilephone1cntry=%s where address_id=%s
+            returning address_id""",
+            (self.addresstype,self.member_id,self.addrbook_id,self.orgunitname,self.field3,self.billingcode,self.billingcodetype,
+            self.status,self.orgname,self.isprimary,self.lastname,self.persontitle,self.firstname,self.middlename,self.businesstitle,
+            self.phone1,self.fax1,self.phone2,self.address1,self.fax2,self.nickname,self.address2,self.address3,self.city,self.state,
+            self.country,self.zipcode,self.email1,self.email2,self.phone1type,self.phone2type,self.publishphone1,self.publishphone2,
+            self.bestcallingtime,self.packagesuppression,self.lastcreate,self.officeaddress,self.selfaddress,self.field1,self.field2,
+            self.taxgeocode,self.shippinggeocode,self.mobilephone1,self.mobilephone1cntry,self.address_id,))
+            con.commit();return cursor.fetchone()[0]
+        except (Exception,psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
     
     def save(self):
         try:
-            cursor.execute("""insert into address(addresstype,member_id,addrbook_id,orgunitname,field3,billingcode,billingcodetype,status,
-            orgname,isprimary,lastname,persontitle,firstname,middlename,businesstitle,phone1,fax1,phone2,address1,fax2,nickname,
-            address2,address3,city,state,country,zipcode,email1,email2,phone1type,phone2type,publishphone1,publishphone2,bestcallingtime,
-            packagesuppression,lastcreate,officeaddress,selfaddress,field1,field2,taxgeocode,shippinggeocode,mobilephone1,mobilephone1cntry)
-            values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
-            on conflict(nickname)do update set addresstype=%s,member_id=%s,addrbook_id=%s,orgunitname=%s,field3=%s,billingcode=%s,billingcodetype=%s,status=%s,
-            orgname=%s,isprimary=%s,lastname=%s,persontitle=%s,firstname=%s,middlename=%s,businesstitle=%s,phone1=%s,fax1=%s,phone2=%s,address1=%s,fax2=%s,nickname=%s,
-            address2=%s,address3=%s,city=%s,state=%s,country=%s,zipcode=%s,email1=%s,email2=%s,phone1type=%s,phone2type=%s,publishphone1=%s,publishphone2=%s,bestcallingtime=%s,
-            packagesuppression=%s,lastcreate=%s,officeaddress=%s,selfaddress=%s,field1=%s,field2=%s,taxgeocode=%s,shippinggeocode=%s,mobilephone1=%s,mobilephone1cntry=%s
-            returning address_id""",(self.addresstype,self.member_id,self.addrbook_id,self.orgunitname,self.field3,self.billingcode,self.billingcodetype,
-            self.status,self.orgname,self.isprimary,self.lastname,self.persontitle,self.firstname,self.middlename,self.businesstitle,self.phone1,self.fax1,
-            self.phone2,self.address1,self.fax2,self.nickname,self.address2,self.address3,self.city,self.status,self.country,self.zipcode,self.email1,
-            self.email2,self.phone1type,self.phone2type,self.publishphone1,self.publishphone2,self.bestcallingtime,self.packagesuppression,self.lastcreate,
-            self.officeaddress,self.selfaddress,self.field1,self.field2,self.taxgeocode,self.shippinggeocode,self.mobilephone1,self.mobilephone1cntry,
-            self.addresstype,self.member_id,self.addrbook_id,self.orgunitname,self.field3,self.billingcode,self.billingcodetype,self.status,
-            self.orgname,self.isprimary,self.lastname,self.persontitle,self.firstname,self.middlename,self.businesstitle,self.phone1,self.fax1,self.phone2,self.address1,self.fax2,self.nickname,
-            self.address2,self.address3,self.city,self.state,self.country,self.zipcode,self.email1,self.email2,self.phone1type,self.phone2type,self.publishphone1,self.publishphone2,
-            self.bestcallingtime,self.packagesuppression,self.lastcreate,self.officeaddress,self.selfaddress,self.field1,self.field2,self.taxgeocode,self.shippinggeocode,self.mobilephone1,
-            self.mobilephone1cntry,));con.commit();return cursor.fetchone()[0]
+            cursor.execute("""insert into address(addresstype,member_id,addrbook_id,orgunitname,field3,billingcode,
+            billingcodetype,status,orgname,isprimary,lastname,persontitle,firstname,middlename,businesstitle,phone1,
+            fax1,phone2,address1,fax2,nickname,address2,address3,city,state,country,zipcode,email1,email2,phone1type,
+            phone2type,publishphone1,publishphone2,bestcallingtime,packagesuppression,lastcreate,officeaddress,selfaddress,
+            field1,field2,taxgeocode,shippinggeocode,mobilephone1,mobilephone1cntry)values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,
+            %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+            on conflict(nickname)do update set addresstype=%s,member_id=%s,addrbook_id=%s,orgunitname=%s,field3=%s,
+            billingcode=%s,billingcodetype=%s,status=%s,orgname=%s,isprimary=%s,lastname=%s,persontitle=%s,firstname=%s,
+            middlename=%s,businesstitle=%s,phone1=%s,fax1=%s,phone2=%s,address1=%s,fax2=%s,nickname=%s,
+            address2=%s,address3=%s,city=%s,state=%s,country=%s,zipcode=%s,email1=%s,email2=%s,phone1type=%s,phone2type=%s,
+            publishphone1=%s,publishphone2=%s,bestcallingtime=%s,packagesuppression=%s,lastcreate=%s,officeaddress=%s,
+            selfaddress=%s,field1=%s,field2=%s,taxgeocode=%s,shippinggeocode=%s,mobilephone1=%s,mobilephone1cntry=%s
+            returning address_id""",(self.addresstype,self.member_id,self.addrbook_id,self.orgunitname,self.field3,
+            self.billingcode,self.billingcodetype,self.status,self.orgname,self.isprimary,self.lastname,self.persontitle,
+            self.firstname,self.middlename,self.businesstitle,self.phone1,self.fax1,self.phone2,self.address1,self.fax2,
+            self.nickname,self.address2,self.address3,self.city,self.state,self.country,self.zipcode,self.email1,self.email2,
+            self.phone1type,self.phone2type,self.publishphone1,self.publishphone2,self.bestcallingtime,self.packagesuppression,
+            self.lastcreate,self.officeaddress,self.selfaddress,self.field1,self.field2,self.taxgeocode,self.shippinggeocode,
+            self.mobilephone1,self.mobilephone1cntry,self.addresstype,self.member_id,self.addrbook_id,self.orgunitname,
+            self.field3,self.billingcode,self.billingcodetype,self.status,self.orgname,self.isprimary,self.lastname,
+            self.persontitle,self.firstname,self.middlename,self.businesstitle,self.phone1,self.fax1,self.phone2,self.address1,
+            self.fax2,self.nickname,self.address2,self.address3,self.city,self.state,self.country,self.zipcode,self.email1,
+            self.email2,self.phone1type,self.phone2type,self.publishphone1,self.publishphone2,self.bestcallingtime,
+            self.packagesuppression,self.lastcreate,self.officeaddress,self.selfaddress,self.field1,self.field2,self.taxgeocode,
+            self.shippinggeocode,self.mobilephone1,self.mobilephone1cntry,));con.commit();return cursor.fetchone()[0]
         except (Exception, psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
@@ -677,6 +866,27 @@ class Attrtype:
         except (Exception, psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
+
+class RolePermDefaults:
+    def __init__(self,fname,orgentity_id):
+        self.fname=fname
+        self.orgentity_id=orgentity_id
+    
+    def isfilled(self):
+        cursor.execute("select count(roleasnprm_id)from roleasnprm")
+        res=cursor.fetchone()[0]
+        if res > 0:return True
+        elif res <= 0:return False
+    
+    def save(self):
+        basedir=os.path.abspath(os.path.dirname(__file__))
+        fileurl=os.path.join(os.path.join(os.path.split(os.path.split(basedir)[0])[0],"static/datafiles"),self.fname)
+        if os.path.isfile(fileurl):
+            df=pd.read_csv(fileurl)
+            df['orgentity_id']=pd.Series([self.orgentity_id]*df.shape[0])
+            perms=list(map(list,df.values));[Roleasnprm(*p).save()for p in perms]
+
+# RolePermDefaults('roleasnprm.csv',1).save()
 
 class RoleDefaults:
     def __init__(self,fname):
@@ -736,6 +946,22 @@ class UserSign:
         return cursor.fetchone()[0].strip()
 
 # u=UserSign('info@pronov.co')
-# print(u.getroles())
-# print('\n')
-# print(u.getemployer())
+# print(u.logonid)
+# print(u.member_id)
+# print(u.roles)
+# print(u.employer)
+# print(u.language_id)
+# print(u.profiletype)
+
+class ListAllMembers:
+    def data(self):
+        cursor.execute("""select member_id from member""")
+        ids=[x for (x,) in cursor.fetchall()]
+        return [self.details(i) for i in ids]
+    
+    def details(self,x):
+        return dict(member=Member.readmember(x),orgentity=Orgentity.readorgentity(x),mbrrole=Mbrrole.read(x),
+        busprof=Busprof.readbusprof(x),userprof=Userprof.readuserprof(x),userreg=Userreg.readuserreg(x),
+        users=Users.readusers(x),addrbook=Addrbook.readaddrbook(x),address=Address.readaddress(x))
+
+# print(ListAllMembers().data())
