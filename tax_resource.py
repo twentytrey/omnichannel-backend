@@ -278,3 +278,4 @@ class create_taxcalrange(Resource):
             return {"msg":"Successfully saved calculation range","calrangedata":Calrange.read()},200
         except EntryException as e:
             return {"msg":"Error saving calculation range. Error: {0}".format(e.message)},422
+

@@ -205,7 +205,7 @@ class CalculationCodeIndirectAttachment:
         specified store and trading agreement or all trading agreements"""
         cursor.execute("""create table catgpcalcd(
             store_id integer not null,
-            catgpcalcd_id bigint not null,
+            catgpcalcd_id bigserial not null,
             trading_id bigint,
             catgroup_id bigint not null,
             calcode_id integer,

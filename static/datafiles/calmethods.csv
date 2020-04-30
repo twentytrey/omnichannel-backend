@@ -82,3 +82,4 @@ storeent_id,calusage_id,taskname,description,subclass,name
 ,7,calculationframework.calculationrange.fixedamountcalculationrange,,,Fixed Amount Calculation Range
 ,2,calculationframework.calculationscalelookup.quantitycalculationscalelookup,,,Quantity Calculation Scale Lookup
 ,2,calculationframework.calculationscalelookup.quantityspreadbynetpricecalculationscalelookup,,,Quantity Spread By Net Price Calculation Scale Lookup
+,1,calculationframework.calculationrange.percentagecalculationrange,,,Percentage Calculation Range

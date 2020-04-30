@@ -411,6 +411,20 @@ class Catalog:
         cursor.execute("create index i263122 on catentry(baseitem_id)")
         # CONSTRAINTS:
     
+    def catalogtpc(self):
+        cursor.execute("""create table catalogtpc(
+            catalog_id bigint not null,
+            tradeposcn_id bigint not null,
+            store_id bigint not null,
+            primary key(catalog_id,tradeposcn_id,store_id)
+        )""")
+        cursor.execute("create index i005529 on catalogtpc(catalog_id)")
+        cursor.execute("create index i005530 on catalogtpc(tradeposcn_id)")
+        cursor.execute("create index i005531 on catalogtpc(store_id)")
+        cursor.execute(build_constraint("catalogtpc","f_5529","catalog_id","catalog","catalog_id"))
+        cursor.execute(build_constraint("catalogtpc","f_5530","tradeposcn_id","tradeposcn","tradeposcn_id"))
+        cursor.execute(build_constraint("catalogtpc","f_5531","store_id","store","store_id"))
+    
     def catgrptpc(self):
         """this table relates master catalogs with trading position containers.
         each catalog entry belonging to the indicated master catalog must have
@@ -1177,6 +1191,7 @@ if __name__=="__main__":
     c.storecat()
     c.cattogrp()
     c.catgrptpc()
+    c.catalogtpc()
     c.catgrprule()
     c.catgrprel()
     c.catgroup()

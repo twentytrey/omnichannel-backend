@@ -103,7 +103,7 @@ class ATPInventory:
         cursor.execute("""create table rtnrcptdsp(
             rtndspcode_id integer not null,
             rtnreceipt_id bigint not null,
-            rtnrcptdsp_id bigint not null,
+            rtnrcptdsp_id bigserial not null,
             rtnreason_id integer,
             quantity integer not null,
             dispositiondate timestamp not null,

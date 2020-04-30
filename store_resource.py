@@ -4,7 +4,11 @@ from flask_jwt_extended import (create_access_token,create_refresh_token,jwt_req
 from flask_jwt_extended.exceptions import RevokedTokenError
 from ops.helpers.functions import timestamp_forever,timestamp_now,defaultlanguage
 from ops.stores.stores import Storeent,Storegrp,Storelang,Curlist,Store,Staddress,EntryException,Storeentds,Ffmcenter,Ffmcentds
-from ops.calculations.calculations import InstallCalmethods,InstallStencal
+from ops.calculations.calculations import InstallCalmethods,InstallStencal,Calcode
+from ops.catalog.catalog import Catalog,Catgroup
+from ops.currency.currency import Setcurr
+from ops.shipping.shipping import Shipmode
+from ops.calculations.calculations import Calcode,Calcodedesc,Calscale,Calscaleds,Calrule,Crulescale,Calrange,Calrlookup
 
 class create_store(Resource):
     def __init__(self):
@@ -154,3 +158,116 @@ class read_ffmcenter(Resource):
     def post(self):
         member_id=self.parser.parse_args()['member_id']
         return Ffmcenter.read(member_id),200
+
+class read_stores(Resource):
+    def __init__(self):
+        self.parser=reqparse.RequestParser()
+        self.parser.add_argument("owner_id",help="required",required=True)
+        super(read_stores,self).__init__()
+    
+    @jwt_required
+    def post(self):
+        data=self.parser.parse_args()
+        owner_id=data["owner_id"]
+        return Storeent.readstores(owner_id),200
+
+class your_stores(Resource):
+    def __init__(self):
+        self.parser=reqparse.RequestParser()
+        self.parser.add_argument("owner_id",help="required",required=True)
+        super(your_stores,self).__init__()
+    
+    @jwt_required
+    def post(self):
+        data=self.parser.parse_args()
+        owner_id=data["owner_id"]
+        return Storeent.yourstore(owner_id),200
+
+class store_utilities(Resource):
+    def __init__(self):
+        self.parser=reqparse.RequestParser()
+        self.parser.add_argument('member_id',help="required field",required=True)
+        self.parser.add_argument('store_id',help="required field",required=True)
+        self.parser.add_argument('language_id',help='required field',required=True)
+        super(store_utilities,self).__init__()
+    
+    @jwt_required
+    def post(self):
+        data=self.parser.parse_args()
+        member_id=data['member_id']
+        store_id=data['store_id']
+        language_id=data['language_id']
+        calcodes=Calcode.read(store_id,language_id,[1,2,3])
+        catalogs=Catalog.readcatalogs(member_id,language_id)
+        shipmodes=Shipmode.read(store_id,language_id)
+        [x.update(dict(attached=Catalog.attachedtostore(store_id,x["catalog_id"])))for x in catalogs]
+        catgroups=Catgroup.readcatgroups(member_id,language_id)
+        [x.update(dict(attached=Catgroup.attachedtostore(store_id,x["catgroup_id"])))for x in catgroups]
+        return dict(calcodes=calcodes,catalogs=catalogs,catgroups=catgroups,shipmodes=shipmodes),200
+
+class create_discount(Resource):
+    def __init__(self):
+        self.parser=reqparse.RequestParser()
+        self.parser.add_argument("calmethod_id",help="required field",required=True)
+        self.parser.add_argument("calmethod_id_app",help="required field",required=True)
+        self.parser.add_argument("calmethod_id_qfy",help="required field",required=True)
+        self.parser.add_argument("calrangecalmethod_id",help="required field",required=True)
+        self.parser.add_argument("calrulecalmethod_id",help="required field",required=True)
+        self.parser.add_argument("calrulecalmethod_id_qfy",help="required field",required=True)
+        self.parser.add_argument("calrulefield2",help="required field",required=True)
+        self.parser.add_argument("calruleflags",help="required field",required=True)
+        self.parser.add_argument("calscalecalmethod_id",help="required field",required=True)
+        self.parser.add_argument("calscalecode",help="required field",required=True)
+        self.parser.add_argument("calusage_id",help="required field",required=True)
+        self.parser.add_argument("code",help="required field",required=True)
+        self.parser.add_argument("cumulative",help="required field",required=True)
+        self.parser.add_argument("description",help="required field",required=True)
+        self.parser.add_argument("enddate")
+        self.parser.add_argument("language_id",help="required field",required=True)
+        self.parser.add_argument("rangestart",help="required field",required=True)
+        self.parser.add_argument("startdate")
+        self.parser.add_argument("storeent_id",help="required field",required=True)
+        self.parser.add_argument("timelimited")
+        self.parser.add_argument("value",help="required field",required=True)
+        super(create_discount,self).__init__()
+    
+    @jwt_required
+    def post(self):
+        data=self.parser.parse_args()
+        calmethod_id=data['calmethod_id']
+        calmethod_id_app=data['calmethod_id_app']
+        calmethod_id_qfy=data['calmethod_id_qfy']
+        calrangecalmethod_id=data['calrangecalmethod_id']
+        calrulecalmethod_id=data['calrulecalmethod_id']
+        calrulecalmethod_id_qfy=data['calrulecalmethod_id_qfy']
+        calrulefield2=data['calrulefield2']
+        calruleflags=data['calruleflags']
+        calscalecalmethod_id=data['calscalecalmethod_id']
+        calscalecode=data['calscalecode']
+        calusage_id=data['calusage_id']
+        code=data['code']
+        cumulative=data['cumulative']
+        description=data['description']
+        enddate=data['enddate']
+        language_id=data['language_id']
+        rangestart=data['rangestart']
+        startdate=data['startdate']
+        storeent_id=data['storeent_id']
+        timelimited=data['timelimited']
+        value=data['value']
+        try:
+            calcode_id=Calcode(code,calusage_id,storeent_id,calmethod_id,calmethod_id_app,calmethod_id_qfy,
+                                    lastupdate=timestamp_now(),startdate=startdate,enddate=enddate).save()
+            Calcodedesc(calcode_id,language_id,description).save()
+            calrule_id=Calrule(calcode_id,calrulecalmethod_id,calrulecalmethod_id_qfy,startdate=startdate,enddate=enddate,
+                                                                            field2=calrulefield2,flags=calruleflags).save()
+            calscale_id=Calscale(storeent_id,calusage_id,calscalecalmethod_id,code=calscalecode,description=description).save()
+            Calscaleds(calscale_id,language_id,description=description).save()
+            Crulescale(calscale_id,calrule_id).save()
+            calrange_id=Calrange(calrangecalmethod_id,calscale_id=calscale_id,rangestart=rangestart,cumulative=cumulative).save()
+            Calrlookup(calrange_id,value=value).save()
+            return {"msg":"Successfully saved pricing discount"},200
+        except EntryException as e:
+            return {"msg":"Error saving pricing discount. Error: {0}".format(e.message)},422
+
+        

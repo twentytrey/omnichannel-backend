@@ -1,0 +1,140 @@
+learn python automation
+
+emzor
+skg
+vixa
+sfh
+greenlife
+juhel
+biofem
+sanofi
+swipha
+chi pharma
+vitabiotics
+bond chemical
+bayer
+adams desire
+reals
+vitane
+servier
+
+each orderitem has a reference to an OFFER,CONTRACT,SHIPPINGMODE,FFMCENTER
+application,initialization,combination,qualification,calculation,lookup,summarization,finalization
+
+initializecalculationusage
+applycalculationusage
+calculationcodeapply
+calculationcodecombine
+calculationcodequalify
+calculationcodecalculate
+calculationrulecombine
+calculationrulequalify
+calculationrulecalculate
+monetarycalculationscalelookup
+quantitycalculationscalelookup
+calculationrange
+summarizecalculationusage
+finalizecalculationusage
+
+
+initializecalculationusage - STENCAL
+applycalculationusage - STENCAL
+	calculationcodecombine - STENCAL
+		calculationcodequalify - CALCODE
+	calculationcodecalculate - CALCODE
+		calculationrulecombine - STENCAL
+			calculationrulequalify
+			calculationrulecalculate
+				calculationscalelookup
+				calculationrange
+	calculationcodeapply - CALCODE
+summarizecalculationusage
+finalizecalculationusage
+
+
+LOGISTICS
+from 1-10k - #500 (old charge)
+from 1-100k - #2000 (new charge) within lagos
+anything above 100k
+	if syrups are plenty (increased weight)
+	charge 5000 or 3500 depending on weight.
+upcountries - kaduna, abuja, 3500 for 1-100k
+ibadan and lagos are the same
+
+revenue,expenses,asset,liability,equity,
+REVENUE
+4000 - sales
+4060 - interest income
+4900 - sales discounts
+
+EXPENSES
+6100 - auto expenses
+6200 - bank fees
+6550 - freight expense
+6900 - licenses expense
+7050 - meals and entertainment expense
+7550 - supplies expense
+6750 - interest expense
+6710 - insurance expense
+6400 - depreciation expense
+6550 - income taxes - federal
+6660 - income taxes - state
+6670 - income taxes - local
+
+COST OF GOODS SOLD
+5800 - cost of goods sold
+5100 - direct labor costs
+
+ASSET
+1520 - vehicles - fixed
+1000 - cash - current
+1205 - supplies - current
+1510 - equipment - fixed
+1420 - notes receivable - current
+1100 - accounts receivable - current
+1400 - prepaid insurance - current
+
+LIABILITY
+2708 - interest payable - long-term liabilities
+2700 - notes payable / loan payable - long-term liabilities
+2000 - accounts payable - current liabilities
+2310 - sales tax payable - current liabilities
+2320 - wages payable - current liabilities
+2440 - unearned revenue / deferred revenues / customer deposits - current liabilities
+
+EQUITY
+3010 - common stock
+3020 - paid-in capital in excess of par value-common stock
+3030 - preferred stock
+3040 - retained earnings
+3050 - accumulated other comprehensive income,
+3060 - treasury stock
+3070 - current year's net income
+
+
+
+TRADING - CUSTOMER ACCOUNT	ACCOUNT
+trdtype_id - account:0		name
+state - inactive:0 | active:1	member_id:owner
+starttime - timestamp_now	store_id
+endtime - timestamp_set		state: initial:0 | active:3 | closed:6
+creditallowed - no:0 | yes:1	currency
+language_id			comments
+timecreated			timecreated
+timeupdated			timeupdated
+				timeapproved
+				timeactivated
+
+TRADING - PROCUREMENT CONTRACT	CONTRACT
+trdtype_id - contract:1		name
+state - inactive:0 | active:1	member_id - owner
+starttime - timestamp_now	origin - manual:0 | imported:1 | RFQ:2 | exchange:3 | auction:4 | 2-party negotiation:5 | deployment:6
+endtime - timestamp_set		state - draft:0 | pending approval:1 | approved:2 | active:3 | rejected:4 | canceled:5 | closed:6 | suspended:7
+creditallowed - no:0 | yes:1	usage - default:0 | org buyer:1 | reseller:2 | special bid:3 | referral:4 | supplier:5
+language_id			comments
+timecreated			timecreated
+timeupdated			timeupdated
+				timeapproved
+				timeactivated
+				timedeployed
+				store_id - storecntr

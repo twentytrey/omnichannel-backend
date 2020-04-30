@@ -46,62 +46,83 @@ from ops.catalog.catalog import CatenttypeDefaults,AttrtypeDefaults,CatreltypeDe
 from ops.calculations.calculations import CalusageDefaults
 from ops.tax.tax import InstallTaxtype
 from ops.accounting.accounting import InstallAccountClasses
-from ops.trading.trading import InstallPartroles,InstallAttachusg,InstallTctypes
+from ops.trading.trading import InstallPartroles,InstallAttachusg,InstallTctypes,InstallTradetypes
 
 @app.before_first_request
 def initializedefaults():
     ld=LanguageDefault('langdefaults.csv')
     if ld.isfilled():pass
     elif ld.isfilled()==False:ld.save()
+
     cd=CurrencyDefaults('allcurrencycodes.csv')
     if cd.isfilled():pass
     elif cd.isfilled()==False:cd.save()
+
     nd=NumberUsageDefaults('numberusage.csv')
     if nd.isfilled():pass
     elif nd.isfilled()==False:nd.save()
+
     dpp=DefaultPasswordPolicy('defaultpasswordpolicy.csv')
     if dpp.isfilled():pass
     elif dpp.isfilled()==False:dpp.save()
+
     dlp=DefaultLockoutPolicy('defaultlockoutpolicy.csv')
     if dlp.isfilled():pass
     elif dlp.isfilled()==False:dlp.save()
+
     dap=DefaultAccountPolicy()
     if dap.isfilled():pass
     elif dap.isfilled()==False:dap.savedescription()
+
     rd=RoleDefaults('rolesdescriptions.csv')
     if rd.isfilled():pass
     elif rd.isfilled()==False:rd.save()
+
     cd=CountryDefaults('countrycodes.csv')
     if cd.isfilled():pass
     elif cd.isfilled()==False:cd.save()
+
     sd=StateprovDefaults('ngstatecodes.csv','NG')
     if sd.isfilled():pass
     elif sd.isfilled()==False:sd.save()
+
     c=CatenttypeDefaults()
     if c.isfilled():pass
     elif c.isfilled()==False:c.save()
+
     a=AttrtypeDefaults()
     if a.isfilled():pass
     elif a.isfilled()==False:a.enter()
+
     c=CatreltypeDefaults()
     if c.isfilled():pass
     elif c.isfilled()==False:c.enter()
+
     cd=CalusageDefaults()
     if cd.isfilled()==True:pass
     elif cd.isfilled()==False:cd.save()
+
     i=InstallTaxtype('taxtypes.csv')
     if i.isfilled()==True:pass
     elif i.isfilled()==False:i.save()
-    i=InstallAccountClasses('accountclasses.csv',1,1)
-    if i.isfilled():pass
-    elif i.isfilled()==False:i.save()
+
+    ## i=InstallAccountClasses('accountclasses.csv',1,1)
+    ## if i.isfilled():pass
+    ## elif i.isfilled()==False:i.save()
+
     i=InstallPartroles('partroles.csv')
     if i.isfilled()==True:pass
     elif i.isfilled()==False:i.save()
+
     i=InstallAttachusg('attachusg.csv')
     if i.isfilled()==True:pass
     elif i.isfilled()==False:i.save()
+
     i=InstallTctypes('tctypes.csv')
+    if i.isfilled()==True:pass
+    elif i.isfilled()==False:i.save()
+
+    i=InstallTradetypes('tradetypes.csv')
     if i.isfilled()==True:pass
     elif i.isfilled()==False:i.save()
 
@@ -159,7 +180,7 @@ def productuploads():
             return jsonify(url=regularize(file_url),name=filename,size=file_size)
 
 
-import resource,members_resource,catalog_resource,currency_resource,customer_resource,vendor_resource,store_resource,tax_resource,calculation_resource,shipping_resource,accounting_resource
+import resource,members_resource,catalog_resource,currency_resource,customer_resource,vendor_resource,store_resource,tax_resource,calculation_resource,shipping_resource,accounting_resource,trading_resource
 api.add_resource(resource.default_password_policy,"/api/v1.0/default_password_policy",endpoint="default_password_policy")
 api.add_resource(members_resource.create_organization,"/api/v1.0/create_organization",endpoint="create_organization")
 api.add_resource(members_resource.login_organization,"/api/v1.0/login_organization",endpoint="login_organization")
@@ -180,6 +201,7 @@ api.add_resource(currency_resource.list_currs,"/api/v1.0/list_currs",endpoint="l
 api.add_resource(catalog_resource.catgroups_for_catalog,"/api/v1.0/catgroups_for_catalog",endpoint="catgroups_for_catalog")
 api.add_resource(catalog_resource.create_catentry,"/api/v1.0/create_catentry",endpoint="create_catentry")
 api.add_resource(catalog_resource.list_catentries,"/api/v1.0/list_catentries",endpoint="list_catentries")
+api.add_resource(catalog_resource.products_for_catalog,"/api/v1.0/products_for_catalog",endpoint="products_for_catalog")
 api.add_resource(catalog_resource.create_composite,"/api/v1.0/create_composite",endpoint="create_composite")
 api.add_resource(customer_resource.create_customer_organization,"/api/v1.0/create_customer_organization",endpoint="create_customer_organization")
 api.add_resource(customer_resource._create_customer_organization,"/api/v1.0/_create_customer_organization",endpoint="_create_customer_organization")
@@ -223,38 +245,46 @@ api.add_resource(shipping_resource.methods_from_calcode,"/api/v1.0/methods_from_
 api.add_resource(accounting_resource.list_accounts,"/api/v1.0/list_accounts",endpoint="list_accounts")
 api.add_resource(accounting_resource.list_acclasses,"/api/v1.0/list_acclasses",endpoint="list_acclasses")
 api.add_resource(accounting_resource.create_account,"/api/v1.0/create_account",endpoint="create_account")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+api.add_resource(trading_resource.contract_defaults,"/api/v1.0/contract_defaults",endpoint="contract_defaults")
+api.add_resource(members_resource.list_organizations,"/api/v1.0/list_organizations",endpoint="list_organizations")
+api.add_resource(trading_resource.create_contract,"/api/v1.0/create_contract",endpoint="create_contract")
+api.add_resource(trading_resource.read_trading,"/api/v1.0/read_trading",endpoint="read_trading")
+api.add_resource(catalog_resource.read_attrtypes,"/api/v1.0/read_attrtypes",endpoint="read_attrtypes")
+api.add_resource(catalog_resource.create_attribute,"/api/v1.0/create_attribute",endpoint="create_attribute")
+api.add_resource(catalog_resource.read_attr,"/api/v1.0/read_attr",endpoint="read_attr")
+api.add_resource(catalog_resource.create_catentryattr,"/api/v1.0/create_catentryattr",endpoint="create_catentryattr")
+api.add_resource(catalog_resource.list_composite_containers,"/api/v1.0/list_composite_containers",endpoint="list_composite_containers")
+api.add_resource(catalog_resource.create_parent_composite,"/api/v1.0/create_parent_composite",endpoint="create_parent_composite")
+api.add_resource(catalog_resource.read_catentries,"/api/v1.0/read_catentries",endpoint="read_catentries")
+api.add_resource(trading_resource.read_contracts,"/api/v1.0/read_contracts",endpoint="read_contracts")
+api.add_resource(customer_resource.list_storeorgs,"/api/v1.0/list_storeorgs",endpoint="list_storeorgs")
+api.add_resource(store_resource.read_stores,"/api/v1.0/read_stores",endpoint="read_stores")
+api.add_resource(trading_resource.create_accounts,"/api/v1.0/create_accounts",endpoint="create_accounts")
+api.add_resource(trading_resource.read_accounts,"/api/v1.0/read_accounts",endpoint="read_accounts")
+api.add_resource(trading_resource.read_all_trading,"/api/v1.0/read_all_trading",endpoint="read_all_trading")
+api.add_resource(trading_resource.read_contract,"/api/v1.0/read_contract",endpoint="read_contract")
+api.add_resource(store_resource.your_stores,"/api/v1.0/your_stores",endpoint="your_stores")
+api.add_resource(store_resource.store_utilities,"/api/v1.0/store_utilities",endpoint="store_utilities")
+api.add_resource(catalog_resource.create_storecat,"/api/v1.0/create_storecat",endpoint="create_storecat")
+api.add_resource(catalog_resource.create_storecgrp,"/api/v1.0/create_storecgrp",endpoint="create_storecgrp")
+api.add_resource(calculation_resource.discount_calcode_methods,"/api/v1.0/discount_calcode_methods",endpoint="discount_calcode_methods")
+api.add_resource(calculation_resource.discount_calrule_methods,"/api/v1.0/discount_calrule_methods",endpoint="discount_calrule_methods")
+api.add_resource(calculation_resource.discount_calscale_methods,"/api/v1.0/discount_calscale_methods",endpoint="discount_calscale_methods")
+api.add_resource(calculation_resource.discount_calrange_methods,"/api/v1.0/discount_calrange_methods",endpoint="discount_calrange_methods")
+api.add_resource(store_resource.create_discount,"/api/v1.0/create_discount",endpoint="create_discount")
+api.add_resource(trading_resource.create_default_contract,"/api/v1.0/create_default_contract",endpoint="create_default_contract")
+api.add_resource(trading_resource.read_default_contracts,"/api/v1.0/read_default_contracts",endpoint="read_default_contracts")
+api.add_resource(trading_resource.term_catalog_with_adjustment,"/api/v1.0/term_catalog_with_adjustment",endpoint="term_catalog_with_adjustment")
+api.add_resource(trading_resource.term_customized_price_list,"/api/v1.0/term_customized_price_list",endpoint="term_customized_price_list")
+api.add_resource(trading_resource.trading_read_catentries,"/api/v1.0/trading_read_catentries",endpoint="trading_read_catentries")
+api.add_resource(trading_resource.trading_products_for_catalog,"/api/v1.0/trading_products_for_catalog",endpoint="trading_products_for_catalog")
+api.add_resource(trading_resource.list_tradepositions,"/api/v1.0/list_tradepositions",endpoint="list_tradepositions")
+api.add_resource(calculation_resource.list_calcodes,"/api/v1.0/list_calcodes",endpoint="list_calcodes")
+api.add_resource(catalog_resource.create_catgpcalcd,"/api/v1.0/create_catgpcalcd",endpoint="create_catgpcalcd")
+api.add_resource(catalog_resource.create_catencalcd,"/api/v1.0/create_catencalcd",endpoint="create_catencalcd")
+api.add_resource(trading_resource.custom_pset_exclusion,"/api/v1.0/custom_pset_exclusion",endpoint="custom_pset_exclusion")
+api.add_resource(trading_resource.catgroup_pset_exclusion,"/api/v1.0/catgroup_pset_exclusion",endpoint="catgroup_pset_exclusion")
+api.add_resource(shipping_resource.create_shipmode,"/api/v1.0/create_shipmode",endpoint="create_shipmode")
 
 
 

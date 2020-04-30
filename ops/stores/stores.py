@@ -5,11 +5,25 @@ con,cursor=createcon('retail','jmso','localhost','5432')
 import pandas as pd
 import numpy as np
 import os,re
-# from ops import CurrencyHelper,humanize_date,timestamp_forever,timestamp_now
+from ops import CurrencyHelper,humanize_date,timestamp_forever,timestamp_now
 
 class EntryException(Exception):
     def __init__(self,message):
         self.message=message
+
+class Storeorgs:
+    def __init__(self,orgentitytype='O',profiletype='C'):
+        self.orgentitytype=orgentitytype
+        self.profiletype=profiletype
+
+    def getdata(self):
+        cursor.execute("""select users.users_id,orgentity.orgentityname from users inner join orgentity on
+        users.users_id=orgentity.orgentity_id where orgentity.orgentitytype=%s and users.profiletype=%s
+        """,(self.orgentitytype,self.profiletype,));res=cursor.fetchall()
+        if len(res) <= 0:return [dict(users_id=None,orgentityname=None)]
+        elif len(res) > 0:return [dict(users_id=r[0],orgentityname=r[1])for r in res]
+
+# print( Storeorgs().getdata() )
 
 class Storeent:
     def __init__(self,member_id,stype,identifier,setccurr=None,markfordelete=0):
@@ -24,6 +38,39 @@ class Storeent:
         if stype==None:return None
         elif stype=='S':return 'Store'
         elif stype=='G':return 'StoreGroup'
+    
+    @staticmethod
+    def addressinfo(staddress_id):
+        st=Staddress.read(staddress_id)
+        return dict(address=st['address1'],city=st['city'],state=st['state'],country=st['country'],
+        email=st['email1'],phone=st['phone1'],image=st['field1'],contact="{0} {1} {2}".format(st['firstname'],
+        st['middlename'],st['lastname']))
+
+    @staticmethod
+    def readstores(owner_id):
+        cursor.execute("""select storeent.storeent_id,storeent.identifier,storeent.type,storeent.setccurr,
+        storeentds.staddress_id_loc,setcurrdsc.description from storeent inner join storeentds on storeent.
+        storeent_id=storeentds.storeent_id left join setcurrdsc on storeent.setccurr=setcurrdsc.setccurr
+        where storeent.member_id != %s""",(owner_id,));res=cursor.fetchall()
+        if len(res) <= 0:return [dict(storeent_id=None,name=None,type=None,currency=None,staddress_id=None,staddress=None,
+        address=None,city=None,state=None,country=None,email=None,phone=None,image=None,firstname=None,middlename=None,
+        lastname=None)]
+        elif len(res) > 0:
+            data=[dict(storeent_id=r[0], name=r[1],type=Storeent.mapstoretype(r[2]),setccurr=r[3],staddress_id=r[4],
+            currency=r[5]) for r in res];[x.update(Storeent.addressinfo(x['staddress_id'])) for x in data ];return data
+
+    @staticmethod
+    def yourstore(owner_id):
+        cursor.execute("""select storeent.storeent_id,storeent.identifier,storeent.type,storeent.setccurr,
+        storeentds.staddress_id_loc,setcurrdsc.description from storeent inner join storeentds on storeent.
+        storeent_id=storeentds.storeent_id left join setcurrdsc on storeent.setccurr=setcurrdsc.setccurr
+        where storeent.member_id=%s""",(owner_id,));res=cursor.fetchall()
+        if len(res) <= 0:return [dict(storeent_id=None,name=None,type=None,currency=None,staddress_id=None,staddress=None,
+        address=None,city=None,state=None,country=None,email=None,phone=None,image=None,firstname=None,middlename=None,
+        lastname=None)]
+        elif len(res) > 0:
+            data=[dict(storeent_id=r[0], name=r[1],type=Storeent.mapstoretype(r[2]),setccurr=r[3],staddress_id=r[4],
+            currency=r[5]) for r in res];[x.update(Storeent.addressinfo(x['staddress_id'])) for x in data ];return data
     
     @staticmethod
     def read(mid,lid):
@@ -46,7 +93,8 @@ class Storeent:
         except(Exception,psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
-# print(Storeent.read(1,1))
+
+# print(Storeent.readstores())
 
 class Storeentds:
     def __init__(self,language_id,storeent_id,displayname=None,staddress_id_loc=None,description=None,staddress_id_cont=None):
@@ -226,15 +274,15 @@ class Staddress:
     def read(staddress_id):
         cursor.execute("""select address1,member_id,address2,address3,city,country,email1,email2,fax1,fax2,field1,
         field2,field3,phone1,phone2,state,zipcode,firstname,lastname,middlename,persontitle,businesstitle,nickname,
-        shippinggeocode,taxgeocode,url from staddress where staddress_id=%s""",(staddress_id,));res=cursor.fetchall()
-        if len(res) <= 0:return [dict(address1=None,member_id=None,address2=None,address3=None,city=None,country=None,
+        shippinggeocode,taxgeocode,url from staddress where staddress_id=%s""",(staddress_id,));res=cursor.fetchone()
+        if len(res) <= 0:return dict(address1=None,member_id=None,address2=None,address3=None,city=None,country=None,
         email1=None,email2=None,fax1=None,fax2=None,field1=None,field2=None,field3=None,phone1=None,phone2=None,
         state=None,zipcode=None,firstname=None,lastname=None,middlename=None,persontitle=None,businesstitle=None,
-        nickname=None,shippinggeocode=None,taxgeocode=None,url=None)]
-        elif len(res) > 0:return [dict(address1=r[0],member_id=r[1],address2=r[2],address3=r[3],city=r[4],country=r[5],
-        email1=r[6],email2=r[7],fax1=r[8],fax2=r[9],field1=r[10],field2=r[11],field3=r[12],phone1=r[13],phone2=r[14],
-        state=r[15],zipcode=r[16],firstname=r[17],lastname=r[18],middlename=r[19],persontitle=r[20],businesstitle=r[21],
-        nickname=r[22],shippinggeocode=r[23],taxgeocode=r[24],url=r[25]) for r in res]
+        nickname=None,shippinggeocode=None,taxgeocode=None,url=None)
+        elif len(res) > 0:return dict(address1=res[0],member_id=res[1],address2=res[2],address3=res[3],city=res[4],country=res[5],
+        email1=res[6],email2=res[7],fax1=res[8],fax2=res[9],field1=res[10],field2=res[11],field3=res[12],phone1=res[13],phone2=res[14],
+        state=res[15],zipcode=res[16],firstname=res[17],lastname=res[18],middlename=res[19],persontitle=res[20],businesstitle=res[21],
+        nickname=res[22],shippinggeocode=res[23],taxgeocode=res[24],url=res[25])
     
     def save(self):
         try:

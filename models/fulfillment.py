@@ -69,8 +69,8 @@ class Fulfillment:
             store_id integer not null,
             catentry_id bigint not null,
             storequantity float,
-            quantitymeasure char(16)not null,
-            c5 integer not null
+            quantitymeasure char(16),
+            c5 integer
         )""")
 
 if __name__=="__main__":

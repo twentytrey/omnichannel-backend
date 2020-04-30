@@ -51,6 +51,8 @@ applycalculationusage - STENCAL
 summarizecalculationusage
 finalizecalculationusage
 
+calusage_id,catentry_id,calcode_id,store_id,trading_id
+
 
 LOGISTICS
 from 1-10k - #500 (old charge)
@@ -110,3 +112,31 @@ EQUITY
 3050 - accumulated other comprehensive income,
 3060 - treasury stock
 3070 - current year's net income
+
+
+
+TRADING - CUSTOMER ACCOUNT	ACCOUNT
+trdtype_id - account:0		name
+state - inactive:0 | active:1	member_id:owner
+starttime - timestamp_now	store_id
+endtime - timestamp_set		state: initial:0 | active:3 | closed:6
+creditallowed - no:0 | yes:1	currency
+language_id			comments
+timecreated			timecreated
+timeupdated			timeupdated
+				timeapproved
+				timeactivated
+
+TRADING - PROCUREMENT CONTRACT	CONTRACT
+trdtype_id - contract:1		name
+state - inactive:0 | active:1	member_id - owner
+starttime - timestamp_now	origin - manual:0 | imported:1 | RFQ:2 | exchange:3 | auction:4 | 2-party negotiation:5 | deployment:6
+endtime - timestamp_set		state - draft:0 | pending approval:1 | approved:2 | active:3 | rejected:4 | canceled:5 | closed:6 | suspended:7
+creditallowed - no:0 | yes:1	usage - default:0 | org buyer:1 | reseller:2 | special bid:3 | referral:4 | supplier:5
+language_id			comments
+timecreated			timecreated
+timeupdated			timeupdated
+				timeapproved
+				timeactivated
+				timedeployed
+				store_id - storecntr

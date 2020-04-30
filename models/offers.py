@@ -27,7 +27,7 @@ class Offers:
             identifier bigint,
             primary key(offer_id)
         )""")
-        cursor.execute("create unique index i0000165 on offer(catentry_id,identifier,tradeposcn_id)")
+        cursor.execute("create unique index i0000165 on offer(catentry_id,tradeposcn_id)")
         cursor.execute("create index i0000167 on offer(catentry_id,published,tradeposcn_id)")
         cursor.execute("create index i0000626 on offer(tradeposcn_id)")
         # CONSTRAINTS

@@ -39,8 +39,8 @@ class Shipmodclcd:
         try:
             cursor.execute("""insert into shipmodclcd(store_id,calcode_id,shipmode_id,trading_id)values(%s,%s,%s,%s)
             on conflict(store_id,calcode_id,shipmode_id,trading_id)do update set store_id=%s,calcode_id=%s,shipmode_id=%s,
-            trading_id=%s,""",(self.store_id,self.calcode_id,self.shipmode_id,self.trading_id,self.store_id,self.calcode_id,
-            self.shipmode_id,self.trading_id,));con.commit();return cursor.fetchone()[0]
+            trading_id=%s""",(self.store_id,self.calcode_id,self.shipmode_id,self.trading_id,self.store_id,self.calcode_id,
+            self.shipmode_id,self.trading_id,));con.commit()
         except(Exception,psycopg2.DatabaseError)as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
@@ -62,6 +62,16 @@ class Shipmode:
         self.trackingtype=trackingtype
         self.markfordelete=markfordelete
     
+    @staticmethod
+    def read(sid,lid):
+        cursor.execute("""select shipmode.code,shipmode.carrier,shipmode.storeent_id,shipmodedsc.description from
+        shipmode inner join shipmodedsc on shipmode.shipmode_id=shipmodedsc.shipmode_id where
+        shipmode.storeent_id=%s and shipmodedsc.language_id=%s""",(sid,lid,))
+        res=cursor.fetchall()
+        if len(res) <= 0:return [dict(code=None,carrier=None,storeent_id=None,description=None)]
+        elif len(res) > 0:return [dict(code=r[0],carrier=r[1],storeent_id=r[2],description=r[3],attached=r[2]!=None) 
+        for r in res]
+    
     def save(self):
         try:
             cursor.execute("""insert into shipmode(field1,storeent_id,field2,code,carrier,trackingname,trackingurl,
@@ -73,6 +83,68 @@ class Shipmode:
             self.markfordelete,self.field1,self.storeent_id,self.field2,self.code,self.carrier,
             self.trackingname,self.trackingurl,self.trackinghost,self.trackingport,self.trackingicon,self.trackingtype,
             self.markfordelete,));con.commit();return cursor.fetchone()[0]
+        except(Exception,psycopg2.DatabaseError) as e:
+            if con is not None:con.rollback()
+            raise EntryException(str(e).strip().split('\n')[0])
+
+class Shipmodedsc:
+    def __init__(self,shipmode_id,language_id,description=None,field1=None,field2=None):
+        self.shipmode_id=shipmode_id
+        self.language_id=language_id
+        self.description=description
+        self.field1=field1
+        self.field2=field2
+    
+    def save(self):
+        try:
+            cursor.execute("""insert into shipmodedsc(shipmode_id,language_id,description,field1,field2)
+            values(%s,%s,%s,%s,%s)on conflict(shipmode_id,language_id)do update set shipmode_id=%s,
+            language_id=%s,description=%s,field1=%s,field2=%s returning shipmode_id""",(self.shipmode_id,
+            self.language_id,self.description,self.field1,self.field2,self.shipmode_id,self.language_id,
+            self.description,self.field1,self.field2,));con.commit();return cursor.fetchone()[0]
+        except(Exception,psycopg2.DatabaseError) as e:
+            if con is not None:con.rollback()
+            raise EntryException(str(e).strip().split('\n')[0])
+
+class Shparrange:
+    def __init__(self,store_id,ffmcenter_id,shipmode_id,startdate=None,enddate=None,trackingnumber=None,field1=None,
+    precedence=0,field2=None,flags=0):
+        self.store_id=store_id
+        self.ffmcenter_id=ffmcenter_id
+        self.shipmode_id=shipmode_id
+        self.startdate=startdate
+        self.enddate=enddate
+        self.trackingnumber=trackingnumber
+        self.field1=field1
+        self.precedence=precedence
+        self.field2=field2
+        self.flags=flags
+    
+    def save(self):
+        try:
+            cursor.execute("""insert into shparrange(store_id,ffmcenter_id,shipmode_id,startdate,enddate,trackingnumber,
+            field1,precedence,field2,flags)values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)on conflict(ffmcenter_id,shipmode_id,
+            store_id,startdate,enddate)do update set store_id=%s,ffmcenter_id=%s,shipmode_id=%s,startdate=%s,enddate=%s,
+            trackingnumber=%s,field1=%s,precedence=%s,field2=%s,flags=%s returning shparrange_id""",
+            (self.store_id,self.ffmcenter_id,self.shipmode_id,self.startdate,self.enddate,self.trackingnumber,self.field1,
+            self.precedence,self.field2,self.flags,
+            self.store_id,self.ffmcenter_id,self.shipmode_id,self.startdate,self.enddate,self.trackingnumber,self.field1,
+            self.precedence,self.field2,self.flags,));con.commit();return cursor.fetchone()[0]
+        except(Exception,psycopg2.DatabaseError) as e:
+            if con is not None:con.rollback()
+            raise EntryException(str(e).strip().split('\n')[0])
+
+class Shparjurgp:
+    def __init__(self,shparrange_id,jurstgroup_id):
+        self.shparrange_id=shparrange_id
+        self.jurstgroup_id=jurstgroup_id
+    
+    def save(self):
+        try:
+            cursor.execute("""insert into shparjurgp(shparrange_id,jurstgroup_id)values(%s,%s)on conflict
+            (shparrange_id,jurstgroup_id)do update set shparrange_id=%s,jurstgroup_id=%s""",
+            (self.shparrange_id,self.jurstgroup_id,self.shparrange_id,self.jurstgroup_id,))
+            con.commit()
         except(Exception,psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])

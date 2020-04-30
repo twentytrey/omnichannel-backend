@@ -18,6 +18,13 @@ class Catalog:
         self.description=description
     
     @staticmethod
+    def attachedtostore(sid,cid):
+        cursor.execute("select catalog_id=%s from storecat where storeent_id=%s and catalog_id=%s",
+        (cid,sid,cid,));res=cursor.fetchone()
+        if res == None:return False
+        elif res != None:return True
+    
+    @staticmethod
     def catgroupforcatalog(catalog_id):
         cursor.execute("""select cattogrp.catgroup_id,catgroup.identifier from cattogrp left join
         catgroup on catgroup.catgroup_id=cattogrp.catgroup_id where cattogrp.catalog_id=%s""",(catalog_id,))
@@ -85,7 +92,7 @@ class Storecat:
         self.storeent_id=storeent_id
         self.mastercatalog=mastercatalog
         self.lastupdate=lastupdate
-    
+        
     def save(self):
         try:
             cursor.execute("""insert into storecat(catalog_id,storeent_id,mastercatalog,lastupdate)values(%s,%s,%s,%s)
@@ -108,11 +115,29 @@ class Catgroup:
         self.dynamic=dynamic
     
     @staticmethod
+    def attachedtostore(sid,cid):
+        cursor.execute("select catgroup_id=%s from storecgrp where storeent_id=%s and catgroup_id=%s",
+        (cid,sid,cid,));res=cursor.fetchone()
+        if res == None:return False
+        elif res != None:return res[0]
+    
+    @staticmethod
+    def productcount(catgroup_id):
+        if catgroup_id==None:return 0
+        elif catgroup_id != None:
+            cursor.execute("select count(catentry_id)from catgpenrel where catgroup_id=%s",(catgroup_id,))
+            res=cursor.fetchone()
+            if res == None:return 0
+            elif res != None:return res[0]
+
+    @staticmethod
     def readcatgroups(mid,lid):
         cursor.execute("""select catgroup.catgroup_id,catgroup.identifier,catgrpdesc.shortdescription from catgroup
         left join catgrpdesc on catgroup.catgroup_id=catgrpdesc.catgroup_id where catgroup.member_id=%s and 
-        catgrpdesc.language_id=%s""",(mid,lid,));res=cursor.fetchall();return [dict(zip(["catgroup_id","identifier",
-        "description"],r)) for r in res ]
+        catgrpdesc.language_id=%s""",(mid,lid,));res=cursor.fetchall()
+        if len(res) <= 0:return [dict(catgroup_id=None,identifier=None,description=None)]
+        elif len(res) > 0:return [dict(catgroup_id=r[0],identifier=r[1],description=r[2],count=Catgroup.productcount(r[0]))
+        for r in res]
     
     def save(self):
         try:
@@ -125,7 +150,7 @@ class Catgroup:
         except(Exception,psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
-
+# print(Catgroup.attachedtostore(1,4))
 class Catgrpdesc:
     def __init__(self,language_id,catgroup_id,name,published,shortdescription=None,longdescription=None,thumbnail=None,
     fullimage=None,display=None,note=None):
@@ -249,8 +274,24 @@ class Storecgrp:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
 
+class Catalogtpc:
+    def __init__(self,catalog_id,tradeposcn_id,store_id):
+        self.catalog_id=catalog_id
+        self.tradeposcn_id=tradeposcn_id
+        self.store_id=store_id
+    
+    def save(self):
+        try:
+            cursor.execute("""insert into catalogtpc(catalog_id,tradeposcn_id,store_id)values(%s,%s,%s)
+            on conflict(catalog_id,tradeposcn_id,store_id)do update set catalog_id=%s,tradeposcn_id=%s,
+            store_id=%s returning tradeposcn_id""",(self.catalog_id,self.tradeposcn_id,self.store_id,
+            self.catalog_id,self.tradeposcn_id,self.store_id,));con.commit();return cursor.fetchone()[0]
+        except(Exception,psycopg2.DatabaseError) as e:
+            if con is not None:con.rollback()
+            raise EntryException(str(e).strip().split('\n')[0])
+
 class Catgrptpc:
-    def __init__(self,catalog_id,catgroup_id,tradeposcn_id,store_id):
+    def __init__(self,catalog_id,tradeposcn_id,catgroup_id=0,store_id=0):
         self.catalog_id=catalog_id
         self.catgroup_id=catgroup_id
         self.tradeposcn_id=tradeposcn_id
@@ -424,12 +465,44 @@ class Catentry:
         except (Exception, psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split("\n")[0])
+    
+    @staticmethod
+    def readcontainers(mid,lid):
+        cursor.execute("""select catentry.catentry_id,catentdesc.name from catentry left join catentdesc on
+        catentry.catentry_id=catentdesc.catentry_id where catentry.member_id=%s and catentdesc.language_id=%s
+        and catentry.catenttype_id='Bundle'""",(mid,lid,));res=cursor.fetchall()
+        if len(res) <= 0:return [dict(catentry_id=None,name=None)]
+        elif len(res) > 0:return [dict(catentry_id=r[0],name=r[1]) for r in res]
 
     @staticmethod
     def readcatentry(mid,lid):
         cursor.execute("""select catentry.catentry_id,catentdesc.name from catentry left join catentdesc
         on catentry.catentry_id=catentdesc.catentry_id where catentry.member_id=%s and catentdesc.language_id=%s""",
         (mid,lid,));res=cursor.fetchall();return [dict(zip(["catentry_id","name"],r)) for r in res]
+    
+    @staticmethod
+    def read(mid,lid):
+        cursor.execute("""select catentry.catentry_id,catentry.member_id,catentry.itemspc_id,catentry.catenttype_id::text,
+        catentry.partnumber,catentry.mfpartnumber,catentry.mfname,catentry.url,catentry.field1,catentry.field2,
+        catentry.lastupdate,catentry.field3,catentry.onspecial,catentry.onauction,catentry.field4,catentry.field5,catentry.buyable,
+        catentry.baseitem_id,catentry.state,catentry.startdate,catentry.enddate,catentry.rank,catentry.availabilitydate,
+        catentry.lastorderdate,catentry.endofservicedate,catentry.discontinuedate,catentdesc.name,catentdesc.shortdesciption,
+        catentdesc.longdesctiption,catentdesc.thumbnail,catentdesc.auxdescription1,catentdesc.fullimage,catentdesc.auxdescription2,
+        catentdesc.avaialble,catentdesc.published,catentdesc.availabilitydate,listprice.currency,listprice.listprice::float,
+        catgpenrel.catgroup_id,catgroup.identifier,catgpenrel.catalog_id from catentry inner join catentdesc on catentry.catentry_id=catentdesc.catentry_id 
+        inner join listprice on catentry.catentry_id=listprice.catentry_id inner join catgpenrel on catentry.catentry_id=catgpenrel.
+        catentry_id inner join catgroup on catgroup.catgroup_id=catgpenrel.catgroup_id where catentry.member_id=%s and catentdesc.language_id=%s""",(mid,lid,))
+        res=cursor.fetchall()
+        if len(res) <= 0:return [dict()]
+        elif len(res) > 0:return [dict(catentry_id=r[0],member_id=r[1],itemspc_id=r[2],catenttype_id=r[3],type=r[3],
+        partnumber=r[4],mfpartnumber=r[5],mfname=r[6],url=r[7],field1=r[8],field2=r[9],lastupdate=humanize_date(r[10]),
+        field3=r[11],onspecial=r[12],onauction=r[13],field4=r[14],field5=r[15],buyable=r[16],baseitem_id=r[17],
+        state=r[18],startdate=humanize_date(r[19]),enddate=humanize_date(r[20]),rank=r[21],availabilitydate=humanize_date(r[22]),
+        lastorderdate=humanize_date(r[23]),endofservicedate=humanize_date(r[24]),discontinuedate=humanize_date(r[25]),name=r[26],
+        shortdescription=r[27],longdescription=r[28],thumbnail=r[29],auxdescription1=r[30],fullimage=r[31],auxdescription2=r[32],
+        available=r[33],published=r[34],availabilitydate2=humanize_date(r[35]),currency=r[36],price=r[37],
+        symbol=CurrencyHelper(lid).getcurrsymbol(),catgroup_id=r[38],category=r[39],catalog_id=r[40],
+        expires=humanize_date(r[24])) for r in res]
     
     def save(self):
         try:
@@ -450,7 +523,7 @@ class Catentry:
         except(Exception,psycopg2.DatabaseError) as e:
             if con is None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
-# print(Catentry.readcatentry(1,1))
+# print(Catentry.read(1,1))
 class Catentdesc:
     def __init__(self,catentry_id,language_id,published,name=None,shortdescription=None,longdescription=None,
     thumbnail=None,auxdescription1=None,fullimage=None,auxdescription2=None,available=None,availabilitydate=None):
@@ -654,6 +727,13 @@ class Attrtype:
         self.description=description
         self.oid=oid
     
+    @staticmethod
+    def read():
+        cursor.execute("select attrtype_id::text,description::text from attrtype")
+        res=cursor.fetchall()
+        if len(res) <= 0:return [dict(text=None,value=None)]
+        elif len(res) > 0:return [dict(value=x[0],text=x[1])for x in res]
+    
     def save(self):
         try:
             cursor.execute("""insert into attrtype(attrtype_id,description,oid)values(%s,%s,%s)on conflict(attrtype_id)
@@ -662,7 +742,7 @@ class Attrtype:
         except(Exception,psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
-
+# print(Attrtype.read())
 class Attrvalue:
     def __init__(self,language_id,attribute_id,attrtype_id,catentry_id,stringvalue=None,operator_id=None,sequence=0,
     integervalue=None,floatvalue=None,name=None,field1=None,image1=None,image2=None,field2=None,field3=None,
@@ -850,3 +930,219 @@ class CatenttypeDefaults:
         elif res <= 0:return False
     
     def save(self):[self.enter(*i) for i in self.types]
+
+class Attrdict:
+    def __init__(self,storeent_id,field1=None,field2=None,field3=None):
+        self.storeent_id=storeent_id
+        self.field1=field1
+        self.field2=field2
+        self.field3=field3
+    
+    def save(self):
+        try:
+            cursor.execute("""insert into attrdict(storeent_id,field1,field2,field3)values(%s,%s,%s,%s)
+            returning attrdict_id""",(self.storeent_id,self.field1,self.field2,self.field3,))
+            con.commit();return cursor.fetchone()[0]
+        except(Exception,psycopg2.DatabaseError) as e:
+            if con is not None:con.rollback()
+            raise EntryException(str(e).strip().split('\n')[0])
+
+class Attr:
+    def __init__(self,identifier,attrtype_id,storeent_id=None,attrdict_id=None,sequence=0,displayable=None,
+    searchable=None,comparable=None,field1=None,field2=None,field3=None,attrusage=None,storedisplay=None,
+    facetable=0,merchandisable=None,swatchable=0):
+        self.identifier=identifier
+        self.attrtype_id=attrtype_id
+        self.storeent_id=storeent_id
+        self.attrdict_id=attrdict_id
+        self.sequence=sequence
+        self.displayable=displayable
+        self.searchable=searchable
+        self.comparable=comparable
+        self.field1=field1
+        self.field2=field2
+        self.field3=field3
+        self.attrusage=attrusage
+        self.storedisplay=storedisplay
+        self.facetable=facetable
+        self.merchandisable=merchandisable
+        self.swatchable=swatchable
+    
+    @staticmethod
+    def read(lid):
+        cursor.execute("""select attr.attr_id,attr.identifier,attr.attrtype_id,attrdesc.name,
+        attrdesc.description from attr inner join attrdesc on attr.attr_id=attrdesc.attr_id 
+        where attrdesc.language_id=%s""",(lid,));res=cursor.fetchall()
+        if len(res) <= 0:return [dict(attr_id=None,identifier=None,attrtype_id=None,attriute_type=None,
+        name=None,description=None)]
+        elif len(res) > 0:return [dict(attr_id=r[0],identifier=r[1],attrtype_id=r[2],attribute_type=r[2],
+        name=r[3],description=r[4]) for r in res]
+
+    def save(self):
+        try:
+            cursor.execute("""insert into attr(identifier,attrtype_id,attrdict_id,storeent_id,sequence,
+            displayable,searchable,comparable,field1,field2,field3,attrusage,storedisplay,facetable,
+            merchandisable,swatchable)values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)on conflict
+            (identifier)do update set identifier=%s,attrtype_id=%s,attrdict_id=%s,storeent_id=%s,
+            sequence=%s,displayable=%s,searchable=%s,comparable=%s,field1=%s,field2=%s,field3=%s,attrusage=%s,
+            storedisplay=%s,facetable=%s,merchandisable=%s,swatchable=%s returning attr_id""",
+            (self.identifier,self.attrtype_id,self.attrdict_id,self.storeent_id,self.sequence,self.displayable,
+            self.searchable,self.comparable,self.field1,self.field2,self.field3,self.attrusage,self.storedisplay,
+            self.facetable,self.merchandisable,self.swatchable,
+            self.identifier,self.attrtype_id,self.attrdict_id,self.storeent_id,self.sequence,self.displayable,
+            self.searchable,self.comparable,self.field1,self.field2,self.field3,self.attrusage,self.storedisplay,
+            self.facetable,self.merchandisable,self.swatchable,));con.commit();return cursor.fetchone()[0]
+        except(Exception,psycopg2.DatabaseError) as e:
+            if con is not None:con.rollback()
+            raise EntryException(str(e).strip().split('\n')[0])
+
+class Attrdesc:
+    def __init__(self,attr_id,language_id,attrtype_id,name=None,description=None,description2=None,
+    field1=None,groupname=None,qtyunit_id=None,noteinfo=None):
+        self.attr_id=attr_id
+        self.language_id=language_id
+        self.attrtype_id=attrtype_id
+        self.name=name
+        self.description=description
+        self.description2=description2
+        self.field1=field1
+        self.groupname=groupname
+        self.qtyunit_id=qtyunit_id
+        self.noteinfo=noteinfo
+    
+    def save(self):
+        try:
+            cursor.execute("""insert into attrdesc(attr_id,language_id,attrtype_id,name,description,description2,
+            field1,groupname,qtyunit_id,noteinfo)values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)on conflict(attr_id,
+            language_id)do update set attr_id=%s,language_id=%s,attrtype_id=%s,name=%s,description=%s,
+            description2=%s,field1=%s,groupname=%s,qtyunit_id=%s,noteinfo=%s returning attr_id""",
+            (self.attr_id,self.language_id,self.attrtype_id,self.name,self.description,self.description2,
+            self.field1,self.groupname,self.qtyunit_id,self.noteinfo,
+            self.attr_id,self.language_id,self.attrtype_id,self.name,self.description,self.description2,
+            self.field1,self.groupname,self.qtyunit_id,self.noteinfo,));con.commit();return cursor.fetchone()[0]
+        except(Exception,psycopg2.DatabaseError) as e:
+            if con is not None:con.rollback()
+            raise EntryException(str(e).strip().split('\n')[0])
+
+class Attrval:
+    def __init__(self,attr_id,identifier=None,valusage=None,storeent_id=None,field1=None,field2=None,field3=None):
+        self.atttr_id=attr_id
+        self.identifier=identifier
+        self.valusage=valusage
+        self.storeent_id=storeent_id
+        self.field1=field1
+        self.field2=field2
+        self.field3=field3
+    
+    def save(self):
+        try:
+            cursor.execute("""insert into attrval(attr_id,identifier,valusage,storeent_id,field1,field2,field3)
+            values(%s,%s,%s,%s,%s,%s,%s)on conflict(attr_id,identifier)do update set attr_id=%s,identifier=%s,
+            valusage=%s,storeent_id=%s,field1=%s,field2=%s,field3=%s returning attrval_id""",
+            (self.atttr_id,self.identifier,self.valusage,self.storeent_id,self.field1,self.field2,self.field3,
+            self.atttr_id,self.identifier,self.valusage,self.storeent_id,self.field1,self.field2,self.field3,))
+            con.commit();return cursor.fetchone()[0]
+        except(Exception,psycopg2.DatabaseError) as e:
+            if con is not None:con.rollback()
+            raise EntryException(str(e).strip().split('\n')[0])
+
+class Attrvaldesc:
+    def __init__(self,attrval_id,language_id,attr_id,value=None,valusage=None,sequence=None,
+    stringvalue=None,integervalue=None,floatvalue=None,datetimevalue=None,qtyunit_id=None,image1=None,
+    image2=None,field1=None,field2=None,field3=None):
+        self.attrval_id=attrval_id
+        self.language_id=language_id
+        self.attr_id=attr_id
+        self.value=value
+        self.valusage=valusage
+        self.sequence=sequence
+        self.stringvalue=stringvalue
+        self.integervalue=integervalue
+        self.floatvalue=floatvalue
+        self.datetimevalue=datetimevalue
+        self.qtyunit_id=qtyunit_id
+        self.image1=image1
+        self.image2=image2
+        self.field1=field1
+        self.field2=field2
+        self.field3=field3
+    
+    def save(self):
+        try:
+            cursor.execute("""insert into attrvaldesc(attrval_id,language_id,attr_id,value,valusage,
+            sequence,stringvalue,integervalue,floatvalue,qtyunit_id,image1,image2,field1,field2,field3,datetimevalue)
+            values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)on conflict(attrval_id,language_id)do update
+            set attrval_id=%s,language_id=%s,attr_id=%s,value=%s,valusage=%s,sequence=%s,stringvalue=%s,integervalue=%s,
+            floatvalue=%s,qtyunit_id=%s,image1=%s,image2=%s,field1=%s,field2=%s,field3=%s,datetimevalue=%s returning attrval_id""",
+            (self.attrval_id,self.language_id,self.attr_id,self.value,self.valusage,self.sequence,self.stringvalue,
+            self.integervalue,self.floatvalue,self.qtyunit_id,self.image1,self.image2,self.field1,self.field2,
+            self.field3,self.datetimevalue,self.attrval_id,self.language_id,self.attr_id,self.value,self.valusage,self.sequence,self.stringvalue,
+            self.integervalue,self.floatvalue,self.qtyunit_id,self.image1,self.image2,self.field1,self.field2,
+            self.field3,self.datetimevalue,));con.commit();return cursor.fetchone()[0]
+        except(Exception,psycopg2.DatabaseError) as e:
+            if con is not None:con.rollback()
+            raise EntryException(str(e).strip().split('\n')[0])
+
+class Catentryattr:
+    def __init__(self,catentry_id,attr_id,attrval_id,usage,sequence=None,field1=None,field2=None,field3=None):
+        self.catentry_id=catentry_id
+        self.attr_id=attr_id
+        self.attrval_id=attrval_id
+        self.usage=usage
+        self.sequence=sequence
+        self.field1=field1
+        self.field2=field2
+        self.field3=field3
+        
+    def save(self):
+        try:
+            cursor.execute("""insert into catentryattr(catentry_id,attr_id,attrval_id,usage,sequence,
+            field1,field2,field3)values(%s,%s,%s,%s,%s,%s,%s,%s)on conflict(catentry_id,attr_id,attrval_id)
+            do update set catentry_id=%s,attr_id=%s,attrval_id=%s,usage=%s,sequence=%s,field1=%s,
+            field2=%s,field3=%s returning attr_id""",(self.catentry_id,self.attr_id,self.attrval_id,
+            self.usage,self.sequence,self.field1,self.field2,self.field3,self.catentry_id,self.attr_id,
+            self.attrval_id,self.usage,self.sequence,self.field1,self.field2,self.field3,))
+            con.commit();return cursor.fetchone()[0]
+        except(Exception,psycopg2.DatabaseError) as e:
+            if con is not None:con.rollback()
+            raise EntryException(str(e).strip().split('\n')[0])
+
+# print(Catentryattr.read(1))
+class Catgpcalcd:
+    def __init__(self,store_id,catgroup_id,trading_id=None,calcode_id=None,calflags=0):
+        self.store_id=store_id
+        self.catgroup_id=catgroup_id
+        self.trading_id=trading_id
+        self.calcode_id=calcode_id
+        self.calflags=calflags
+    
+    def save(self):
+        try:
+            cursor.execute("""insert into catgpcalcd(store_id,trading_id,catgroup_id,calcode_id,calflags)
+            values(%s,%s,%s,%s,%s)on conflict(store_id,catgroup_id,calcode_id,trading_id)do update set
+            store_id=%s,trading_id=%s,catgroup_id=%s,calcode_id=%s,calflags=%s returning catgpcalcd_id""",
+            (self.store_id,self.trading_id,self.catgroup_id,self.calcode_id,self.calflags,
+            self.store_id,self.trading_id,self.catgroup_id,self.calcode_id,self.calflags,))
+            con.commit();return cursor.fetchone()[0]
+        except(Exception,psycopg2.DatabaseError) as e:
+            if con is not None:con.rollback()
+            raise EntryException(str(e).strip().split('\n')[0])
+
+class Catencalcd:
+    def __init__(self,store_id,trading_id=None,catentry_id=None,calcode_id=None,calflags=None):
+        self.store_id=store_id
+        self.trading_id=trading_id
+        self.catentry_id=catentry_id
+        self.calcode_id=calcode_id
+        self.calflags=calflags
+    
+    def save(self):
+        try:
+            cursor.execute("""insert into catencalcd(store_id,trading_id,catentry_id,calcode_id,calflags)
+            values(%s,%s,%s,%s,%s)on conflict(store_id,catentry_id,calcode_id,trading_id)do update set store_id=%s,
+            trading_id=%s,catentry_id=%s,calcode_id=%s,calflags=%s returning catencalcd_id""",(self.store_id,
+            self.trading_id,self.catentry_id,self.calcode_id,self.calflags,self.store_id,self.trading_id,
+            self.catentry_id,self.calcode_id,self.calflags,));con.commit();return cursor.fetchone()[0]
+        except(Exception,psycopg2.DatabaseError) as e:
+            if con is not None:con.rollback()
+            raise EntryException(str(e).strip().split('\n')[0])

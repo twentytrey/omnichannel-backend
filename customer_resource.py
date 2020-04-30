@@ -6,6 +6,7 @@ from ops.members.members import Member,Orgentity,Users,Userreg,Mbrrole,Busprof,E
 from ops.helpers.functions import timestamp_forever,timestamp_now,defaultlanguage
 from ops.authentication.authentication import Plcyacct,Plcypasswd
 from ops.mailer.mailer import Mailer
+from ops.stores.stores import Storeorgs
 
 class create_customer_organization(Resource):
     def __init__(self):
@@ -48,7 +49,9 @@ class create_customer_organization(Resource):
             if logonis=="email":Address(addrbook_id,member_id,orgentityname,email1=logonid,address_id=address_id).update()
             elif logonis=="phone":Address(addrbook_id,member_id,orgentityname,phone1=logonid,address_id=address_id).update()
             access_token=create_access_token(identity=usersign);refresh_token=create_refresh_token(identity=usersign)
-            return {"access_token":access_token,"refresh_token":refresh_token,"msg":"Successfully initialized customer organization: {0}".format(orgentityname)},200
+            return {"access_token":access_token,"refresh_token":refresh_token,
+            "msg":"Successfully initialized customer organization: {0}".format(orgentityname),
+            },200
         except EntryException as e:
             return {"msg":"Error initializing organization {0}. Error {1}".format(orgentityname,e.message)},422
 
@@ -93,12 +96,18 @@ class _create_customer_organization(Resource):
                 if logonis=="email":
                     Address(addrbook_id,member_id,orgentityname,email1=logonid).save()
                     if userreg_id==users_id:
-                        # send EMail notification
+                        # send Email notification
                         access_token=create_access_token(identity=usersign);refresh_token=create_refresh_token(identity=usersign)
-                        Mailer("pronovserver@gmail.com","jmsoyewale@gmail.com","Pronov Confirmation Email","http://localhost:8080/#/customersignup/"+access_token,"f10aeb05").buildmessage()
+                        # Mailer("pronovserver@gmail.com","jmsoyewale@gmail.com","Pronov Confirmation Email","http://localhost:8080/#/customersignup/"+access_token,"f10aeb05").buildmessage()
                 elif logonis=="phone":
                     Address(addrbook_id,member_id,orgentityname,phone1=logonid).save()
                     # send SMS notification
-                return {"usersdata":ListAllMembers().data(),"msg":"Customer organization will now receive email and SMS on instructions to proceed"},200
+                return {"usersdata":ListAllMembers().data(),
+                "msg":"Customer organization will now receive email and SMS on instructions to proceed",
+                "storeorgs":Storeorgs().getdata()},200
         except EntryException as e:
             return {"msg":"Error initializing organization {0}. Error {1}".format(orgentityname,e.message)},422
+
+class list_storeorgs(Resource):
+    @jwt_required
+    def get(self):return Storeorgs().getdata(),200

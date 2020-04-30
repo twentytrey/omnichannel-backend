@@ -15,7 +15,7 @@ class Attrdict:
             identifier varchar(254)not null,
             attrtype_id char(16)not null,
             attrdict_id bigint,
-            storeent_id integer not null,
+            storeent_id integer,
             sequence float not null default 0,
             displayable integer,
             searchable integer,
@@ -30,7 +30,7 @@ class Attrdict:
             swatchable smallint not null default 0,
             primary key(attr_id)
         )""")
-        cursor.execute("create unique index i0001203 on attr(identifier,attrdict_id)")
+        cursor.execute("create unique index i0001203 on attr(identifier)")
         cursor.execute("create index i0001204 on attr(storeent_id)")
         cursor.execute("create index i0001464 on attr(facetable)")
         # CONSTRAINT
@@ -100,6 +100,7 @@ class Attrdict:
             sequence float,
             stringvalue varchar(2000),
             integervalue integer,
+            datetimevalue timestamp,
             floatvalue float,
             qtyunit_id char(16),
             image1 varchar(254),

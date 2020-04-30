@@ -274,7 +274,7 @@ class TaxCalrule:
         qualification=TaxCalrule.methodnames(r[8]),field1=r[9],field2=r[10],flags=r[11],identifier=r[12],
         ffmcenter_id=r[13],shipping=TaxCalrule.ffmcenter(r[13]),jurstgroup_id=r[14],
         jurisdiction=TaxCalrule.jurstnames(r[14]))for r in res]
-# print(TaxCalrule.read())
+
 class InstallTaxtype:
     def __init__(self,fname):
         self.fname=fname

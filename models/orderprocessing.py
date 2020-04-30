@@ -506,7 +506,7 @@ class OrderManagementAdjustmentAndTax:
             orgentity_id bigint,
             policy_id bigint,
             member_id bigint not null,
-            trading_id bigint,
+            trading_id bigint,i
             ffmcenter_id integer,
             rmadate timestamp not null,
             totalcredit decimal(20,5)default 0,
@@ -534,7 +534,7 @@ class OrderManagementAdjustmentAndTax:
         or services. this can be applicable to the entire RMA or to a specific RMA item. such as 
         restocking fees or shipping credits."""
         cursor.execute("""create table rmacharge(
-            rmacharge_id bigint not null,
+            rmacharge_id bigserial not null,
             rmaitem_id bigint,
             chargetype_id integer not null,
             rma_id bigint not null,
@@ -873,7 +873,7 @@ class OrderTradingAgreement:
         right-to-buy by amount or obligation-to-buy by amount terms and conditions"""
         cursor.execute("""create table trdpuramt(
             trading_id bigint not null,
-            trdpuramt_id bigint not null,
+            trdpuramt_id bigserial not null,
             setccurr char(3),
             orderitems_id bigint,
             amount decimal(20,5)not null,

@@ -118,6 +118,18 @@ class Orgentity:
     @staticmethod
     def maporgentitytype(otype):
         return {"O":"Organization","OU":"Organization Unit","AD":"Authorization Domain"}[otype]
+    
+    @staticmethod
+    def listorgentities():
+        cursor.execute("""select orgentity_id,legalid,orgentitytype,orgentityname,businesscategory,
+        description,adminfirstname,adminlastname,preferreddelivery,field1,field2,dn,taxpayerid,field3,
+        status from orgentity""");res=cursor.fetchall()
+        if len(res) <= 0:return [dict(orgentity_id=None,legalid=None,orgentitytype=None,orgentityname=None,
+        businesscategory=None,description=None,adminfirstname=None,adminlastname=None,preferreddelivery=None,
+        field1=None,field2=None,dn=None,taxpayerid=None,field3=None,status=None)]
+        elif len(res) > 0:return [dict(orgentity_id=r[0],legalid=r[1],orgentitytype=r[2],orgentityname=r[3],
+        businesscategory=r[4],description=r[5],adminfirstname=r[6],adminlastname=r[7],preferreddelivery=r[8],
+        field1=r[9],field2=r[10],dn=r[11],taxpayerid=r[12],field3=r[13],status=r[14]) for r in res]
 
     @staticmethod
     def readorgentity(oid):
@@ -868,9 +880,15 @@ class Attrtype:
             raise EntryException(str(e).strip().split('\n')[0])
 
 class RolePermDefaults:
-    def __init__(self,fname,orgentity_id):
-        self.fname=fname
+    def __init__(self,orgentity_id):
         self.orgentity_id=orgentity_id
+    
+    def roles(self):
+        cursor.execute("select role_id,name from role")
+        res=cursor.fetchall()
+        master=[x for x in res if x[1]=="permission_editor"][0]
+        data=[ [master[0],self.orgentity_id,x[0]] for x in res ]
+        return data
     
     def isfilled(self):
         cursor.execute("select count(roleasnprm_id)from roleasnprm")
@@ -879,14 +897,9 @@ class RolePermDefaults:
         elif res <= 0:return False
     
     def save(self):
-        basedir=os.path.abspath(os.path.dirname(__file__))
-        fileurl=os.path.join(os.path.join(os.path.split(os.path.split(basedir)[0])[0],"static/datafiles"),self.fname)
-        if os.path.isfile(fileurl):
-            df=pd.read_csv(fileurl)
-            df['orgentity_id']=pd.Series([self.orgentity_id]*df.shape[0])
-            perms=list(map(list,df.values));[Roleasnprm(*p).save()for p in perms]
-
-# RolePermDefaults('roleasnprm.csv',1).save()
+        filled=self.isfilled()
+        if filled==False:[Roleasnprm(*p).save() for p in self.roles()]
+        elif filled==True:pass
 
 class RoleDefaults:
     def __init__(self,fname):
@@ -959,9 +972,15 @@ class ListAllMembers:
         ids=[x for (x,) in cursor.fetchall()]
         return [self.details(i) for i in ids]
     
+    def findmaster(self,roles):
+        find=len([x for x in roles if x['rolename']=="Permission Editor"])
+        if find<=0:return False
+        elif find>0:return True
+    
     def details(self,x):
-        return dict(member=Member.readmember(x),orgentity=Orgentity.readorgentity(x),mbrrole=Mbrrole.read(x),
+        data=dict(member=Member.readmember(x),orgentity=Orgentity.readorgentity(x),mbrrole=Mbrrole.read(x),
         busprof=Busprof.readbusprof(x),userprof=Userprof.readuserprof(x),userreg=Userreg.readuserreg(x),
         users=Users.readusers(x),addrbook=Addrbook.readaddrbook(x),address=Address.readaddress(x))
+        data.update(dict(ismaster=self.findmaster(data["mbrrole"])));return data
 
 # print(ListAllMembers().data())

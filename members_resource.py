@@ -6,8 +6,10 @@ from ops.members.members import Member,Orgentity,Users,Userreg,Mbrrole,Busprof,E
 from ops.helpers.functions import timestamp_forever,timestamp_now,defaultlanguage
 from ops.authentication.authentication import Plcyacct,Plcypasswd
 from ops.members.members import ListAllMembers
-import json
+import json,urllib.request
 from ops.mailer.mailer import Mailer
+from ops.sms.sms import Sms
+
 
 class create_organization(Resource):
     def __init__(self):
@@ -48,11 +50,12 @@ class create_organization(Resource):
                 Mbrrole(userreg_id,rid,orgentity_id).save()
                 users_id=Busprof(member_id,org_id=orgentity_id).save()
                 usersign=UserSign(logonid)
-                RolePermDefaults('roleasnprm.csv',orgentity_id).save()
+                RolePermDefaults(orgentity_id).save()
                 addrbook_id=Addrbook(member_id,orgentityname,description="{}: Address Book".format(orgentityname)).save()
-                logonis=Userreg.logoniswhat(logonid)
-                if logonis=="email":Address(addrbook_id,member_id,orgentityname,email1=logonid).save()
-                elif logonis=="phone":Address(addrbook_id,member_id,orgentityname,phone1=logonid).save()
+                # logonis=Userreg.logoniswhat(logonid)
+                # if logonis=="email":Address(addrbook_id,member_id,orgentityname,email1=logonid).save()
+                # elif logonis=="phone":Address(addrbook_id,member_id,orgentityname,phone1=logonid).save()
+                Address(addrbook_id,member_id,orgentityname,phone1=logonid).save()
                 if userreg_id==users_id:
                     access_token=create_access_token(identity=usersign);refresh_token=create_refresh_token(identity=usersign)
                     return {"access_token":access_token,"refresh_token":refresh_token,
@@ -96,6 +99,10 @@ class UserIdentity(Resource):
         useridentity=get_jwt_claims()
         return dict(current_user=current_user,user=useridentity),200
 
+class list_organizations(Resource):
+    @jwt_required
+    def get(self):return Orgentity.listorgentities(),200
+
 class read_organization(Resource):
     def __init__(self):
         self.parser=reqparse.RequestParser()
@@ -111,8 +118,7 @@ class read_organization(Resource):
             "users":Users.readusers(logonid),"busprof":Busprof.readbusprof(logonid),
             "userprof":Userprof.readuserprof(logonid),"addrbook":Addrbook.readaddrbook(logonid),
             "address":Address.readaddress(logonid),"userreg":Userreg.readuserreg(logonid)},200
-        except EntryException as e:
-            return {"msg":"Error reading organization data. Error {0}".format(e.message)},422
+        except EntryException as e:return {"msg":"Error reading organization data. Error {0}".format(e.message)},422
 
 class update_orgentity(Resource):
     def __init__(self):
@@ -284,7 +290,7 @@ class _create_business_user(Resource):
         self.parser.add_argument("registertype",help="required field",required=True)
         self.parser.add_argument("profiletype",help="required field",required=True)
         self.parser.add_argument("firstname",help="required field",required=True)
-        self.parser.add_argument("middlename",help="required field",required=True)
+        self.parser.add_argument("middlename")
         self.parser.add_argument("lastname",help="required field",required=True)
         self.parser.add_argument("logonid",help="required field",required=True)
         self.parser.add_argument("logonpassword",help="required field",required=True)
@@ -361,23 +367,29 @@ class create_business_user(Resource):
             if exists:return {"msg":"A user with that identity already exists. Choose another identity"},200
             elif exists==False:
                 member_id=member.save()
-                users_id=Users(member_id,registertype,dn=logonid,profiletype=profiletype,language_id=defaultlanguage(),registration=timestamp_now()).save()
-                userreg_id=Userreg(users_id,logonid,plcyacct_id=Plcyacct.read_default()['plcyacct_id']).save()
+                users_id=Users(member_id,registertype,field1=firstname,field2=middlename,field3=lastname,dn=logonid,profiletype=profiletype,language_id=defaultlanguage(),registration=timestamp_now()).save()
+                salt='M{}{}{}{}'.format(member_id,registertype,profiletype,logonid[-1])
+                userreg_id=Userreg(users_id,logonid,plcyacct_id=Plcyacct.read_default()['plcyacct_id'],salt=salt).save()
                 Mbrrole(member_id,role_id,employerid).save()
                 Busprof(users_id,org_id=employerid).save()
                 usersign=UserSign(logonid)
                 addrbook_id=Addrbook(member_id,firstname+' '+lastname,description="{}: Address Book".format(firstname+' '+lastname)).save()
-                logonis=Userreg.logoniswhat(logonid)
-                if logonis=="email":
-                    Address(addrbook_id,member_id,logonid,email1=logonid).save()
-                    if userreg_id==users_id:
-                        # send EMail notification
-                        access_token=create_access_token(identity=usersign);refresh_token=create_refresh_token(identity=usersign)
-                        Mailer("pronovserver@gmail.com","jmsoyewale@gmail.com","Pronov Confirmation Email","http://localhost:8080/#/confirmident/"+access_token,"f10aeb05").buildmessage()
-                elif logonis=="phone":
-                    Address(addrbook_id,member_id,logonid,phone1=logonid,firstname=firstname,middlename=middlename,lastname=lastname).save()
-                    # send SMS notification
-                return {"usersdata":ListAllMembers().data(),"msg":"Business user will now receive email or SMS notification to proceed."},200
+                Address(addrbook_id,member_id,logonid,phone1=logonid,firstname=firstname,middlename=middlename,lastname=lastname).save()
+
+                # send SMS notification
+                # msg_url="https://www.bulksmsnigeria.com/api/v1/sms/create?api_token=O7csPy8LWqUqvg3qBrIuPOS33T4olZt63GilMSQxo5dPnEDQTHQcGcZDMRoh&from=PronovApp&to={}&body={}&dnd=2".format(logonid[1:].replace(" ",""),urllib.parse.quote("Your PronovApp token is: "+salt))
+                # sms_request=urllib.request.urlopen(msg_url);raw_data=sms_request.read()
+                # encoding=sms_request.info().get_content_charset('utf8')
+                # data=json.loads(raw_data.decode(encoding))
+                # sms_status=data["data"]["status"]
+                # sms_message=data["data"]["message"]
+                sms=Sms(logonid[1:].replace(" ",""),"Your PronovApp token is: "+salt,sms_from="PronovApp",dnd="2")
+                sms_status,sms_message=sms.send()
+
+                if sms_status=="success":
+                    return {"usersdata":ListAllMembers().data(),"msg":"Business user will receive SMS token to proceed."},200
+                else:
+                    return {"usersdata":ListAllMembers().data(),"msg":"Unable to send SMS token to user. Error: {}.".format(sms_message)},422
         except EntryException as e:
             return {"msg":"Error initializing business user. Error {}".format(e.message)},422
 

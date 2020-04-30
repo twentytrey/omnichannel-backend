@@ -114,8 +114,8 @@ class Pricing:
         cursor.execute("""create table storetpc(
             storeent_id integer not null,
             tradeposcn_id bigint not null,
-            sttpcusg_id integer not null,
-            primary key(storeent_id,tradeposcn_id,sttpcusg_id)
+            sttpcusg_id integer,
+            primary key(storeent_id,tradeposcn_id)
         )""")
         cursor.execute("create index i0001357 on storetpc(tradeposcn_id)")
         cursor.execute("create index i0001388 on storetpc(sttpcusg_id)")

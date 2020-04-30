@@ -5,7 +5,7 @@ con,cursor=createcon("retail","jmso","localhost","5432")
 import  importlib
 import pandas as pd
 import numpy as np
-from ops import textualize_datetime
+from ops import textualize_datetime,humanize_date
 
 class EntryException(Exception):
     def __init__(self,message):
@@ -225,11 +225,33 @@ class Calcode:
         self.precedence=precedence
 
     @staticmethod
+    def usagename(cusage_id):
+        if cusage_id==None:return None
+        else:
+            cursor.execute("select description from calusage where calusage_id=%s",(cusage_id,))
+            return cursor.fetchone()[0]
+    
+    @staticmethod
+    def storename(store_id):
+        if store_id==None:return None
+        else:
+            cursor.execute("select identifier from storeent where storeent_id=%s",(store_id,))
+            return cursor.fetchone()[0]
+
+    @staticmethod
     def methodname(mid):
         if mid==None:return None
         else:
             cursor.execute("select name from calmethod where calmethod_id=%s",(mid,))
             return cursor.fetchone()[0]
+        
+    @staticmethod
+    def select_calcodes(store_id,language_id):
+        cursor.execute("""select calcode.calcode_id,calcodedesc.description from calcode
+        inner join calcodedesc on calcode.calcode_id=calcodedesc.calcode_id where calcode.storeent_id=%s
+        and calcodedesc.language_id=%s""",(store_id,language_id,));res=cursor.fetchall()
+        if len(res) <= 0:return [dict()]
+        elif len(res) > 0:return [dict(calcode_id=r[0],description=r[1])for r in res]
 
     @staticmethod
     def read(sid,lid,usages):
@@ -243,12 +265,13 @@ class Calcode:
         if len(res) <= 0:return [dict(calcode_id=None,calusage_id=None,tax_type=None,storeent_id=None,groupby=None,
         txcdclass_id=None,published=None,sequence=None,combination=None,lastupdate=None,calmethod_id=None,
         calmethod_id_app=None,calmethod_id_qfy=None,field1=None,description2=None,displaylevel=None,startdate=None,
-        enddate=None,flags=None,precedence=None,description=None,code=None)]
-        elif len(res) > 0:return [dict(calcode_id=r[0],calusage_id=r[1],tax_type=r[2],storeent_id=r[3],groupby=r[4],
+        enddate=None,flags=None,precedence=None,description=None,code=None,storename=None,usage=None,updated=None)]
+        elif len(res) > 0:return [dict(calcode_id=r[0],calusage_id=r[1],tax_type=r[2],type=r[2],storeent_id=r[3],groupby=r[4],
         txcdclass_id=r[5],published=r[6],sequence=r[7],combination=r[8],lastupdate=textualize_datetime(r[9]),calmethod_id=r[10],
         calculation=Calcode.methodname(r[10]),application=Calcode.methodname(r[11]),qualification=Calcode.methodname(r[12]),
         calmethod_id_app=r[11],calmethod_id_qfy=r[12],field1=r[13],description2=r[14],displaylevel=r[15],
-        startdate=r[16],enddate=r[17],flags=r[18],precedence=r[19],description=r[20],code=r[21])for r in res]
+        startdate=r[16],enddate=r[17],flags=r[18],precedence=r[19],description=r[20],code=r[21],usage=Calcode.usagename(r[1]),
+        updated=humanize_date(r[9]),storename=Calcode.storename(r[3]),attached=r[3]!=None)for r in res]
     
     def save(self):
         try:
@@ -470,6 +493,49 @@ class InstallCalmethods:
 
 # InstallCalmethods('calmethods.csv',1).save()
 
+class discountcalrangemethods:
+    def __init__(self,name,storeent_id,calusage_id):
+        self.name=name
+        self.storeent_id=storeent_id
+        self.calusage_id=calusage_id
+    
+    def get(self):
+        cursor.execute("""select calmethod_id from calmethod where storeent_id=%s and calusage_id=%s 
+        and name=%s""",(self.storeent_id,self.calusage_id,self.name,));return cursor.fetchone()[0]
+
+class discountcalscalemethods:
+    def __init__(self,name,storeent_id,calusage_id):
+        self.name=name
+        self.storeent_id=storeent_id
+        self.calusage_id=calusage_id
+    
+    def get(self):
+        cursor.execute("""select calmethod_id from calmethod where storeent_id=%s and calusage_id=%s 
+        and name=%s""",(self.storeent_id,self.calusage_id,self.name,));return cursor.fetchone()[0]
+
+class discountcalcodemethods:
+    def __init__(self,name,storeent_id,calusage_id):
+        self.name=name
+        self.storeent_id=storeent_id
+        self.calusage_id=calusage_id
+    
+    def get(self):
+        cursor.execute("""select calmethod_id from calmethod where name=%s and storeent_id=%s 
+        and calusage_id=%s""",(self.name,self.storeent_id,self.calusage_id,))
+        return cursor.fetchone()[0]
+
+class discountcalrulemethods:
+    def __init__(self,name,storeent_id,calusage_id):
+        self.name=name
+        self.storeent_id=storeent_id
+        self.calusage_id=calusage_id
+    
+    def get(self):
+        cursor.execute("""select calmethod_id from calmethod where storeent_id=%s and calusage_id=%s 
+        and name=%s""",(self.storeent_id,self.calusage_id,self.name,));return cursor.fetchone()[0]
+
+# print( discountcalcodemethods('Calculation Code Calculate',1,1).get() )
+
 # def packagenames():
 #     bdir=os.path.abspath(os.path.dirname(__file__))
 #     cdir=os.path.join(bdir,"calculationframework/")
@@ -481,7 +547,3 @@ class InstallCalmethods:
 # def getpackage(packagename):
 #     packages=packagenames()
 #     return {key:value for key,value in packages.items() if key==packagename}[packagename]
-
-# modstring='calculationframework.initializecalculationusage.initializecalculationusage'
-# mod=importlib.import_module(modstring)
-# print(mod)

@@ -1,64 +1,28 @@
-# from .db_con import createcon
-from db_con import createcon
+from .db_con import createcon
+# from db_con import createcon
 import psycopg2,json,math,os
 con,cursor=createcon("retail","jmso","localhost","5432")
 import  importlib
 import pandas as pd
 import numpy as np
-# from ops import textualize_datetime,CurrencyHelper
+from ops import textualize_datetime,humanize_date,CurrencyHelper
+
+# z=list(range(100))
+# print( [z[i:i+10] for i in range(0,len(z),10)] )
 
 class EntryException(Exception):
     def __init__(self,message):
         self.message=message
 
-class Trading:
-    def __init__(self,trdtype_id,account_id=None,state=0,markfordelete=0,referencecount=0,
-    starttime=None,endtime=None,creditallowed=0,reftrading_id=None):
-        self.trdtype_id=trdtype_id
-        self.account_id=account_id
-        self.state=state
-        self.markfordelete=markfordelete
-        self.referencecount=referencecount
-        self.starttime=starttime
-        self.endtime=endtime
-        self.creditallowed=creditallowed
-        self.reftrading_id=reftrading_id
-    
-    def save(self):
-        try:
-            cursor.execute("""insert into trading(trdtype_id,account_id,state,markfordelete,
-            referencecount,starttime,endtime,creditallowed,reftrading_id)values(%s,%s,%s,%s,%s,
-            %s,%s,%s,%s)returning trading_id""",(self.trdtype_id,self.account_id,self.state,
-            self.markfordelete,self.referencecount,self.starttime,self.endtime,self.creditallowed,
-            self.reftrading_id,));con.commit();return cursor.fetchone()[0]
-        except(Exception,psycopg2.DatabaseError) as e:
-            if con is not None:con.rollback()
-            raise EntryException(str(e).strip().split('\n')[0])
-
-class Trddesc:
-    def __init__(self,trading_id,language_id,description=None,longdescription=None,
-    timecreated=None,timeupdated=None):
-        self.trading_id=trading_id
-        self.language_id=language_id
-        self.description=description
-        self.longdescription=longdescription
-        self.timecreated=timecreated
-        self.timeupdated=timeupdated
-
-    def save(self):
-        try:
-            cursor.execute("""insert into trddesc(trading_id,language_id,description,longdescription,
-            timecreated,timeupdated)values(%s,%s,%s,%s,%s,%s)on conflict(trading_id,language_id)
-            do update set trading_id=%s,language_id=%s,description=%s,longdescription=%s,timecreated=%s,
-            timeupdated=%s returning trading_id""",(self.trading_id,self.language_id,self.description,
-            self.longdescription,self.timecreated,self.timeupdated,));con.commit();return cursor.fetchone()[0]
-        except(Exception,psycopg2.DatabaseError) as e:
-            if con is not None:con.rollback()
-            raise EntryException(str(e).strip().split('\n')[0])
-
 class Trdtype:
     def __init__(self,trdtype_id,):
         self.trdtype_id=trdtype_id
+
+    @staticmethod
+    def read():
+        cursor.execute("select trdtype_id,description from trdtypedsc");res=cursor.fetchall()
+        if len(res) > 0:return [dict(value=x[0],text=x[1]) for x in res]
+        elif len(res) <= 0:return [dict(value=None,text=None)]
     
     def save(self):
         try:
@@ -81,6 +45,238 @@ class Trdtypedsc:
             language_id=%s,description=%s returning trdtype_id""",(self.trdtype_id,self.language_id,
             self.description,self.trdtype_id,self.language_id,self.description,));con.commit()
             return cursor.fetchone()[0]
+        except(Exception,psycopg2.DatabaseError) as e:
+            if con is not None:con.rollback()
+            raise EntryException(str(e).strip().split('\n')[0])
+
+tradingstate=[dict(text="Inactive",value=0),dict(text="Active",value=1)]
+creditallowed=[dict(text="No",value=0),dict(text="Yes",value=1)]
+contractorigin=[dict(text="Manual",value=0),dict(text="Imported",value=1),dict(text="RFQ",value=2),
+    dict(text="Exchange",value=3),dict(text="Auction",value=4),dict(text="2-Party Negotiation",value=5),
+    dict(text="Deployment",value=6)]
+contractstate=[dict(text="Draft",value=0),dict(text="Pending Approval",value=1),dict(text="Approved",value=2),
+    dict(text="Active",value=3),dict(text="Rejected",value=4),dict(text="Canceled",value=5),
+    dict(text="Closed",value=6),dict(text="Suspended",value=7)]
+contractusage=[dict(text="Default",value=0),dict(text="Organizational Buyer",value=1),dict(text="Reseller",value=2),
+    dict(text="Special Bid",value=3),dict(text="Referral",value=4),dict(text="Supplier",value=5)]
+trdtypes=Trdtype.read()
+
+class Participnt:
+    def __init__(self,member_id,partrole_id,trading_id=None,termcond_id=None,information=None,
+    timecreated=None,timeupdated=None):
+        self.member_id=member_id
+        self.partrole_id=partrole_id
+        self.trading_id=trading_id
+        self.termcond_id=termcond_id
+        self.information=information
+        self.timecreated=timecreated
+        self.timeupdated=timeupdated
+
+    @staticmethod
+    def read(tid):
+        cursor.execute("""select participnt.member_id,orgentity.orgentityname,participnt.partrole_id,
+        partroleds.description,participnt.trading_id,participnt.termcond_id,participnt.information,
+        participnt.timecreated,participnt.timeupdated from participnt inner join orgentity on 
+        participnt.member_id=orgentity.orgentity_id inner join partroleds on participnt.partrole_id=
+        partroleds.partrole_id where participnt.trading_id=%s""",(tid,));res=cursor.fetchone()
+        if res != None:return dict(member_id=res[0],participant=res[1],partrole_id=res[2],
+        role=res[3],trading_id=res[4],termcond_id=res[5],information=res[6],timecreated=textualize_datetime(res[7]),
+        created_on=humanize_date(res[7]),timeupdated=textualize_datetime(res[8]),updated_on=humanize_date(res[8]))
+    
+    def save(self):
+        try:
+            cursor.execute("""insert into participnt(member_id,partrole_id,trading_id,termcond_id,information,timecreated,
+            timeupdated)values(%s,%s,%s,%s,%s,%s,%s)on conflict(member_id,partrole_id,trading_id,termcond_id)do update 
+            set member_id=%s,partrole_id=%s,trading_id=%s,termcond_id=%s,information=%s,timecreated=%s,timeupdated=%s 
+            returning participnt_id""",(self.member_id,self.partrole_id,self.trading_id,self.termcond_id,self.information,self.timecreated,
+            self.timeupdated,self.member_id,self.partrole_id,self.trading_id,self.termcond_id,self.information,self.timecreated,
+            self.timeupdated,));con.commit();return cursor.fetchone()[0]
+        except(Exception,psycopg2.DatabaseError) as e:
+            if con is not None:con.rollback()
+            raise EntryException(str(e).strip().split('\n')[0])
+# print(Participnt.read(1))
+
+class Trading:
+    def __init__(self,trdtype_id,account_id=None,state=0,markfordelete=0,referencecount=0,
+    starttime=None,endtime=None,creditallowed=0,reftrading_id=None):
+        self.trdtype_id=trdtype_id
+        self.account_id=account_id
+        self.state=state
+        self.markfordelete=markfordelete
+        self.referencecount=referencecount
+        self.starttime=starttime
+        self.endtime=endtime
+        self.creditallowed=creditallowed
+        self.reftrading_id=reftrading_id
+    
+    @staticmethod
+    def particpantname(mid):
+        cursor.execute("select orgentityname from orgentity where orgentity_id=%s",(mid,))
+        return cursor.fetchone()[0]
+    
+    @staticmethod
+    def readaccounts(language_id):
+        cursor.execute("""select trading.trading_id,trading.trdtype_id,trading.state,trading.starttime,
+        trading.endtime,trading.creditallowed,trddesc.longdescription,trddesc.timecreated,trddesc.timeupdated,
+        account.name,account.member_id,account.store_id,account.state,account.currency,account.comments,
+        account.timecreated,account.timeupdated,account.timeapproved,account.timeactivated,
+        orgentity.orgentityname,participnt.member_id from trading inner join 
+        trddesc on trading.trading_id=trddesc.trading_id inner join account on trading.trading_id=account.account_id 
+        inner join orgentity on account.member_id=orgentity.orgentity_id inner join participnt on trading.
+        trading_id=participnt.trading_id where trddesc.language_id=%s and trading.trdtype_id=0""",(language_id,))
+        res=cursor.fetchall()
+        if len(res) <= 0:return [dict()]
+        elif len(res) > 0:return [dict(trading_id=r[0],trdtype_id=r[1],tradingstate=r[2],
+        tradingstarttime=textualize_datetime(r[3]),starting=humanize_date(r[3]),ending=humanize_date(r[4]),
+        tradingendtime=textualize_datetime(r[4]),creditallowed=r[5],longdescription=r[6],
+        tradingtimecreated=textualize_datetime(r[7]),created=humanize_date(r[7]),updated=humanize_date(r[8]),
+        tradingtimeupdated=textualize_datetime(r[8]),
+        type=[x['text'] for x in trdtypes if x['value']==r[1]][0],
+        state=[x['text'] for x in tradingstate if x['value']==r[2]][0],
+        credit=[x['text'] for x in creditallowed if x['value']==r[5]][0],
+        stage=[x['text'] for x in contractstate if x['value']==r[12]][0],
+        contract_title=r[9],contractmember_id=r[10],store_id=r[11],contractstate=r[12],
+        currency=r[13],contractcomments=r[14],
+        contracttimecreated=textualize_datetime(r[15]),contracttimeupdated=textualize_datetime(r[16]),
+        contracttimeapproved=textualize_datetime(r[17]),contracttimeactivated=textualize_datetime(r[18]),
+        created_by=r[19],participant=Trading.particpantname(r[20]))for r in res]
+
+    @staticmethod
+    def readdefaultcontracts(language_id):
+        cursor.execute("""select trading.trading_id,trading.trdtype_id,trading.state,trading.starttime,
+        trading.endtime,trading.creditallowed,trddesc.longdescription,trddesc.timecreated,trddesc.timeupdated,
+        contract.name,contract.member_id,contract.origin,contract.state,contract.usage,contract.comments,
+        contract.timecreated,contract.timeapproved,contract.timeactivated,contract.timedeployed,
+        orgentity.orgentityname,participnt.member_id from trading inner join 
+        trddesc on trading.trading_id=trddesc.trading_id inner join contract on trading.trading_id=contract.contract_id
+        inner join orgentity on contract.member_id=orgentity.orgentity_id inner join participnt on trading.
+        trading_id=participnt.trading_id where trddesc.language_id=%s and trading.trdtype_id=1 and contract.usage<=0""",
+        (language_id,));res=cursor.fetchall()
+        if len(res) <= 0: return [dict()]
+        elif len(res) > 0:return [dict(trading_id=r[0],trdtype_id=r[1],tradingstate=r[2],
+        tradingstarttime=textualize_datetime(r[3]),starting=humanize_date(r[3]),ending=humanize_date(r[4]),
+        tradingendtime=textualize_datetime(r[4]),creditallowed=r[5],longdescription=r[6],
+        tradingtimecreated=textualize_datetime(r[7]),created=humanize_date(r[7]),updated=humanize_date(r[8]),
+        tradingtimeupdated=textualize_datetime(r[8]),
+        type=[x['text'] for x in trdtypes if x['value']==r[1]][0],
+        state=[x['text'] for x in tradingstate if x['value']==r[2]][0],
+        origin=[x['text'] for x in contractorigin if x['value']==r[11]][0],
+        credit=[x['text'] for x in creditallowed if x['value']==r[5]][0],
+        stage=[x['text'] for x in contractstate if x['value']==r[12]][0],
+        contract_title=r[9],contractmember_id=r[10],contractorigin=r[11],contractstate=r[12],contractusage=r[13],
+        contractcomments=r[14],contracttimecreated=textualize_datetime(r[15]),_rowVariant='success',
+        contracttimeapproved=textualize_datetime(r[16]),approved=humanize_date(r[16]),
+        contracttimeactivated=textualize_datetime(r[17]),activated=humanize_date(r[17]),deployed=humanize_date(r[18]),
+        contracttimedeployed=textualize_datetime(r[18]),created_by=r[19],participant=Trading.particpantname(r[20])) for r in res]
+
+    @staticmethod
+    def readcontracts(language_id):
+        cursor.execute("""select trading.trading_id,trading.trdtype_id,trading.state,trading.starttime,
+        trading.endtime,trading.creditallowed,trddesc.longdescription,trddesc.timecreated,trddesc.timeupdated,
+        contract.name,contract.member_id,contract.origin,contract.state,contract.usage,contract.comments,
+        contract.timecreated,contract.timeapproved,contract.timeactivated,contract.timedeployed,
+        orgentity.orgentityname,participnt.member_id from trading inner join 
+        trddesc on trading.trading_id=trddesc.trading_id inner join contract on trading.trading_id=contract.contract_id
+        inner join orgentity on contract.member_id=orgentity.orgentity_id inner join participnt on trading.
+        trading_id=participnt.trading_id where trddesc.language_id=%s and trading.trdtype_id=1 and contract.usage>0""",
+        (language_id,));res=cursor.fetchall()
+        if len(res) <= 0: return [dict()]
+        elif len(res) > 0:return [dict(trading_id=r[0],trdtype_id=r[1],tradingstate=r[2],
+        tradingstarttime=textualize_datetime(r[3]),starting=humanize_date(r[3]),ending=humanize_date(r[4]),
+        tradingendtime=textualize_datetime(r[4]),creditallowed=r[5],longdescription=r[6],
+        tradingtimecreated=textualize_datetime(r[7]),created=humanize_date(r[7]),updated=humanize_date(r[8]),
+        tradingtimeupdated=textualize_datetime(r[8]),
+        type=[x['text'] for x in trdtypes if x['value']==r[1]][0],
+        state=[x['text'] for x in tradingstate if x['value']==r[2]][0],
+        origin=[x['text'] for x in contractorigin if x['value']==r[11]][0],
+        credit=[x['text'] for x in creditallowed if x['value']==r[5]][0],
+        stage=[x['text'] for x in contractstate if x['value']==r[12]][0],
+        contract_title=r[9],contractmember_id=r[10],contractorigin=r[11],contractstate=r[12],contractusage=r[13],
+        contractcomments=r[14],contracttimecreated=textualize_datetime(r[15]),
+        contracttimeapproved=textualize_datetime(r[16]),approved=humanize_date(r[16]),
+        contracttimeactivated=textualize_datetime(r[17]),activated=humanize_date(r[17]),deployed=humanize_date(r[18]),
+        contracttimedeployed=textualize_datetime(r[18]),created_by=r[19],participant=Trading.particpantname(r[20])) for r in res]
+    
+    @staticmethod
+    def readcontract(tid,lid):
+        cursor.execute("""select 
+        trading.trading_id,trading.trdtype_id,trading.state,trading.starttime,trading.endtime,trading.creditallowed,
+        trddesc.longdescription,trddesc.timecreated,trddesc.timeupdated,
+        contract.name,contract.member_id,orgentity.orgentityname,contract.origin,contract.state,contract.usage,
+        contract.timeapproved,contract.timeactivated,contract.timedeployed,
+        participnt.member_id,participnt.partrole_id,partroleds.description,storecntr.store_id
+        from trading inner join trddesc on trading.trading_id=trddesc.trading_id 
+        inner join contract on trading.trading_id=contract.contract_id 
+        inner join storecntr on trading.trading_id=storecntr.contract_id
+        inner join orgentity on contract.member_id=orgentity.orgentity_id 
+        inner join participnt on trading.trading_id=participnt.trading_id
+        inner join partroleds on participnt.partrole_id=partroleds.partrole_id
+        where trading.trading_id=%s and trddesc.language_id=%s""",(tid,lid,))
+        res=cursor.fetchone()
+        if len(res) <= 0:return dict()
+        elif len(res) > 0:return dict(trading_id=res[0],trdtype_id=res[1],
+        trdtype_str=[x['text'] for x in trdtypes if x['value']==res[1]][0],
+        trading_state=res[2],tradingstate=[x['text'] for x in tradingstate if x['value']==res[2]][0],
+        trading_starttime=textualize_datetime(res[3]),trading_starts=humanize_date(res[3]),
+        trading_endtime=textualize_datetime(res[4]),trading_ends=humanize_date(res[4]),
+        trading_creditallowed=res[5],creditallowed=[x['text'] for x in creditallowed if x['value']==res[5]][0],
+        description_comment=res[6],trading_timecreated=textualize_datetime(res[7]),created_on=humanize_date(res[7]),
+        trading_timeupdated=textualize_datetime(res[8]),updated_on=humanize_date(res[8]),contract_name=res[9],
+        contract_member_id=res[10],owner=res[11],contract_origin=res[12],origin=[x['text'] for x in contractorigin if x['value']==res[12]][0],
+        contract_state=res[13],stage=[x['text'] for x in contractstate if x['value']==res[13]][0],contract_usage=res[14],
+        usage=[x['text'] for x in contractusage if x['value']==res[14]][0],contract_timeapproved=textualize_datetime(res[15]),
+        approved_on=humanize_date(res[15]),contract_timeactivated=textualize_datetime(res[16]),activated_on=humanize_date(res[16]),
+        contract_timedeployed=textualize_datetime(res[17]),deployed_on=humanize_date(res[17]),participant_id=res[18],
+        participant=Trading.particpantname(res[18]),partrole_id=res[19],participant_role=res[20],store_id=res[21])
+
+    @staticmethod
+    def read(tid,lid):
+        cursor.execute("""select trading.trading_id,trading.trdtype_id,trading.account_id,trading.state,
+        trading.markfordelete,trading.referencecount,trading.starttime,trading.endtime,trading.creditallowed,
+        trading.reftrading_id,trddesc.description as code,trddesc.longdescription as description,trddesc.timecreated,
+        trddesc.timeupdated from trading inner join trddesc on trading.trading_id=trddesc.trading_id where trading.
+        trading_id=%s and trddesc.language_id=%s""",(tid,lid,));res=cursor.fetchone()
+        if res==None:return dict(trading_id=None,trdtype_id=None,account_id=None,state=None,markfordelete=None,
+        referencecount=None,starttime=None,endtime=None,creditallowed=None,reftrading_id=None,code=None,description=None,
+        timecreated=None,timeupdated=None,contract=None,participant=None)
+        elif res != None:return dict(trading_id=res[0],trdtype_id=res[1],account_id=res[2],state=res[3],
+        trdtype_str=[x['text'] for x in trdtypes if x['value']==res[1]][0],
+        state_str=[x['text'] for x in tradingstate if x['value']==res[3]][0],
+        markfordelete=res[4],referencecount=res[5],starttime=textualize_datetime(res[6]),starttime_str=humanize_date(res[6]),
+        endtime=textualize_datetime(res[7]),endtime_str=humanize_date(res[7]),creditallowed=res[8],
+        creditallowed_str=[x['text'] for x in creditallowed if x['value']==res[8]][0],
+        reftrading_id=res[9],code=res[10],description=res[11],timecreated=textualize_datetime(res[12]),
+        timeupdated=textualize_datetime(res[13]),contract=Contract.read(res[0]),participant=Participnt.read(res[0]))
+    
+    def save(self):
+        try:
+            cursor.execute("""insert into trading(trdtype_id,account_id,state,markfordelete,
+            referencecount,starttime,endtime,creditallowed,reftrading_id)values(%s,%s,%s,%s,%s,
+            %s,%s,%s,%s)returning trading_id""",(self.trdtype_id,self.account_id,self.state,
+            self.markfordelete,self.referencecount,self.starttime,self.endtime,self.creditallowed,
+            self.reftrading_id,));con.commit();return cursor.fetchone()[0]
+        except(Exception,psycopg2.DatabaseError) as e:
+            if con is not None:con.rollback()
+            raise EntryException(str(e).strip().split('\n')[0])
+# print(Trading.readcontract(8,1))
+class Trddesc:
+    def __init__(self,trading_id,language_id,description=None,longdescription=None,
+    timecreated=None,timeupdated=None):
+        self.trading_id=trading_id
+        self.language_id=language_id
+        self.description=description
+        self.longdescription=longdescription
+        self.timecreated=timecreated
+        self.timeupdated=timeupdated
+
+    def save(self):
+        try:
+            cursor.execute("""insert into trddesc(trading_id,language_id,description,longdescription,
+            timecreated,timeupdated)values(%s,%s,%s,%s,%s,%s)on conflict(trading_id,language_id)
+            do update set trading_id=%s,language_id=%s,description=%s,longdescription=%s,timecreated=%s,
+            timeupdated=%s returning trading_id""",(self.trading_id,self.language_id,self.description,
+            self.longdescription,self.timecreated,self.timeupdated,self.trading_id,self.language_id,self.description,
+            self.longdescription,self.timecreated,self.timeupdated,));con.commit();return cursor.fetchone()[0]
         except(Exception,psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
@@ -125,8 +321,9 @@ class Account:
             raise EntryException(str(e).strip().split('\n')[0])
 
 class Contract:
-    def __init__(self,contract_id,majorversion,minorversion,name,member_id,origin,state,usage,
-    markfordelete,comments,timecreated,timeupdated,timeapproved,timeactivated,timedeployed,family_id):
+    def __init__(self,contract_id,name,member_id,majorversion=1,minorversion=0,origin=0,
+    state=0,usage=0,markfordelete=0,comments=None,timecreated=None,timeupdated=None,
+    timeapproved=None,timeactivated=None,timedeployed=None,family_id=None):
         self.contract_id=contract_id
         self.majorversion=majorversion
         self.minorversion=minorversion
@@ -143,6 +340,13 @@ class Contract:
         self.timeactivated=timeactivated
         self.timedeployed=timedeployed
         self.family_id=family_id
+
+    @staticmethod
+    def code():
+        cursor.execute("select trading_id from trading order by trading_id desc limit 1")
+        res=cursor.fetchone()
+        if res==None:return 'PR/CO/{0}'.format(1)
+        elif res !=None:return 'PR/CO/{0}'.format(res[0]+1)
     
     def save(self):
         try:
@@ -161,6 +365,26 @@ class Contract:
         except(Exception,psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
+
+    @staticmethod
+    def read(contract_id):
+        cursor.execute("""select contract.contract_id,contract.majorversion,contract.minorversion,contract.name,
+        contract.member_id,contract.origin,contract.state,contract.usage,contract.markfordelete,contract.comments,
+        contract.timecreated,contract.timeupdated,contract.timeapproved,contract.timeactivated,contract.timedeployed,
+        contract.family_id,orgentity.orgentityname from contract inner join orgentity on contract.member_id=orgentity.
+        orgentity_id where contract_id=%s""",(contract_id,));res=cursor.fetchone()
+        if res==None:return dict(contract_id=None,majorversion=None,minorversion=None,name=None,member_id=None,
+        origin=None,state=None,usage=None,markfordelete=None,comments=None,timecreated=None,timeupdated=None,
+        timeapproved=None,timeactivated=None,timedeployed=None,family_id=None,owner=None)
+        elif res != None:return dict(contract_id=res[0],majorversion=res[1],minorversion=res[2],name=res[3],member_id=res[4],
+        origin=res[5],state=res[6],usage=res[7],markfordelete=res[8],comments=res[9],created_on=humanize_date(res[10]),
+        origin_str=[x['text'] for x in contractorigin if x['value']==res[5]][0],
+        timecreated=textualize_datetime(res[10]),updated_on=humanize_date(res[11]),timeupdated=textualize_datetime(res[11]),
+        state_str=[x['text'] for x in contractstate if x['value']==res[6]][0],approved_on=humanize_date(res[12]),
+        timeapproved=textualize_datetime(res[12]),activated_on=humanize_date(res[13]),timeactivated=textualize_datetime(res[13]),
+        deployed_on=humanize_date(res[14]),timedeployed=textualize_datetime(res[14]),family_id=res[15],owner=res[16])
+
+# print(Contract.read(1))
 
 class Cntrname:
     def __init__(self,name,member_id,origin):
@@ -243,52 +467,6 @@ class Trdattach:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
 
-class Participnt:
-    def __init__(self,member_id,partrole_id,trading_id=None,termcond_id=None,information=None,
-    timecreated=None,timeupdated=None):
-        self.member_id=member_id
-        self.partrole_id=partrole_id
-        self.trading_id=trading_id
-        self.termcond_id=termcond_id
-        self.information=information
-        self.timecreated=timecreated
-        self.timeupdated=timeupdated
-    
-    def save(self):
-        try:
-            cursor.execute("""insert into participnt(member_id,partrole_id,trading_id,termcond_id,information,timecreated,
-            timeupdated)on conflict(member_id,partrole_id,trading_id,termcond_id)do update set member_id=%s,partrole_id=%s,
-            trading_id=%s,termcond_id=%s,information=%s,timecreated=%s,timeupdated=%s returning participnt_id""",
-            (self.member_id,self.partrole_id,self.trading_id,self.termcond_id,self.information,self.timecreated,
-            self.timeupdated,self.member_id,self.partrole_id,self.trading_id,self.termcond_id,self.information,self.timecreated,
-            self.timeupdated,));con.commit();return cursor.fetchone()[0]
-        except(Exception,psycopg2.DatabaseError) as e:
-            if con is not None:con.rollback()
-            raise EntryException(str(e).strip().split('\n')[0])
-
-class Buysupmap:
-    def __init__(self,suporg_id,buyorgunit_id,catalog_id,procprotcl_id=None,contract_id=None,mbrgrp_id=None,field1=None,field2=None,field3=None):
-        self.suporg_id=suporg_id
-        self.buyorgunit_id=buyorgunit_id
-        self.catalog_id=catalog_id
-        self.procprotcl_id=procprotcl_id
-        self.contract_id=contract_id
-        self.mbrgrp_id=mbrgrp_id
-    
-    def save(self):
-        try:
-            cursor.execute("""insert into buysupmap(suporg_id,buyorgunit_id,catalog_id,procprotcl_id,
-            contract_id,mbrgrp_id,field1,field2,field3)values(%s,%s,%s,%s,%s,%s,%s,%s,%s)on conflict(suporg_id,
-            buyorgunit_id)do update set suporg_id=%s,buyorgunit_id=%s,catalog_id=%s,procprotcl_id=%s,
-            contract_id=%s,mbrgrp_id=%s,field1=%s,field2=%s,field3=%s returning suporg_id""",(self.suporg_id,
-            self.buyorgunit_id,self.catalog_id,self.procprotcl_id,self.contract_id,self.mbrgrp_id,
-            self.field1,self.field2,self.field3,self.suporg_id,
-            self.buyorgunit_id,self.catalog_id,self.procprotcl_id,self.contract_id,self.mbrgrp_id,
-            self.field1,self.field2,self.field3,));con.commit();return cursor.fetchone()[0]
-        except(Exception,psycopg2.DatabaseError) as e:
-            if con is not None:con.rollback()
-            raise EntryException(str(e).strip().split('\n')[0])
-
 class Termcond:
     def __init__(self,tcsubtype_id,trading_id,mandatory=0,changeable=0,timecreated=None,timeupdated=None,stringfield1=None,
     stringfield2=None,stringfield3=None,integerfield1=None,integerfield2=None,integerfield3=None,bigintfield1=None,
@@ -325,7 +503,7 @@ class Termcond:
             cursor.execute("""insert into termcond(tcsubtype_id,trading_id,mandatory,changeable,timecreated,timeupdated,
             stringfield1,stringfield2,stringfield3,integerfield1,integerfield2,integerfield3,bigintfield1,bigintfield2,
             bigintfield3,floatfield1,floatfield2,floatfield3,timefield1,timefield2,timefield3,decimalfield1,decimalfield2,
-            decimalfield3,sequence)values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+            decimalfield3,sequence)values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
             on conflict(trading_id,tcsubtype_id)do update set tcsubtype_id=%s,trading_id=%s,mandatory=%s,changeable=%s,
             timecreated=%s,timeupdated=%s,stringfield1=%s,stringfield2=%s,stringfield3=%s,integerfield1=%s,integerfield2=%s,
             integerfield3=%s,bigintfield1=%s,bigintfield2=%s,bigintfield3=%s,floatfield1=%s,floatfield2=%s,floatfield3=%s,
@@ -574,6 +752,22 @@ class Fileupload:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
 
+class Storedef:
+    def __init__(self,store_id,contract_id=None,shipmode_id=None):
+        self.store_id=store_id
+        self.contract_id=contract_id
+        self.shipmode_id=shipmode_id
+    
+    def save(self):
+        try:
+            cursor.execute("""insert into storedef(store_id,contract_id,shipmode_id)values(%s,%s,%s)
+            on conflict(store_id)do update set store_id=%s,contract_id=%s,shipmode_id=%s returning contract_id""",
+            (self.store_id,self.contract_id,self.shipmode_id,self.store_id,self.contract_id,self.shipmode_id,))
+            con.commit();return cursor.fetchone()[0]
+        except(Exception,psycopg2.DatabaseError) as e:
+            if con is not None:con.rollback()
+            raise EntryException(str(e).strip().split('\n')[0])
+
 class Storecntr:
     def __init__(self,contract_id,store_id):
         self.contract_id=contract_id
@@ -620,7 +814,7 @@ class Catcntr:
             raise EntryException(str(e).strip().split('\n')[0])
 
 class Tradeposcn:
-    def __init__(self,member_id,productset_id,name,description=None,precedence=0,markfordelete=0,ttype='S',flags=0):
+    def __init__(self,member_id,name,productset_id=None,description=None,precedence=0,markfordelete=0,ttype='S',flags=0):
         self.member_id=member_id
         self.productset_id=productset_id
         self.name=name
@@ -629,6 +823,17 @@ class Tradeposcn:
         self.markfordelete=markfordelete
         self.type=ttype
         self.flags=flags
+    
+    @staticmethod
+    def read(member_id,trading_id):
+        cursor.execute("""with tradepositions as(select tradeposcn_id from tdpscncntr where contract_id=%s)
+        select tradepositions.tradeposcn_id,tradeposcn.member_id,tradeposcn.productset_id,tradeposcn.description,
+        tradeposcn.name,tradeposcn.precedence,tradeposcn.markfordelete,tradeposcn.type,tradeposcn.flags from
+        tradepositions inner join tradeposcn on tradepositions.tradeposcn_id=tradeposcn.tradeposcn_id where tradeposcn.
+        member_id=%s""",(trading_id,member_id,));res=cursor.fetchall()
+        if len(res) <= 0:return [dict()]
+        elif len(res) > 0:return [dict(tradeposcn_id=r[0],member_id=r[1],productset_id=r[2],description=r[3],
+        name=r[4],precedence=r[5],markfordelete=r[6],type=r[7],flags=r[8])for r in res]
 
     def save(self):
         try:
@@ -641,6 +846,8 @@ class Tradeposcn:
         except(Exception,psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
+
+# print( Tradeposcn.read(1,20) )
 
 class Productset:
     def __init__(self,member_id,name=None,xmldefinition=None,publishtime=None,markfordelete=0,static=None):
@@ -655,7 +862,7 @@ class Productset:
         try:
             cursor.execute("""insert into productset(name,member_id,xmldefinition,publishtime,markfordelete,
             static)values(%s,%s,%s,%s,%s,%s)on conflict(name,member_id)do update set name=%s,member_id=%s,xmldefinition=%s,
-            publishtim=%s,markfordelete=%s,static=%s returning productset_id""",
+            publishtime=%s,markfordelete=%s,static=%s returning productset_id""",
             (self.name,self.member_id,self.xmldefinition,self.publishtime,self.markfordelete,self.static,
             self.name,self.member_id,self.xmldefinition,self.publishtime,self.markfordelete,self.static,))
             con.commit();return cursor.fetchone()[0]
@@ -663,8 +870,39 @@ class Productset:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
 
+class Prsetcerel:
+    def __init__(self,productset_id,catentry_id):
+        self.productset_id=productset_id
+        self.catentry_id=catentry_id
+    
+    def save(self):
+        try:
+            cursor.execute("""insert into prsetcerel(productset_id,catentry_id)values(%s,%s)on conflict
+            (productset_id,catentry_id)do update set productset_id=%s,catentry_id=%s returning productset_id""",
+            (self.productset_id,self.catentry_id,self.productset_id,self.catentry_id,));con.commit()
+            return cursor.fetchone()[0]
+        except(Exception,psycopg2.DatabaseError) as e:
+            if con is not None:con.rollback()
+            raise EntryException(str(e).strip().split('\n')[0])
+
+class Prodsetdsc:
+    def __init__(self,productset_id,language_id,description=None):
+        self.productset_id=productset_id
+        self.language_id=language_id
+        self.description=description
+    
+    def save(self):
+        try:
+            cursor.execute("""insert into prodsetdsc(productset_id,language_id,description)values(%s,%s,%s)
+            on conflict(productset_id,language_id)do update set productset_id=%s,language_id=%s,description=%s
+            returning productset_id""",(self.productset_id,self.language_id,self.description,self.productset_id,
+            self.language_id,self.description,));con.commit();return cursor.fetchone()[0]
+        except(Exception,psycopg2.DatabaseError) as e:
+            if con is not None:con.rollback()
+            raise EntryException(str(e).strip().split('\n')[0])
+
 class Psetadjmnt:
-    def __init__(self,termcond_id,productset_id,ttype,adjustment,precedence):
+    def __init__(self,termcond_id,productset_id,ttype,adjustment=0,precedence=0):
         self.termcond_id=termcond_id
         self.productset_id=productset_id
         self.type=ttype
@@ -674,10 +912,11 @@ class Psetadjmnt:
     def save(self):
         try:
             cursor.execute("""insert into psetadjmnt(termcond_id,productset_id,type,adjustment,precedence)
-            on conflict(termcond_id,productset_id)do update set termcond_id=%s,productset_id=%s,type=%s,
-            adjustment=%s,precedence=%s returning termcond_id""",(self.termcond_id,self.productset_id,
-            self.type,self.adjustment,self.precedence,self.termcond_id,self.productset_id,self.type,
-            self.adjustment,self.precedence,));con.commit();return cursor.fetchone()[0]
+            values(%s,%s,%s,%s,%s)on conflict(termcond_id,productset_id)do update set termcond_id=%s,
+            productset_id=%s,type=%s,adjustment=%s,precedence=%s returning termcond_id""",
+            (self.termcond_id,self.productset_id,self.type,self.adjustment,self.precedence,
+            self.termcond_id,self.productset_id,self.type,self.adjustment,self.precedence,))
+            con.commit();return cursor.fetchone()[0]
         except(Exception,psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
@@ -697,11 +936,10 @@ class InstallTradetypes:
         fileurl=os.path.join(os.path.join(os.path.split(os.path.split(basedir)[0])[0],"static/datafiles"),self.fname)
         if os.path.isfile(fileurl):
             df=pd.read_csv(fileurl)
-            print(df.head())
-
-i=InstallTradetypes('tradetypes.csv')
-# print(i.isfilled())
-i.save()
+            values=df.values[:,[0]]
+            descriptions=df.values[:,[0,2,1]]
+            [Trdtype(*v).save() for v in values]
+            [Trdtypedsc(*d).save() for d in descriptions]
 
 class InstallTctypes:
     def __init__(self,fname):
