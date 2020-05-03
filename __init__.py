@@ -51,80 +51,98 @@ from ops.trading.trading import InstallPartroles,InstallAttachusg,InstallTctypes
 @app.before_first_request
 def initializedefaults():
     ld=LanguageDefault('langdefaults.csv')
-    if ld.isfilled():pass
-    elif ld.isfilled()==False:ld.save()
+    isfilled=ld.isfilled()
+    if isfilled:pass
+    elif isfilled==False:ld.save()
 
     cd=CurrencyDefaults('allcurrencycodes.csv')
-    if cd.isfilled():pass
-    elif cd.isfilled()==False:cd.save()
+    isfilled=cd.isfilled()
+    if isfilled:pass
+    elif isfilled==False:cd.save()
 
     nd=NumberUsageDefaults('numberusage.csv')
-    if nd.isfilled():pass
-    elif nd.isfilled()==False:nd.save()
+    isfilled=nd.isfilled()
+    if isfilled:pass
+    elif isfilled==False:nd.save()
 
     dpp=DefaultPasswordPolicy('defaultpasswordpolicy.csv')
-    if dpp.isfilled():pass
-    elif dpp.isfilled()==False:dpp.save()
+    isfilled=dpp.isfilled()
+    if isfilled:pass
+    elif isfilled==False:dpp.save()
 
     dlp=DefaultLockoutPolicy('defaultlockoutpolicy.csv')
-    if dlp.isfilled():pass
-    elif dlp.isfilled()==False:dlp.save()
+    isfilled=dlp.isfilled()
+    if isfilled:pass
+    elif isfilled==False:dlp.save()
 
     dap=DefaultAccountPolicy()
-    if dap.isfilled():pass
-    elif dap.isfilled()==False:dap.savedescription()
+    isfilled=dap.isfilled()
+    if isfilled:pass
+    elif isfilled==False:dap.savedescription()
 
     rd=RoleDefaults('rolesdescriptions.csv')
-    if rd.isfilled():pass
-    elif rd.isfilled()==False:rd.save()
+    isfilled=rd.isfilled()
+    if isfilled:pass
+    elif isfilled==False:rd.save()
 
     cd=CountryDefaults('countrycodes.csv')
-    if cd.isfilled():pass
-    elif cd.isfilled()==False:cd.save()
+    isfilled=cd.isfilled()
+    if isfilled:pass
+    elif isfilled==False:cd.save()
 
     sd=StateprovDefaults('ngstatecodes.csv','NG')
-    if sd.isfilled():pass
-    elif sd.isfilled()==False:sd.save()
+    isfilled=sd.isfilled()
+    if isfilled:pass
+    elif isfilled==False:sd.save()
 
     c=CatenttypeDefaults()
-    if c.isfilled():pass
-    elif c.isfilled()==False:c.save()
+    isfilled=c.isfilled()
+    if isfilled:pass
+    elif isfilled==False:c.save()
 
     a=AttrtypeDefaults()
-    if a.isfilled():pass
-    elif a.isfilled()==False:a.enter()
+    isfilled=a.isfilled()
+    if isfilled:pass
+    elif isfilled==False:a.enter()
 
     c=CatreltypeDefaults()
-    if c.isfilled():pass
-    elif c.isfilled()==False:c.enter()
+    isfilled=c.isfilled()
+    if isfilled:pass
+    elif isfilled==False:c.enter()
 
     cd=CalusageDefaults()
-    if cd.isfilled()==True:pass
-    elif cd.isfilled()==False:cd.save()
+    isfilled=cd.isfilled()
+    if isfilled:pass
+    elif isfilled==False:cd.save()
 
     i=InstallTaxtype('taxtypes.csv')
-    if i.isfilled()==True:pass
-    elif i.isfilled()==False:i.save()
+    isfilled=i.isfilled()
+    if isfilled:pass
+    elif isfilled==False:i.save()
 
-    ## i=InstallAccountClasses('accountclasses.csv',1,1)
-    ## if i.isfilled():pass
-    ## elif i.isfilled()==False:i.save()
+    # ## i=InstallAccountClasses('accountclasses.csv',1,1)
+    # ## if i.isfilled():pass
+    # ## elif i.isfilled()==False:i.save()
 
     i=InstallPartroles('partroles.csv')
-    if i.isfilled()==True:pass
-    elif i.isfilled()==False:i.save()
+    isfilled=i.isfilled()
+    if isfilled:pass
+    elif isfilled==False:i.save()
 
     i=InstallAttachusg('attachusg.csv')
-    if i.isfilled()==True:pass
-    elif i.isfilled()==False:i.save()
+    isfilled=i.isfilled()
+    if isfilled:pass
+    elif isfilled==False:i.save()
 
     i=InstallTctypes('tctypes.csv')
-    if i.isfilled()==True:pass
-    elif i.isfilled()==False:i.save()
+    isfilled=i.isfilled()
+    if isfilled:pass
+    elif isfilled==False:i.save()
 
     i=InstallTradetypes('tradetypes.csv')
-    if i.isfilled()==True:pass
-    elif i.isfilled()==False:i.save()
+    isfilled=i.isfilled()
+    if isfilled:pass
+    elif isfilled==False:i.save()
 
 jwt=JWTManager(app)
 
@@ -285,12 +303,17 @@ api.add_resource(catalog_resource.create_catencalcd,"/api/v1.0/create_catencalcd
 api.add_resource(trading_resource.custom_pset_exclusion,"/api/v1.0/custom_pset_exclusion",endpoint="custom_pset_exclusion")
 api.add_resource(trading_resource.catgroup_pset_exclusion,"/api/v1.0/catgroup_pset_exclusion",endpoint="catgroup_pset_exclusion")
 api.add_resource(shipping_resource.create_shipmode,"/api/v1.0/create_shipmode",endpoint="create_shipmode")
-
-
-
-
-
-
+api.add_resource(trading_resource.excluded_items,"/api/v1.0/excluded_items",endpoint="excluded_items")
+api.add_resource(vendor_resource.list_vendors,"/api/v1.0/list_vendors",endpoint="list_vendors")
+api.add_resource(vendor_resource.create_ra,"/api/v1.0/create_ra",endpoint="create_ra")
+api.add_resource(vendor_resource.read_ra,"/api/v1.0/read_ra",endpoint="read_ra")
+api.add_resource(vendor_resource.get_ra,"/api/v1.0/get_ra",endpoint="get_ra")
+api.add_resource(store_resource.get_store_image,"/api/v1.0/get_store_image",endpoint="get_store_image")
+api.add_resource(vendor_resource.read_ra_detail,"/api/v1.0/read_ra_detail",endpoint="read_ra_detail")
+api.add_resource(vendor_resource.create_radetail,"/api/v1.0/create_radetail",endpoint="create_radetail")
+api.add_resource(vendor_resource.read_receipts,"/api/v1.0/read_receipts",endpoint="read_receipts")
+api.add_resource(vendor_resource.receive_inventory,"/api/v1.0/receive_inventory",endpoint="receive_inventory")
+api.add_resource(vendor_resource.inventory_receipt,"/api/v1.0/inventory_receipt",endpoint="inventory_receipt")
 
 
 

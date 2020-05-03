@@ -5,6 +5,7 @@ con,cursor=createcon("retail","jmso","localhost","5432")
 import  importlib
 import pandas as pd
 import numpy as np
+from ops import textualize_datetime,humanize_date,CurrencyHelper
 
 class EntryException(Exception):
     def __init__(self,message):
@@ -110,6 +111,7 @@ class Rcptavail:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
 
+receipttypes=[dict(text="Expected Inventory Record",value="EIR"),dict(text="AdHoc Receipt",value="ADHC"),dict(text="Returned Receipt",value="RTN")]
 class Receipt:
     def __init__(self,versionspc_id,store_id,ffmcenter_id,receiptdate,createtime,cost=0,comment1=None,
     comment2=None,lastupdate=None,receipttype='ADHC',qtyreceived=0,qtyinprocess=0,qtyonhand=0,qtyinkits=0,
@@ -132,6 +134,37 @@ class Receipt:
         self.setccurr=setccurr
         self.radetail_id=radetail_id
         self.rtnrcptdsp_id=rtnrcptdsp_id
+    
+    @staticmethod
+    def getpo(radetail_id):
+        cursor.execute("""with radetail as(select ra_id from radetail where radetail_id=%s)select
+        ra.externalid::text from ra inner join radetail on radetail.ra_id=ra.ra_id""",(radetail_id,))
+        res=cursor.fetchone()
+        if res==None:return None
+        elif res!=None:return res[0]
+    
+    @staticmethod
+    def read():
+        cursor.execute("""select receipt.receipt_id,receipt.versionspc_id,catentdesc.name,receipt.radetail_id,
+        receipt.store_id,storeent.identifier,receipt.setccurr,setcurrdsc.description,receipt.ffmcenter_id,
+        ffmcenter.name,receipt.vendor_id,vendor.vendorname,receipt.receiptdate,receipt.qtyreceived,
+        receipt.qtyinprocess,receipt.qtyonhand,receipt.qtyinkits,receipt.cost::float,receipt.comment1,receipt.lastupdate,
+        receipt.createtime,receipt.receipttype::text,receipt.rtnrcptdsp_id from receipt inner join catentdesc on receipt.
+        versionspc_id=catentdesc.catentry_id inner join storeent on receipt.store_id=storeent.storeent_id inner join
+        setcurrdsc on receipt.setccurr=setcurrdsc.setccurr inner join ffmcenter on receipt.ffmcenter_id=ffmcenter.ffmcenter_id
+        inner join vendor on receipt.vendor_id=vendor.vendor_id""");res=cursor.fetchall()
+        if len(res)<=0:return [dict(receipt_id=None,versionspc_id=None,product=None,radetail_id=None,store_id=None,store=None,
+        setccurr=None,currency=None,ffmcenter_id=None,warehouse=None,vendor_id=None,vendor=None,receiptdate=None,received=None,
+        qtyreceived=None,qtyinprocess=None,qtyonhand=None,qtyinkits=None,unit_cost=None,comment1=None,comment=None,lastupdate=None,
+        updated=None,createtime=None,created=None,receipttype=None,type=None,rtnrcptdsp_id=None,PO_number=None)]
+
+        elif len(res)>0:return [dict(receipt_id=r[0],versionspc_id=r[1],product=r[2],radetail_id=r[3],store_id=r[4],
+        store=r[5],setccurr=r[6],currency=r[7],ffmcenter_id=r[8],warehouse=r[9],vendor_id=r[10],vendor=r[11],
+        receiptdate=textualize_datetime(r[12]),received=humanize_date(r[12]),qtyreceived=r[13],quantity=r[13],
+        qtyinprocess=r[14],in_process=r[14],qtyonhand=r[15],on_hand=r[15],qtyinkits=r[16],in_kits=r[16],unit_cost=r[17],
+        comment=r[18],lastupdate=textualize_datetime(r[19]),updated=humanize_date(r[19]),createtime=textualize_datetime(r[20]),
+        created=humanize_date(r[20]),receipttype=r[21],type=[x["text"] for x in receipttypes if x["value"]==r[21]][0],
+        rtnrcptdsp_id=r[22],PO_number=Receipt.getpo(r[3])) for r in res]
     
     def save(self):
         try:
@@ -404,6 +437,7 @@ class Invadjdesc:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
 
+openindicators=[dict(text="Yes",value="Y"),dict(text="No",value="N")]
 class Ra:
     def __init__(self,vendor_id,store_id,orderdate,createtime,openindicator=None,dateclosed=None,
     lastupdate=None,externalid=None,markfordelete=0):
@@ -416,6 +450,40 @@ class Ra:
         self.lastupdate=lastupdate
         self.externalid=externalid
         self.markfordelete=markfordelete
+    
+    @staticmethod
+    def read():
+        cursor.execute("""select ra.vendor_id,vendor.vendorname,ra.store_id,storeent.identifier,ra.orderdate,
+        ra.createtime,ra.openindicator,ra.dateclosed,ra.externalid::text,ra.ra_id from ra inner join vendor on 
+        ra.vendor_id=vendor.vendor_id inner join storeent on ra.store_id=storeent.storeent_id""");res=cursor.fetchall()
+        if len(res)<=0:return [dict(vendor_id=None,vendor=None,store_id=None,store=None,orderedate=None,
+        ordered=None,createtime=None,created=None,openindicator=None,open=None,dateclosed=None,closed=None,
+        externalid=None,po_number=None)]
+        elif len(res)>0:return [dict(vendor_id=r[0],vendor=r[1],store_id=r[2],store=r[3],
+        orderdate=textualize_datetime(r[4]),ordered=humanize_date(r[4]),createtime=textualize_datetime(r[5]),
+        created=humanize_date(r[5]),openindicator=r[6],open=[x['text'] for x in openindicators if x['value']==r[6]][0],
+        dateclosed=textualize_datetime(r[7]),closed=humanize_date(r[7]),externalid=r[8],po_number=r[8],ra_id=r[9]) for r in res]
+
+    @staticmethod
+    def read_ra(ra_id):
+        cursor.execute("""select ra.vendor_id,ra.store_id,ra.orderdate,ra.openindicator,ra.dateclosed,ra.lastupdate,
+        ra.externalid::text,ra.markfordelete,ra.createtime,vendor.vendorname from ra inner join vendor on ra.vendor_id=
+        vendor.vendor_id where ra_id=%s""",(ra_id,));res=cursor.fetchone()
+        if res==None:return dict(vendor_id=None,store_id=None,orderdate=None,ordered=None,openindicator=None,
+        open=None,dateclosed=None,closed=None,lastupdate=None,updated=None,externalid=None,markfordelete=None,
+        createtime=None,created=None,vendor=None)
+        elif res!=None:return dict(vendor_id=res[0],store_id=res[1],orderdate=textualize_datetime(res[2]),
+        ordered=humanize_date(res[2]),openindicator=res[3],open=[x['text'] for x in openindicators if x['value']==res[3]][0],
+        dateclosed=textualize_datetime(res[4]),closed=humanize_date(res[4]),lastupdate=textualize_datetime(res[5]),
+        updated=humanize_date(res[5]),externalid=res[6],markfordelete=res[7],createtime=textualize_datetime(res[8]),
+        created=humanize_date(res[8]),vendor=res[9])
+
+    @staticmethod
+    def lastraid():
+        cursor.execute("select ra_id from ra order by ra_id desc limit 1")
+        res=cursor.fetchone()
+        if res==None:return 1
+        elif res!=None:return res[0]+1
     
     def save(self):
         try:
@@ -446,6 +514,43 @@ class Radetail:
         self.radetailcomment=radetailcomment
         self.lastupdate=lastupdate
         self.markfordelete=markfordelete
+    
+    @staticmethod
+    def getcatentry(itemspc_id):
+        if itemspc_id==None:return None
+        elif itemspc_id!=None:
+            cursor.execute("""with catent as(select catentry_id from catentry where itemspc_id=%s)
+            select catentdesc.name from catentdesc,catent where catent.catentry_id=catentdesc.catentry_id""",
+            (itemspc_id,));res=cursor.fetchone()
+            if res==None:return None
+            elif res!=None:return res[0]
+    
+    @staticmethod
+    def store_ra(ra_id):
+        if ra_id==None:return None
+        elif ra_id!=None:
+            cursor.execute("select store_id from ra where ra_id=%s",(ra_id,))
+            res=cursor.fetchone()
+            if res==None:return None
+            elif res!=None:return res[0]
+    
+    @staticmethod
+    def read(ra_id):
+        cursor.execute("""select radetail.ra_id,radetail.ffmcenter_id,radetail.itemspc_id,radetail.qtyordered,
+        radetail.qtyreceived,radetail.qtyremaining,radetail.qtyallocated,radetail.expecteddate,radetail.radetailcomment,
+        radetail.lastupdate,radetail.markfordelete,ffmcentds.displayname,radetail.radetail_id,catentry.catentry_id from 
+        radetail left join ffmcentds on radetail.ffmcenter_id=ffmcentds.ffmcenter_id left join catentry on radetail.itemspc_id
+        =catentry.itemspc_id where ra_id=%s""",(ra_id,));res=cursor.fetchall()
+        if len(res)<=0:return [dict(ra_id=None,ffmcenter_id=None,itemspc_id=None,qtyordered=None,qtyreceived=None,
+        qtyremaining=None,qtyallocated=None,expecteddate=None,radetailcomment=None,lastupdate=None,markfordelete=None,
+        warehouse=None,item=None,ordered=None,received=None,remaining=None,allocated=None,expected_on=None,updated_on=None,
+        radetail_id=None,catentry_id=None,store_id=None)]
+        
+        elif len(res)>0:return [dict(ra_id=r[0],ffmcenter_id=r[1],itemspc_id=r[2],qtyordered=r[3],ordered=r[3],
+        qtyreceived=r[4],received=r[4],qtyremaining=r[5],remaining=r[5],qtyallocated=r[6],allocated=r[6],
+        expecteddate=textualize_datetime(r[7]),expected_on=humanize_date(r[7]),radetailcomment=r[8],
+        lastupdate=textualize_datetime(r[9]),updated_on=humanize_date(r[9]),catentry_id=r[13],store_id=Radetail.store_ra(r[0]),
+        markfordelete=r[10],warehouse=r[11],item=Radetail.getcatentry(r[2]),radetail_id=r[12]) for r in res]
     
     def save(self):
         try:
@@ -481,3 +586,43 @@ class Rabackallo:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
 
+class ReceiveInventory:
+    def __init__(self,radetail_id):
+        self.radetail_id=radetail_id
+        self.receipt_id=self.has_receipt()
+        self.data=dict()
+        if self.receipt_id!=None:self.data=self.read()
+        elif self.receipt_id==None:self.data=self.emptydata()
+    
+    def has_receipt(self):
+        cursor.execute("select receipt_id from receipt where radetail_id=%s",(self.radetail_id,))
+        res=cursor.fetchone()
+        if res==None:return None
+        elif res!=None:return res[0]
+    
+    def emptydata(self):
+        cursor.execute("""select radetail.radetail_id,radetail.itemspc_id,catentry.catentry_id,ra.store_id,
+        radetail.ffmcenter_id,ra.vendor_id,radetail.qtyreceived,radetail.radetailcomment,radetail.lastupdate
+        from radetail inner join catentry on radetail.itemspc_id=catentry.itemspc_id inner join ra on radetail.
+        ra_id=ra.ra_id where radetail.radetail_id=%s""",(self.radetail_id,));r=cursor.fetchone()
+        return dict(radetail_id=r[0],itemspc_id=r[1],catentry_id=r[2],store_id=r[3],ffmcenter_id=r[4],
+        vendor_id=r[5],qtyreceived=r[6],comment=r[7],lastupdate=textualize_datetime(r[8]),setccurr=None,
+        receiptdate=None,qtyinprocess=None,qtyonhand=None,qtyinkits=None,unit_cost=None,createtime=None,receipttype="EIR",
+        rtnrcptdsp_id=None)
+
+    def read(self):
+        cursor.execute("""select receipt.receipt_id,receipt.versionspc_id,catentdesc.name,receipt.radetail_id,
+        receipt.store_id,storeent.identifier,receipt.setccurr,setcurrdsc.description,receipt.ffmcenter_id,
+        ffmcenter.name,receipt.vendor_id,vendor.vendorname,receipt.receiptdate,receipt.qtyreceived,
+        receipt.qtyinprocess,receipt.qtyonhand,receipt.qtyinkits,receipt.cost::float,receipt.comment1,receipt.lastupdate,
+        receipt.createtime,receipt.receipttype::text,receipt.rtnrcptdsp_id from receipt inner join catentdesc on receipt.
+        versionspc_id=catentdesc.catentry_id inner join storeent on receipt.store_id=storeent.storeent_id inner join
+        setcurrdsc on receipt.setccurr=setcurrdsc.setccurr inner join ffmcenter on receipt.ffmcenter_id=ffmcenter.ffmcenter_id
+        inner join vendor on receipt.vendor_id=vendor.vendor_id where receipt.receipt_id=%s""",(self.receipt_id,))
+        r=cursor.fetchone();return dict(receipt_id=r[0],versionspc_id=r[1],product=r[2],radetail_id=r[3],store_id=r[4],
+        store=r[5],setccurr=r[6],currency=r[7],ffmcenter_id=r[8],warehouse=r[9],vendor_id=r[10],vendor=r[11],
+        receiptdate=textualize_datetime(r[12]),received=humanize_date(r[12]),qtyreceived=r[13],quantity=r[13],
+        qtyinprocess=r[14],in_process=r[14],qtyonhand=r[15],on_hand=r[15],qtyinkits=r[16],in_kits=r[16],unit_cost=r[17],
+        comment=r[18],lastupdate=textualize_datetime(r[19]),updated=humanize_date(r[19]),createtime=textualize_datetime(r[20]),
+        created=humanize_date(r[20]),receipttype=r[21],type=[x["text"] for x in receipttypes if x["value"]==r[21]][0],
+        rtnrcptdsp_id=r[22],PO_number=Receipt.getpo(r[3]))

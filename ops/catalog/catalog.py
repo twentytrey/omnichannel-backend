@@ -442,6 +442,13 @@ class Catentry:
         self.lastorderdate=lastorderdate
         self.endofservicedate=endofservicedate
         self.discontinuedate=discontinuedate
+
+    @staticmethod
+    def name_exists(name):
+        cursor.execute("select catentry_id from catentdesc where name=%s",(name,))
+        res=cursor.fetchone()
+        if res==None:return False
+        elif res!=None:return True
     
     def partprebuild(self,name):
         splits=name.lower().strip().split(' ')

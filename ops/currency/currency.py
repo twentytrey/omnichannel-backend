@@ -254,4 +254,3 @@ class NumberUsageDefaults:
             [Numbrusg(*u).save() for u in usages]
             [Numbrusgds(*d).save() for d in descriptions]
 
-# print(NumberUsageDefaults('numberusage.csv').isfilled())

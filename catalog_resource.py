@@ -151,17 +151,18 @@ class create_catentry(Resource):
         published=data["published"]
         availabilitydate=data["availabilitydate"]
         try:
-            c=Catentry(member_id,catenttype_id,partnumber,name,itemspc_id=itemspc_id,mfpartnumber=mfpartnumber,
-            mfname=mfname,lastupdate=lastupdate,availabilitydate=availabilitydate,endofservicedate=endofservicedate)
-            oldpart=c.initialpart();c.partnumber=oldpart;catentry_id=c.save();newpart=c.updatepart(catentry_id)
-            itemspc_id=Itemspc(member_id,newpart,lastupdate=timestamp_now()).save()
-            c.update_itemspc(itemspc_id,catentry_id)
-            catentdesc_id=Catentdesc(catentry_id,language_id,published,name=name,shortdescription=shortdescription,
-            fullimage=fullimage,availabilitydate=availabilitydate).save()
-            catgroup_id=Catgpenrel(catgroup_id,catalog_id,catentry_id).save()
-            catentry_listprice_id=Listprice(catentry_id,currency,listprice).save()
-            return {"msg":"Successfully saved product item information","entries":Catentry.readcatentry(member_id,language_id),
-            "catentryitems":Catentry.read(member_id,language_id)},200
+            c=Catentry(member_id,catenttype_id,partnumber,name,itemspc_id=itemspc_id,mfpartnumber=mfpartnumber,mfname=mfname,lastupdate=lastupdate,availabilitydate=availabilitydate,endofservicedate=endofservicedate)
+            nameexists=c.name_exists(name)
+            if nameexists:return {"msg":"A product with that name already exists."},200
+            elif nameexists==False:
+                oldpart=c.initialpart();c.partnumber=oldpart;catentry_id=c.save();newpart=c.updatepart(catentry_id)
+                itemspc_id=Itemspc(member_id,newpart,baseitem_id=catentry_id,lastupdate=timestamp_now()).save()
+                c.update_itemspc(itemspc_id,catentry_id)
+                Catentdesc(catentry_id,language_id,published,name=name,shortdescription=shortdescription,fullimage=fullimage,availabilitydate=availabilitydate).save()
+                catgroup_id=Catgpenrel(catgroup_id,catalog_id,catentry_id).save()
+                Listprice(catentry_id,currency,listprice).save()
+                return {"msg":"Successfully saved product item information","entries":Catentry.readcatentry(member_id,language_id),
+                "catentryitems":Catentry.read(member_id,language_id)},200
         except EntryException as e:
             return {"msg":"Error saving item information. Error {0}".format(e.message)}
 

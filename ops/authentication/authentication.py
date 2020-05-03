@@ -181,7 +181,6 @@ class DefaultPasswordPolicy:
             descriptions=df.values[:,[10,8,9]]
             [Plcypwddsc(*d).save() for d in descriptions]
 
-
 class DefaultAccountPolicy:
     def __init__(self):
         self.plcyacclck_id=self.getlockout()
@@ -223,6 +222,3 @@ class DefaultAccountPolicy:
         except (Exception, psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
-
-# print(DefaultAccountPolicy().savedescription())
-# print(DefaultAccountPolicy().isfilled())

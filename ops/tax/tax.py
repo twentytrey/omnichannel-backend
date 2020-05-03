@@ -141,7 +141,9 @@ class Jurstgroup:
         except(Exception,psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
-# print(Jurstgroup.read(1))
+
+# print(Jurstgroup.read(23,2))
+
 class Jurst:
     def __init__(self,storeent_id,code,subclass,country=None,description=None,city=None,state=None,
     stateabbr=None,countryabbr=None,district=None,county=None,zipcodestart=None,zipcodeend=None,

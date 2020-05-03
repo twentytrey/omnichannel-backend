@@ -371,7 +371,7 @@ from functions import build_constraint
 # cursor.execute(build_constraint("baseitem","f_108","member_id","member","member_id"))
 
 # cursor.execute(build_constraint("itemspc","f_406","member_id","member","member_id"))
-# cursor.execute(build_constraint("itemspc","f_407","baseitem_id","baseitem","baseitem_id"))
+# cursor.execute(build_constraint("itemspc","f_407","baseitem_id","catentry","catentry_id"))
 # cursor.execute(build_constraint("catentrel","f_198","catreltype_id","catreltype","catreltype_id"))
 # cursor.execute(build_constraint("catentrel","f_199","catentry_id_parent","catentry","catentry_id"))
 # cursor.execute(build_constraint("catentrel","f_200","catentry_id_child","catentry","catentry_id"))

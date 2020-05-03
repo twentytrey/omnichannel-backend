@@ -6,6 +6,7 @@ import pandas as pd
 import numpy as np
 import os,re
 from ops import CurrencyHelper,humanize_date,timestamp_forever,timestamp_now
+from ops import textualize_datetime,humanize_date,CurrencyHelper
 
 class EntryException(Exception):
     def __init__(self,message):
@@ -18,6 +19,13 @@ class Vendor:
         self.lastupdate=timestamp_now()
         self.markfordelete=markfordelete
         self.vendorname=vendorname
+    
+    @staticmethod
+    def read():
+        cursor.execute("""select vendor.vendor_id,orgentity.orgentityname from vendor inner join orgentity on
+        vendor.vendor_id=orgentity.orgentity_id""");res=cursor.fetchall()
+        if len(res)<=0:return [dict(vendor_id=None,vendorname=None)]
+        elif len(res)>0:return [dict(vendor_id=r[0],vendorname=r[1]) for r in res]
     
     def save(self):
         try:

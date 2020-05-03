@@ -167,7 +167,8 @@ class Trading:
         contractcomments=r[14],contracttimecreated=textualize_datetime(r[15]),_rowVariant='success',
         contracttimeapproved=textualize_datetime(r[16]),approved=humanize_date(r[16]),
         contracttimeactivated=textualize_datetime(r[17]),activated=humanize_date(r[17]),deployed=humanize_date(r[18]),
-        contracttimedeployed=textualize_datetime(r[18]),created_by=r[19],participant=Trading.particpantname(r[20])) for r in res]
+        contracttimedeployed=textualize_datetime(r[18]),created_by=r[19],participant=Trading.particpantname(r[20])
+        ) for r in res]
 
     @staticmethod
     def readcontracts(language_id):
@@ -258,7 +259,7 @@ class Trading:
         except(Exception,psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
-# print(Trading.readcontract(8,1))
+
 class Trddesc:
     def __init__(self,trading_id,language_id,description=None,longdescription=None,
     timecreated=None,timeupdated=None):
@@ -920,6 +921,32 @@ class Psetadjmnt:
         except(Exception,psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
+
+class ExcludedItems:
+    def __init__(self,trading_id,tcsubtype_id,extype=3):
+        self.extype=extype
+        self.tcsubtype_id=tcsubtype_id
+        self.trading_id=trading_id
+        self.termcond_id=self.gettermcond()
+        self.pset_id=self.getpset_id()
+    
+    def gettermcond(self):
+        cursor.execute("select termcond_id from termcond where trading_id=%s and tcsubtype_id=%s",
+        (self.trading_id,self.tcsubtype_id,));res=cursor.fetchone()
+        if res==None:return None
+        elif res!=None:return res[0]
+    
+    def getpset_id(self):
+        cursor.execute("select productset_id from psetadjmnt where termcond_id=%s and type=%s",
+        (self.termcond_id,self.extype,));res=cursor.fetchone()
+        if res==None:return None
+        elif res!=None:return res[0]
+    
+    def get_items(self):
+        cursor.execute("select catentry_id from prsetcerel where productset_id=%s",(self.pset_id,))
+        res=cursor.fetchall()
+        if len(res)<=0:return list()
+        elif len(res)>0:return [x for (x,)in res]
 
 class InstallTradetypes:
     def __init__(self,fname):

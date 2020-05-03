@@ -21,17 +21,18 @@ class create_store(Resource):
         self.parser.add_argument("ownername",help="required field",required=True)
         self.parser.add_argument("nickname")
         self.parser.add_argument("address1",help="required field",required=True)
-        self.parser.add_argument("city")
-        self.parser.add_argument("state")
-        self.parser.add_argument("country")
+        self.parser.add_argument("city",help="required field",required=True)
+        self.parser.add_argument("state",help="required field",required=True)
+        self.parser.add_argument("country",help="required field",required=True)
         self.parser.add_argument("email1")
         self.parser.add_argument("phone1",help="required field",required=True)
         self.parser.add_argument("zipcode")
-        self.parser.add_argument("firstname")
+        self.parser.add_argument("firstname",help="required field",required=True)
         self.parser.add_argument("middlename")
-        self.parser.add_argument("lastname")
-        self.parser.add_argument("persontitle")
+        self.parser.add_argument("lastname",help="required field",required=True)
+        self.parser.add_argument("persontitle",help="required field",required=True)
         self.parser.add_argument("photourl")
+        self.parser.add_argument("superowner",help="required field",required=True)
         super(create_store,self).__init__()
     
     @jwt_required
@@ -56,6 +57,7 @@ class create_store(Resource):
         lastname=data["lastname"]
         persontitle=data["persontitle"]
         photourl=data['photourl']
+        superowner=data["superowner"]
         try:
             storeent_id=Storeent(member_id,stype,identifier,setccurr=setccurr).save()
             storegrp_id=Storegrp(member_id,ownername).save()
@@ -68,7 +70,7 @@ class create_store(Resource):
             email1=email1,phone1=phone1,zipcode=zipcode,firstname=firstname,middlename=middlename,lastname=lastname,
             persontitle=persontitle).save()
             Storeentds(language_id,storeent_id,identifier,staddress_id_loc=staddress_id_loc).save()
-            return {"msg":"Successfully saved store information"},200
+            return {"msg":"Successfully saved store information","allstores":Storeent.readstores(superowner)},200
         except EntryException as e:
             return {"msg":"Error saving store information. Error {0}".format(e.message)},422
 
@@ -83,16 +85,16 @@ class create_host_warehouse(Resource):
         self.parser.add_argument("ownername",help="required field",required=True)
         self.parser.add_argument("nickname")
         self.parser.add_argument("address1",help="required field",required=True)
-        self.parser.add_argument("city")
-        self.parser.add_argument("state")
-        self.parser.add_argument("country")
-        self.parser.add_argument("email1")
+        self.parser.add_argument("city",help="required field",required=True)
+        self.parser.add_argument("state",help="required field",required=True)
+        self.parser.add_argument("country",help="required field",required=True)
+        self.parser.add_argument("email1",help="required field",required=True)
         self.parser.add_argument("phone1",help="required field",required=True)
         self.parser.add_argument("zipcode")
         self.parser.add_argument("firstname")
         self.parser.add_argument("middlename")
-        self.parser.add_argument("lastname")
-        self.parser.add_argument("persontitle")
+        self.parser.add_argument("lastname",help="required field",required=True)
+        self.parser.add_argument("persontitle",help="required field",required=True)
         self.parser.add_argument("photourl")
         super(create_host_warehouse,self).__init__()
     
@@ -130,7 +132,7 @@ class create_host_warehouse(Resource):
             Storeentds(language_id,storeent_id,identifier,staddress_id_loc=staddress_id_loc).save()
             ffmcenter_id=Ffmcenter(member_id,name=identifier,inventoryopflags=1).save()
             Ffmcentds(ffmcenter_id,language_id,staddress_id=staddress_id_loc,displayname=identifier).save()
-            return {"msg":"Successfully saved host warehouse"},200
+            return {"msg":"Successfully saved host warehouse","your_stores":Storeent.yourstore(member_id)},200
         except EntryException as e:
             return {"msg":"Error saving host warehouse. Error {0}".format(e.message)},422
 
@@ -182,6 +184,18 @@ class your_stores(Resource):
         data=self.parser.parse_args()
         owner_id=data["owner_id"]
         return Storeent.yourstore(owner_id),200
+
+class get_store_image(Resource):
+    def __init__(self):
+        self.parser=reqparse.RequestParser()
+        self.parser.add_argument("store_id",help="required field",required=True)
+        super(get_store_image,self).__init__()
+    
+    @jwt_required
+    def post(self):
+        data=self.parser.parse_args()
+        store_id=data["store_id"]
+        return Storeent.get_image(store_id),200
 
 class store_utilities(Resource):
     def __init__(self):

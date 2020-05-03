@@ -433,7 +433,7 @@ class Role:
         except (Exception, psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
-
+# print(Role.read_roles(1))
 class Roledesc:
     def __init__(self,role_id,language_id,displayname,description=None):
         self.role_id=role_id
@@ -900,7 +900,7 @@ class RolePermDefaults:
         filled=self.isfilled()
         if filled==False:[Roleasnprm(*p).save() for p in self.roles()]
         elif filled==True:pass
-
+# RolePermDefaults(34).save()
 class RoleDefaults:
     def __init__(self,fname):
         self.fname=fname

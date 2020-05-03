@@ -14,12 +14,24 @@ con,cursor=createcon('retail','jmso','localhost','5432')
 
 def timestamp_now():
     now=time.time()
-    formatted=datetime.datetime.fromtimestamp(now).strftime("%Y-%m-%d")
+    formatted=datetime.datetime.fromtimestamp(now).strftime("%Y-%m-%d ")
     return formatted
+
+def datetimestamp_now():
+    now=time.time()
+    formatted=datetime.datetime.fromtimestamp(now).strftime("%Y-%m-%d %H:%M:%S")
+    return formatted
+
+# print( datetimestamp_now() )
 
 def timestamp_forever():
 	forever=datetime.datetime.max
 	formatted=forever.strftime("%Y-%m-%d")
+	return formatted
+
+def datetimestamp_forever():
+	forever=datetime.datetime.max
+	formatted=forever.strftime("%Y-%m-%d %H:%M:%S")
 	return formatted
 
 def defaultlanguage():

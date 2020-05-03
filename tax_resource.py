@@ -88,9 +88,9 @@ class create_jurst(Resource):
             jurst_id=Jurst(storeent_id,code,subclass,country=country,description=description,
             city=city,state=state,stateabbr=stateabbr,countryabbr=countryabbr).save()
             Jurstgprel(jurst_id,jurstgroup_id,subclass).save()
-            return {"msg":"Successfully saved tax jurisdiction","jurstdata":Jurst.read(storeent_id,subclass)},200
+            return {"msg":"Successfully saved jurisdiction","jurstdata":Jurst.read(storeent_id,subclass)},200
         except EntryException as e:
-            return {"msg":"Error saving tax jurisdiction. Error {0}".format(e.message)},422
+            return {"msg":"Error saving jurisdiction. Error {0}".format(e.message)},422
 
 class read_taxtype(Resource):
     @jwt_required

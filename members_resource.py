@@ -52,9 +52,6 @@ class create_organization(Resource):
                 usersign=UserSign(logonid)
                 RolePermDefaults(orgentity_id).save()
                 addrbook_id=Addrbook(member_id,orgentityname,description="{}: Address Book".format(orgentityname)).save()
-                # logonis=Userreg.logoniswhat(logonid)
-                # if logonis=="email":Address(addrbook_id,member_id,orgentityname,email1=logonid).save()
-                # elif logonis=="phone":Address(addrbook_id,member_id,orgentityname,phone1=logonid).save()
                 Address(addrbook_id,member_id,orgentityname,phone1=logonid).save()
                 if userreg_id==users_id:
                     access_token=create_access_token(identity=usersign);refresh_token=create_refresh_token(identity=usersign)

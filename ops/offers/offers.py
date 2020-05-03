@@ -57,8 +57,6 @@ class Offer:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
 
-print(Offer.offerforitem(9,13))
-
 class Offerdesc:
     def __init__(self,offer_id,language_id,description=None):
         self.offer_id=offer_id

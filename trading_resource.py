@@ -5,7 +5,7 @@ from flask_jwt_extended.exceptions import RevokedTokenError
 from ops.helpers.functions import timestamp_forever,timestamp_now,defaultlanguage
 from ops.trading.trading import (EntryException,contractorigin,contractstate,contractusage,Tradeposcn,Tdpscncntr,
 Termcond,tradingstate,creditallowed,Contract,Trading,Trddesc,Cntrname,Participnt,Account,Storecntr,Storedef,Productset,
-Prodsetdsc,Prsetcerel,Psetadjmnt)
+Prodsetdsc,Prsetcerel,Psetadjmnt,ExcludedItems)
 from ops.catalog.catalog import Catgrptpc,Catalogtpc,Catentry,Catgrpps
 from ops.pricing.pricing import Storetpc
 from ops.offers.offers import Offer,Offerdesc,Offerprice
@@ -430,6 +430,20 @@ class term_catalog_with_adjustment(Resource):
             return {"msg":"Successfully saved offer pricing information"},200
         except EntryException as e:
             return {"msg":"{}".format(e.message)},422
+
+class excluded_items(Resource):
+    def __init__(self):
+        self.parser=reqparse.RequestParser()
+        self.parser.add_argument("trading_id",help="required field",required=True)
+        self.parser.add_argument("tcsubtype_id",help="required field",required=True)
+        super(excluded_items,self).__init__()
+    
+    @jwt_required
+    def post(self):
+        data=self.parser.parse_args()
+        trading_id=data['trading_id']
+        tcsubtype_id=data["tcsubtype_id"]
+        return {"items":ExcludedItems(trading_id,tcsubtype_id).get_items()},200
 
 class custom_pset_exclusion(Resource):
     def __init__(self,):

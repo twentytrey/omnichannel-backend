@@ -1,5 +1,5 @@
 storeent_id,calusage_id,taskname,description,subclass,name
-,7,calculationframework.initializecalculationusage.initializeadjustment,,,Initialize Adjustment
+,1,calculationframework.initializecalculationusage.initializeadjustment,,,Initialize Adjustment
 ,5,calculationframework.initializecalculationusage.initializecouponusage,,,Initialize Coupon Usage
 ,3,calculationframework.initializecalculationusage.initializesalestax,,,Initialize Sales Tax
 ,2,calculationframework.initializecalculationusage.initializeshipping,,,Initialize Shipping
@@ -83,3 +83,4 @@ storeent_id,calusage_id,taskname,description,subclass,name
 ,2,calculationframework.calculationscalelookup.quantitycalculationscalelookup,,,Quantity Calculation Scale Lookup
 ,2,calculationframework.calculationscalelookup.quantityspreadbynetpricecalculationscalelookup,,,Quantity Spread By Net Price Calculation Scale Lookup
 ,1,calculationframework.calculationrange.percentagecalculationrange,,,Percentage Calculation Range
+,2,calculationframework.calculationrange.fixedamountcalculationrange,,,Fixed Amount Calculation Range
