@@ -1,4 +1,4 @@
-from flask import Flask,jsonify,request
+from flask import Flask,jsonify,request,Response,send_from_directory
 from flask_restful import Api
 from flask_jwt_extended import JWTManager
 from jwt import ExpiredSignatureError
@@ -46,7 +46,9 @@ from ops.catalog.catalog import CatenttypeDefaults,AttrtypeDefaults,CatreltypeDe
 from ops.calculations.calculations import CalusageDefaults
 from ops.tax.tax import InstallTaxtype
 from ops.accounting.accounting import InstallAccountClasses
-from ops.trading.trading import InstallPartroles,InstallAttachusg,InstallTctypes,InstallTradetypes
+from ops.trading.trading import InstallPartroles,InstallAttachusg,InstallTctypes,InstallTradetypes,InstallPolicyTypes
+from ops.uom.uom import InstallQtyunits
+from ops.orders.orders import InstallBuschn
 
 @app.before_first_request
 def initializedefaults():
@@ -64,6 +66,11 @@ def initializedefaults():
     isfilled=nd.isfilled()
     if isfilled:pass
     elif isfilled==False:nd.save()
+
+    i=InstallQtyunits('qtyunit.csv')
+    isfilled=i.isfilled()
+    if isfilled:pass
+    elif isfilled==False:i.save()
 
     dpp=DefaultPasswordPolicy('defaultpasswordpolicy.csv')
     isfilled=dpp.isfilled()
@@ -120,10 +127,6 @@ def initializedefaults():
     if isfilled:pass
     elif isfilled==False:i.save()
 
-    # ## i=InstallAccountClasses('accountclasses.csv',1,1)
-    # ## if i.isfilled():pass
-    # ## elif i.isfilled()==False:i.save()
-
     i=InstallPartroles('partroles.csv')
     isfilled=i.isfilled()
     if isfilled:pass
@@ -144,6 +147,16 @@ def initializedefaults():
     if isfilled:pass
     elif isfilled==False:i.save()
 
+    i=InstallPolicyTypes('policytypes.csv')
+    isfilled=i.isfilled()
+    if isfilled:pass
+    elif isfilled==False:i.save()
+
+    i=InstallBuschn('buschn.csv')
+    isfilled=i.isfilled()
+    if isfilled:pass
+    elif isfilled==False:i.save()
+
 jwt=JWTManager(app)
 
 @jwt.token_in_blacklist_loader
@@ -153,7 +166,7 @@ def banstatus(decryptedtoken):
     try:
         return r.isbanned()
     except EntryException as e:
-        return jsonify({"status":422,"msg":"Error checking token status"}),422
+        return jsonify({"status":422,"msg":"Error {}".format(e.message)}),422
 
 @jwt.expired_token_loader
 def expired_token_callback():
@@ -198,8 +211,28 @@ def productuploads():
             return jsonify(url=regularize(file_url),name=filename,size=file_size)
 
 
-import resource,members_resource,catalog_resource,currency_resource,customer_resource,vendor_resource,store_resource,tax_resource,calculation_resource,shipping_resource,accounting_resource,trading_resource
+@app.route("/datafileuploads",methods=["POST","GET"])
+def datafileuploads():
+    if request.method=='POST':
+        files=request.files["image"]
+        if files and allowed_file(files.filename):
+            filename = secure_filename( files.filename.split('.')[0]+'.'+files.filename.split('.')[-1] )
+            app.logger.info("Filename: "+filename)
+            updir=os.path.join(basedir,"static/datafiles/")
+            files.save(os.path.join(updir,filename))
+            file_size = os.path.getsize(os.path.join(updir,filename))
+            file_url="static/datafiles/"+filename
+            return jsonify(url=file_url,name=filename,size=file_size)
+
+
+
+import resource,members_resource,catalog_resource,currency_resource,customer_resource,vendor_resource,store_resource
+import tax_resource,calculation_resource,shipping_resource,accounting_resource,trading_resource,payment_resource
+import m_store_resource
 api.add_resource(resource.default_password_policy,"/api/v1.0/default_password_policy",endpoint="default_password_policy")
+api.add_resource(resource.logout_access,"/api/v1.0/logout_access",endpoint="logout_access")
+api.add_resource(resource.logout_refresh,"/api/v1.0/logout_refresh",endpoint="logout_refresh")
+api.add_resource(resource.token_refresh,"/api/v1.0/token_refresh",endpoint="token_refresh")
 api.add_resource(members_resource.create_organization,"/api/v1.0/create_organization",endpoint="create_organization")
 api.add_resource(members_resource.login_organization,"/api/v1.0/login_organization",endpoint="login_organization")
 api.add_resource(members_resource.UserIdentity,"/api/v1.0/useridentity",endpoint="useridentity")
@@ -209,8 +242,11 @@ api.add_resource(resource.list_languages,"/api/v1.0/list_languages",endpoint="li
 api.add_resource(resource.list_currencies,"/api/v1.0/list_currencies",endpoint="list_currencies")
 api.add_resource(members_resource.read_organization,"/api/v1.0/read_organization",endpoint="read_organization")
 api.add_resource(members_resource.update_orgentity,"/api/v1.0/update_orgentity",endpoint="update_orgentity")
+api.add_resource(members_resource.update_users_address,"/api/v1.0/update_users_address",endpoint="update_users_address")
+api.add_resource(members_resource.update_users,"/api/v1.0/update_users",endpoint="update_users")
 api.add_resource(members_resource.update_address,"/api/v1.0/update_address",endpoint="update_address")
 api.add_resource(members_resource.update_preferences,"/api/v1.0/update_preferences",endpoint="update_preferences")
+api.add_resource(members_resource.update_user_preferences,"/api/v1.0/update_user_preferences",endpoint="update_user_preferences")
 api.add_resource(catalog_resource.create_catalog,"/api/v1.0/create_catalog",endpoint="create_catalog")
 api.add_resource(catalog_resource.read_catalogs,"/api/v1.0/read_catalogs",endpoint="read_catalogs")
 api.add_resource(catalog_resource.create_category,"/api/v1.0/create_category",endpoint="create_category")
@@ -229,6 +265,7 @@ api.add_resource(members_resource.list_all_members,"/api/v1.0/list_all_members",
 api.add_resource(members_resource.list_roles,"/api/v1.0/list_roles",endpoint="list_roles")
 api.add_resource(members_resource.create_business_user,"/api/v1.0/create_business_user",endpoint="create_business_user")
 api.add_resource(members_resource._create_business_user,"/api/v1.0/_create_business_user",endpoint="_create_business_user")
+api.add_resource(members_resource.verify_token,"/api/v1.0/verify_token",endpoint="verify_token")
 api.add_resource(members_resource.append_roles,"/api/v1.0/append_roles",endpoint="append_roles")
 api.add_resource(members_resource.approve_member,"/api/v1.0/approve_member",endpoint="approve_member")
 api.add_resource(members_resource.suspend_member,"/api/v1.0/suspend_member",endpoint="suspend_member")
@@ -314,18 +351,29 @@ api.add_resource(vendor_resource.create_radetail,"/api/v1.0/create_radetail",end
 api.add_resource(vendor_resource.read_receipts,"/api/v1.0/read_receipts",endpoint="read_receipts")
 api.add_resource(vendor_resource.receive_inventory,"/api/v1.0/receive_inventory",endpoint="receive_inventory")
 api.add_resource(vendor_resource.inventory_receipt,"/api/v1.0/inventory_receipt",endpoint="inventory_receipt")
+api.add_resource(vendor_resource.list_inventory,"/api/v1.0/list_inventory",endpoint="list_inventory")
+api.add_resource(payment_resource.create_paymethod_policy,"/api/v1.0/create_paymethod_policy",endpoint="create_paymethod_policy")
+api.add_resource(payment_resource.list_payment_policies,"/api/v1.0/list_payment_policies",endpoint="list_payment_policies")
+api.add_resource(trading_resource.create_payment_tc,"/api/v1.0/create_payment_tc",endpoint="create_payment_tc")
+api.add_resource(payment_resource.read_payment_policy,"/api/v1.0/read_payment_policy",endpoint="read_payment_policy")
+api.add_resource(shipping_resource.create_shipmode_policy,"/api/v1.0/create_shipmode_policy",endpoint="create_shipmode_policy")
+api.add_resource(shipping_resource.read_shipping_policy,"/api/v1.0/read_shipping_policy",endpoint="read_shipping_policy")
+api.add_resource(shipping_resource.list_shipping_policies,"/api/v1.0/list_shipping_policies",endpoint="list_shipping_policies")
+api.add_resource(trading_resource.create_shipping_tc,"/api/v1.0/create_shipping_tc",endpoint="create_shipping_tc")
+api.add_resource(trading_resource.read_account,"/api/v1.0/read_account",endpoint="read_account")
+api.add_resource(trading_resource.item_price_default_trading,"/api/v1.0/item_price_default_trading",endpoint="item_price_default_trading")
+api.add_resource(trading_resource.approve_contract,"/api/v1.0/approve_contract",endpoint="approve_contract")
+api.add_resource(trading_resource.deploy_contract,"/api/v1.0/deploy_contract",endpoint="deploy_contract")
+api.add_resource(trading_resource.suspend_contract,"/api/v1.0/suspend_contract",endpoint="suspend_contract")
+api.add_resource(trading_resource.read_category_exclusion,"/api/v1.0/read_category_exclusion",endpoint="read_category_exclusion")
+api.add_resource(trading_resource.include_item,"/api/v1.0/include_item",endpoint="include_item")
+api.add_resource(catalog_resource.remove_catencalcd,"/api/v1.0/remove_catencalcd",endpoint="remove_catencalcd")
+api.add_resource(accounting_resource.ac_read_account,"/api/v1.0/ac_read_account",endpoint="ac_read_account")
 
-
-
-
-
-
-
-
-
-
-
-
+# MOBILE INTEGRATION
+api.add_resource(m_store_resource.m_create_store_organization,"/api/v1.0/m_create_store_organization",endpoint="m_create_store_organization")
+api.add_resource(m_store_resource.m_verify_token,"/api/v1.0/m_verify_token",endpoint="m_verify_token")
+api.add_resource(m_store_resource.m_create_store,"/api/v1.0/m_create_store",endpoint="m_create_store")
 
 
 

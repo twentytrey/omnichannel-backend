@@ -3,6 +3,7 @@ from .db_con import createcon
 import psycopg2,json,math,os
 con,cursor=createcon("retail","jmso","localhost","5432")
 import  importlib
+from ops import textualize_datetime,humanize_date,CurrencyHelper
 
 class EntryException(Exception):
     def __init__(self,message):
@@ -249,3 +250,21 @@ class MethodsFromCalcode:
         cursor.execute("select calmethod_id,name from calmethod where calusage_id=%s",(self.calusage_id,))
         return [dict(text=x[1],value=x[0])for x in cursor.fetchall()]
 # print(MethodsFromCalcode(2).getmethods())
+
+class ShippingPolicy:
+    def __init__(self,language_id,policytype_id):
+        self.language_id=language_id
+        self.policytype_id=policytype_id
+    
+    def read(self):
+        cursor.execute("""select policy.policy_id,policy.policyname,policy.policytype_id::text,
+        policy.storeent_id,storeent.identifier,policy.properties,policy.starttime,policy.endtime,
+        policydesc.description,policydesc.timecreated,policydesc.timeupdated from policy inner join 
+        storeent on policy.storeent_id=storeent.storeent_id inner join
+        policydesc on policy.policy_id=policydesc.policy_id where policy.policytype_id=%s and 
+        policydesc.language_id=%s""",(self.policytype_id,self.language_id,))
+        res=cursor.fetchall()
+        if len(res) <=0:return [dict()]
+        elif len(res)>0:return[dict(policy_id=r[0],name=r[1],type=r[2],storeent_id=r[3],store=r[4],
+        properties=r[5],starttime=textualize_datetime(r[6]),endtime=textualize_datetime(r[7]),
+        description=r[8],created=humanize_date(r[9]),updated=humanize_date(r[10])) for r in res]

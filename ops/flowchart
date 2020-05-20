@@ -51,7 +51,6 @@ applycalculationusage - STENCAL
 summarizecalculationusage
 finalizecalculationusage
 
-calusage_id,catentry_id,calcode_id,store_id,trading_id
 
 
 LOGISTICS
@@ -140,3 +139,89 @@ timeupdated			timeupdated
 				timeactivated
 				timedeployed
 				store_id - storecntr
+
+a merchant account is a type of bank account that allows businesses to accept payments
+by debit or credit cards. so a merchant account is an agreement between a retailer, 
+a merchant bank and payment processor for the settlement of credit and/or debit card
+transactions.
+
+when a customer pays for a product or service, the funds are first deposited into the 
+merchant account and from there funds are eventually transferred to the business bank
+account. transfers to the business account are normally done on a daily or weekly basis
+
+an order is an object that is created as a result of a data flow between a buyer and a 
+merchant and the financial institution during the order life cycle. these transactions
+can be broken into two broad categories: PAYMENTS(monies transferred to the merchant from
+the consumer), and CREDITS(monies returned to the buyer, such as when merchandise is defective).
+As processing on an order continues, payment and credit objects are created, modified and destroyed.
+
+another type of object used is a BATCH object. which represents multiple transactions processed
+as a group, such as the deposit of all payments at the end of a business day. batch objects keep
+track of the collections of transactions. for instance, if a financial institution tells the merchant
+to close out the week's transactions, the merchant will close the current batch and open a new one.
+batch objects for these two atches will reflect the new status of the batches.
+
+
+1. at order submission, the ProcessOrder command calls the PrimePayment cmd to process payment since 
+the order total amount needs to be processed. customize the getinitialamount method of ProcessOrder to get the total amount of this order.
+
+2. the payment subsystem pre-processes payment and returns a shipment confirmation.
+
+3. when the shipment confirmation is received, the order related info is udpdated.
+the payment of order items to be shipped needs to be captured at this phase.
+	a.command to update order related information
+	b.in this command call ReservePayment and FinalizePayment to capture payment for this order
+		to be shipped
+		1. reservepayment - setorderid(orders_id)
+				  - setreleases(shipmentlist) -> has map of all orderitems to ship rn
+					its key is shipment id and value is totalamount
+				  - setreservationamount(dshipmenttotal)
+				  - execute()
+		2. finalizepayment - setorderid(orders_id)
+				   - setreleaseid(shipment_id)
+				   - setfinalizationamount(shipmentamount)
+				   - execute()
+
+
+PAYMENT LIFE CYCLE - there are three stages to payment processing:VALIDATION, RESERVATION, and FINALIZATION. the payment
+lifecycle is related to the order life cycle stages: ORDER CAPTURE, RELEASE to FFM and SHIPPING.
+VALIDATION - ensures that a customer has adequate funds to make the purchase. the payment action depends on the customer's
+		payment method. for instance when a customer pays for a purchase order using a credit card, a credit card
+		authorization is sent and if it is valid, the transaction is approved. this process occurs during the order 
+		submission.
+
+RESERVATION - ensures that funds are available before shipment of the goods. the reservation amount is the sum of all 
+		order release amounts. this process occurs during a release to fulfillment.
+
+FINALIZATION - payment finalization is typically driven by a shipment confirmation message from or on behalf of the fulfiller.
+		this process occurs when the goods are shipped for the order release.
+		an order can have multiple releases if items in the order must be shipped from different warehouses or use
+		different carriers. or if some of the items need to arrive at different times, such as for an expedited item.
+		additionally, a customer can group order items in the same order to ship together including backordered items
+		or future shipments.
+
+PaymentMethodsDisplay.jsp
+	Displays, on the store's checkout page, a list of the available payment methods available 		for use in a drop-down list. The payment methods are derived from the POLICY database table.
+StandardCOD.jsp
+	Displays entry fields to collect information for the Cash on Delivery payment method: first
+	name, last name, delivery address, city, state/province, zip/postal code, country (region),
+	and phone.
+StandardLOC.jsp
+	Displays entry fields to collect information for the Line of Credit payment method: account
+	number, PO number, order ID.
+
+PaymentMethods
+	PaymentRules - define actions needed to move a payment from current to target states
+
+PAYMENTS SUBSYSTEM ARCH
+	Payment Rules Engine
+	Payment Plug-In Controller
+	Payment Plug-Ins
+
+
+##################################################################################################################################
+################################################ RESTART PROTOCOL ################################################################
+##################################################################################################################################
+delete from member
+alter sequence calmethod_calmethod_id_seq restart with 1;
+

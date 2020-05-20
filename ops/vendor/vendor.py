@@ -5,8 +5,7 @@ con,cursor=createcon('retail','jmso','localhost','5432')
 import pandas as pd
 import numpy as np
 import os,re
-from ops import CurrencyHelper,humanize_date,timestamp_forever,timestamp_now
-from ops import textualize_datetime,humanize_date,CurrencyHelper
+from ops import CurrencyHelper,humanize_date,timestamp_forever,timestamp_now,textualize_datetime
 
 class EntryException(Exception):
     def __init__(self,message):

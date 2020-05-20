@@ -22,7 +22,11 @@ def datetimestamp_now():
     formatted=datetime.datetime.fromtimestamp(now).strftime("%Y-%m-%d %H:%M:%S")
     return formatted
 
-# print( datetimestamp_now() )
+def timesplits():
+    splits=datetimestamp_now().split(' ')
+    l=splits[0].replace('-','')
+    r=splits[1].replace(':','')
+    return l+r[2:]
 
 def timestamp_forever():
 	forever=datetime.datetime.max

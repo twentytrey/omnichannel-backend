@@ -368,7 +368,7 @@ class Contract:
             policyname varchar(254)not null,
             policytype_id char(64)not null,
             storeent_id integer not null,
-            properties varchar(254),
+            properties varchar(2000),
             starttime timestamp,
             endtime timestamp,
             primary key(policy_id)

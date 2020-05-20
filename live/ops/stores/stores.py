@@ -32,6 +32,14 @@ class Storeent:
         self.identifier=identifier
         self.setccurr=setccurr
         self.markfordelete=markfordelete
+    
+    @staticmethod
+    def get_image(store_id):
+        cursor.execute("select staddress_id_loc from storeentds where storeent_id=%s",(store_id,))
+        res=cursor.fetchone();staddress_id=None
+        if res==None:staddress_id=None
+        elif res!=None:staddress_id=res[0]
+        return Storeent.addressinfo(staddress_id)
 
     @staticmethod
     def mapstoretype(stype):

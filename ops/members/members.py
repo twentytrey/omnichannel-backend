@@ -5,7 +5,7 @@ con,cursor=createcon('retail','jmso','localhost','5432')
 import pandas as pd
 import numpy as np
 import os,re
-from ops import CurrencyHelper,humanize_date,timestamp_forever,timestamp_now
+from ops import CurrencyHelper,humanize_date,timestamp_forever,timestamp_now,textualize_datetime
 
 class EntryException(Exception):
     def __init__(self,message):
@@ -25,7 +25,7 @@ class RevokedToken:
     
     def isbanned(self):
         try:
-            print(self.token)
+            # print(self.token)
             cursor.execute("select jti from token_revoked where jti=%s",(self.token,))
             res=cursor.fetchone()
             if res == None:return False
@@ -50,6 +50,8 @@ class Member:
         try:
             cursor.execute("update member set state=1 where member_id=%s returning member_id",
             (mid,));con.commit();return cursor.fetchone()[0]
+            cursor.execute("update users set registertype='R' where users_id=%s",(mid,))
+            con.commit()
         except(Exception,psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
@@ -59,6 +61,8 @@ class Member:
         try:
             cursor.execute("update member set state=0 where member_id=%s returning member_id",
             (mid,));con.commit();return cursor.fetchone()[0]
+            cursor.execute("update users set registertype='G' where users_id=%s",(mid,))
+            con.commit()
         except(Exception,psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
@@ -380,7 +384,21 @@ class Userreg:
         except (Exception, psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
-    
+
+    @staticmethod
+    def getusersid(logonid):
+        cursor.execute("select users_id from userreg where logonid=%s",(logonid,))
+        res=cursor.fetchone()
+        if res==None:return None
+        elif res != None:return res[0]
+
+    @staticmethod
+    def getsalt(logonid):
+        cursor.execute("select salt from userreg where users_id=%s",(logonid,))
+        res=cursor.fetchone()
+        if res==None:return None
+        elif res!=None:return res[0]
+
     @staticmethod
     def getpassword(logonid):
         try:
@@ -770,7 +788,7 @@ class Address:
             persontitle=res[12],firstname=res[13],middlename=res[14],businesstitle=res[15],phone1=res[16],fax1=res[17],phone2=res[18],
             address1=res[19],fax2=res[20],nickname=res[21],address2=res[22],address3=res[23],city=res[24],state=res[25],country=res[26],
             zipcode=res[27],email1=res[28],email2=res[29],phone1type=res[30],phone2type=res[31],publishphone1=res[32],publishphone2=res[33],
-            bestcallingtime=res[34],packagesuppression=res[35],lastcreate=res[36],officeaddress=res[37],selfaddress=res[38],
+            bestcallingtime=res[34],packagesuppression=res[35],lastcreate=textualize_datetime(res[36]),officeaddress=res[37],selfaddress=res[38],
             field1=res[39],field2=res[40],taxgeocode=res[41],shippinggeocode=res[42],mobilephone1=res[43],mobilephone1cntry=res[44])
         except (Exception, psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
@@ -984,3 +1002,23 @@ class ListAllMembers:
         data.update(dict(ismaster=self.findmaster(data["mbrrole"])));return data
 
 # print(ListAllMembers().data())
+
+class UserProfile:
+    def __init__(self,user_id):
+        self.user_id=user_id
+        self.type=self.getusertype()
+    
+    def getusertype(self):
+        cursor.execute("select type from member where member_id=%s",(self.user_id,))
+        return cursor.fetchone()[0]
+    
+    def getname(self):
+        if self.type=='O':
+            cursor.execute("select orgentityname from orgentity where orgentity_id=%s",(self.user_id,))
+            return cursor.fetchone()[0]
+        elif self.type=='U':
+            cursor.execute("select field1,field3 from users where users_id=%s",(self.user_id,))
+            res=cursor.fetchone();return "{} {}".format(res[0],res[1])
+    
+    # def getlogonid(self):
+    #     cursor.execute("select logonid from ")

@@ -1,0 +1,11 @@
+policytype_id
+Price
+ProductSet
+ShippingMode
+ShippingCharge
+Payment
+ReturnCharge
+ReturnApproval
+ReturnPayment
+InvoiceFormat
+ReferralInterface

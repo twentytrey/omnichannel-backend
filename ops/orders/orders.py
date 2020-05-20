@@ -1270,3 +1270,28 @@ class Orditemconf:
         except(Exception,psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
+
+class InstallBuschn:
+    def __init__(self,fname):
+        self.fname=fname
+    
+    def isfilled(self):
+        cursor.execute("select count (buschn_id) from buschn")
+        res=cursor.fetchone()[0]
+        if res > 0:return True
+        elif res <= 0:return False
+    
+    def defaultlang(self):
+        cursor.execute("""select language_id from languageds where description='English (Nigeria)'""")
+        return cursor.fetchone()[0]
+    
+    def save(self):
+        basedir=os.path.abspath(os.path.dirname(__file__))
+        fileurl=os.path.join(os.path.join(os.path.split(os.path.split(basedir)[0])[0],"static/datafiles"),self.fname)
+        if os.path.isfile(fileurl):
+            df=pd.read_csv(fileurl)
+            df['language_id']=pd.Series([self.defaultlang()]*df.shape[0])
+            values=df.values[:,[0,1,2]]
+            [Buschn(*v).save() for v in values ]
+
+

@@ -274,8 +274,24 @@ class Storecgrp:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
 
+class Catalogtpc:
+    def __init__(self,catalog_id,tradeposcn_id,store_id):
+        self.catalog_id=catalog_id
+        self.tradeposcn_id=tradeposcn_id
+        self.store_id=store_id
+    
+    def save(self):
+        try:
+            cursor.execute("""insert into catalogtpc(catalog_id,tradeposcn_id,store_id)values(%s,%s,%s)
+            on conflict(catalog_id,tradeposcn_id,store_id)do update set catalog_id=%s,tradeposcn_id=%s,
+            store_id=%s returning tradeposcn_id""",(self.catalog_id,self.tradeposcn_id,self.store_id,
+            self.catalog_id,self.tradeposcn_id,self.store_id,));con.commit();return cursor.fetchone()[0]
+        except(Exception,psycopg2.DatabaseError) as e:
+            if con is not None:con.rollback()
+            raise EntryException(str(e).strip().split('\n')[0])
+
 class Catgrptpc:
-    def __init__(self,catalog_id,catgroup_id,tradeposcn_id,store_id):
+    def __init__(self,catalog_id,tradeposcn_id,catgroup_id=0,store_id=0):
         self.catalog_id=catalog_id
         self.catgroup_id=catgroup_id
         self.tradeposcn_id=tradeposcn_id
@@ -426,6 +442,13 @@ class Catentry:
         self.lastorderdate=lastorderdate
         self.endofservicedate=endofservicedate
         self.discontinuedate=discontinuedate
+
+    @staticmethod
+    def name_exists(name):
+        cursor.execute("select catentry_id from catentdesc where name=%s",(name,))
+        res=cursor.fetchone()
+        if res==None:return False
+        elif res!=None:return True
     
     def partprebuild(self,name):
         splits=name.lower().strip().split(' ')
@@ -466,26 +489,27 @@ class Catentry:
     
     @staticmethod
     def read(mid,lid):
-        cursor.execute("""select catentry.catentry_id,catentry.member_id,catentry.itemspc_id,catentry.catenttype_id,
+        cursor.execute("""select catentry.catentry_id,catentry.member_id,catentry.itemspc_id,catentry.catenttype_id::text,
         catentry.partnumber,catentry.mfpartnumber,catentry.mfname,catentry.url,catentry.field1,catentry.field2,
         catentry.lastupdate,catentry.field3,catentry.onspecial,catentry.onauction,catentry.field4,catentry.field5,catentry.buyable,
         catentry.baseitem_id,catentry.state,catentry.startdate,catentry.enddate,catentry.rank,catentry.availabilitydate,
         catentry.lastorderdate,catentry.endofservicedate,catentry.discontinuedate,catentdesc.name,catentdesc.shortdesciption,
         catentdesc.longdesctiption,catentdesc.thumbnail,catentdesc.auxdescription1,catentdesc.fullimage,catentdesc.auxdescription2,
         catentdesc.avaialble,catentdesc.published,catentdesc.availabilitydate,listprice.currency,listprice.listprice::float,
-        catgpenrel.catgroup_id,catgroup.identifier from catentry inner join catentdesc on catentry.catentry_id=catentdesc.catentry_id 
+        catgpenrel.catgroup_id,catgroup.identifier,catgpenrel.catalog_id from catentry inner join catentdesc on catentry.catentry_id=catentdesc.catentry_id 
         inner join listprice on catentry.catentry_id=listprice.catentry_id inner join catgpenrel on catentry.catentry_id=catgpenrel.
         catentry_id inner join catgroup on catgroup.catgroup_id=catgpenrel.catgroup_id where catentry.member_id=%s and catentdesc.language_id=%s""",(mid,lid,))
         res=cursor.fetchall()
         if len(res) <= 0:return [dict()]
-        elif len(res) > 0:return [dict(catentry_id=r[0],member_id=r[1],itemspc_id=r[2],catenttype_id=r[3],
+        elif len(res) > 0:return [dict(catentry_id=r[0],member_id=r[1],itemspc_id=r[2],catenttype_id=r[3],type=r[3],
         partnumber=r[4],mfpartnumber=r[5],mfname=r[6],url=r[7],field1=r[8],field2=r[9],lastupdate=humanize_date(r[10]),
         field3=r[11],onspecial=r[12],onauction=r[13],field4=r[14],field5=r[15],buyable=r[16],baseitem_id=r[17],
         state=r[18],startdate=humanize_date(r[19]),enddate=humanize_date(r[20]),rank=r[21],availabilitydate=humanize_date(r[22]),
         lastorderdate=humanize_date(r[23]),endofservicedate=humanize_date(r[24]),discontinuedate=humanize_date(r[25]),name=r[26],
         shortdescription=r[27],longdescription=r[28],thumbnail=r[29],auxdescription1=r[30],fullimage=r[31],auxdescription2=r[32],
         available=r[33],published=r[34],availabilitydate2=humanize_date(r[35]),currency=r[36],price=r[37],
-        symbol=CurrencyHelper(lid).getcurrsymbol(),catgroup_id=r[38],category=r[39]) for r in res]
+        symbol=CurrencyHelper(lid).getcurrsymbol(),catgroup_id=r[38],category=r[39],catalog_id=r[40],
+        expires=humanize_date(r[24])) for r in res]
     
     def save(self):
         try:
@@ -544,6 +568,15 @@ class Listprice:
         self.currency=currency
         self.listprice=listprice
         self.oid=oid
+    
+    @staticmethod
+    def update(catentry_id,currency,listprice):
+        try:
+            cursor.execute("update listprice set listprice=%s where catentry_id=%s and currency=%s",
+            (listprice,catentry_id,currency,));con.commit()
+        except(Exception,psycopg2.DatabaseError) as e:
+            if con is not None:con.rollback()
+            raise EntryException(str(e).strip().split('\n')[0])
     
     @staticmethod
     def propercode(desc):
@@ -1091,3 +1124,41 @@ class Catentryattr:
             raise EntryException(str(e).strip().split('\n')[0])
 
 # print(Catentryattr.read(1))
+class Catgpcalcd:
+    def __init__(self,store_id,catgroup_id,trading_id=None,calcode_id=None,calflags=0):
+        self.store_id=store_id
+        self.catgroup_id=catgroup_id
+        self.trading_id=trading_id
+        self.calcode_id=calcode_id
+        self.calflags=calflags
+    
+    def save(self):
+        try:
+            cursor.execute("""insert into catgpcalcd(store_id,trading_id,catgroup_id,calcode_id,calflags)
+            values(%s,%s,%s,%s,%s)on conflict(store_id,catgroup_id,calcode_id,trading_id)do update set
+            store_id=%s,trading_id=%s,catgroup_id=%s,calcode_id=%s,calflags=%s returning catgpcalcd_id""",
+            (self.store_id,self.trading_id,self.catgroup_id,self.calcode_id,self.calflags,
+            self.store_id,self.trading_id,self.catgroup_id,self.calcode_id,self.calflags,))
+            con.commit();return cursor.fetchone()[0]
+        except(Exception,psycopg2.DatabaseError) as e:
+            if con is not None:con.rollback()
+            raise EntryException(str(e).strip().split('\n')[0])
+
+class Catencalcd:
+    def __init__(self,store_id,trading_id=None,catentry_id=None,calcode_id=None,calflags=None):
+        self.store_id=store_id
+        self.trading_id=trading_id
+        self.catentry_id=catentry_id
+        self.calcode_id=calcode_id
+        self.calflags=calflags
+    
+    def save(self):
+        try:
+            cursor.execute("""insert into catencalcd(store_id,trading_id,catentry_id,calcode_id,calflags)
+            values(%s,%s,%s,%s,%s)on conflict(store_id,catentry_id,calcode_id,trading_id)do update set store_id=%s,
+            trading_id=%s,catentry_id=%s,calcode_id=%s,calflags=%s returning catencalcd_id""",(self.store_id,
+            self.trading_id,self.catentry_id,self.calcode_id,self.calflags,self.store_id,self.trading_id,
+            self.catentry_id,self.calcode_id,self.calflags,));con.commit();return cursor.fetchone()[0]
+        except(Exception,psycopg2.DatabaseError) as e:
+            if con is not None:con.rollback()
+            raise EntryException(str(e).strip().split('\n')[0])

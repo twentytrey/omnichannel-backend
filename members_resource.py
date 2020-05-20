@@ -3,7 +3,7 @@ from passlib.hash import pbkdf2_sha256 as sha256
 from flask_jwt_extended import (create_access_token,create_refresh_token,jwt_required,jwt_refresh_token_required,get_jwt_identity,get_raw_jwt,get_jwt_claims)
 from flask_jwt_extended.exceptions import RevokedTokenError
 from ops.members.members import Member,Orgentity,Users,Userreg,Mbrrole,Busprof,EntryException,Role,UserSign,Userprof,Address,RolePermDefaults,Addrbook,Address
-from ops.helpers.functions import timestamp_forever,timestamp_now,defaultlanguage
+from ops.helpers.functions import timestamp_forever,timestamp_now,defaultlanguage,datetimestamp_now,datetimestamp_forever
 from ops.authentication.authentication import Plcyacct,Plcypasswd
 from ops.members.members import ListAllMembers
 import json,urllib.request
@@ -117,6 +117,114 @@ class read_organization(Resource):
             "address":Address.readaddress(logonid),"userreg":Userreg.readuserreg(logonid)},200
         except EntryException as e:return {"msg":"Error reading organization data. Error {0}".format(e.message)},422
 
+class update_users(Resource):
+    def __init__(self):
+        self.parser=reqparse.RequestParser()
+        self.parser.add_argument("department")
+        self.parser.add_argument("dn",help="required field",required=True)
+        self.parser.add_argument("employeeid")
+        self.parser.add_argument("employeetype")
+        self.parser.add_argument("employer",help="required field",required=True)
+        self.parser.add_argument("field1",help="required field",required=True)
+        self.parser.add_argument("field2",help="required field",required=True)
+        self.parser.add_argument("field3",help="required field",required=True)
+        self.parser.add_argument("language_id",help="required field",required=True)
+        self.parser.add_argument("manager")
+        self.parser.add_argument("profiletype",help="required field",required=True)
+        self.parser.add_argument("registertype",help="required field",required=True)
+        self.parser.add_argument("setccurr",help="required field",required=True)
+        self.parser.add_argument("users_id",help="required field",required=True)
+        super(update_users,self).__init__()
+    
+    @jwt_required
+    def post(self):
+        data=self.parser.parse_args()
+        department=data["department"]
+        dn=data["dn"]
+        employeeid=data["employeeid"]
+        employeetype=data["employeetype"]
+        employer=data["employer"]
+        field1=data["field1"]
+        field2=data["field2"]
+        field3=data["field3"]
+        language_id=data["language_id"]
+        manager=data["manager"]
+        profiletype=data["profiletype"]
+        registertype=data["registertype"]
+        setccurr=data["setccurr"]
+        users_id=data["users_id"]
+        try:
+            Users(users_id,registertype,dn,profiletype,language_id,field1,setccurr,field3,field2,registrationupdate=datetimestamp_now()).update()
+            Busprof(users_id,employeeid,org_id=employer,employeetype=employeetype,departmentnum=department,manager=manager).update()
+            return {"msg":"Business information updated"},200
+        except EntryException as e:
+            return {"msg":"Error {}".format(e.message)},422
+
+class update_users_address(Resource):
+    def __init__(self):
+        self.parser=reqparse.RequestParser()
+        self.parser.add_argument("addrbook_id",help="required field",required=True)
+        self.parser.add_argument("address1",help="required field",required=True)
+        self.parser.add_argument("address_id",help="required field",required=True)
+        self.parser.add_argument("addresstype")
+        self.parser.add_argument("businesstitle")
+        self.parser.add_argument("city")
+        self.parser.add_argument("country")
+        self.parser.add_argument("description")
+        self.parser.add_argument("displayname",help="required field",required=True)
+        self.parser.add_argument("email1")
+        self.parser.add_argument("email2")
+        self.parser.add_argument("firstname")
+        self.parser.add_argument("isprimary")
+        self.parser.add_argument("lastname")
+        self.parser.add_argument("member_id",help="required field",required=True)
+        self.parser.add_argument("middlename")
+        self.parser.add_argument("nickname",help="required field",required=True)
+        self.parser.add_argument("orgname")
+        self.parser.add_argument("persontitle")
+        self.parser.add_argument("phone1")
+        self.parser.add_argument("phone2")
+        self.parser.add_argument("state")
+        self.parser.add_argument("status")
+        self.parser.add_argument("zipcode")
+        super(update_users_address,self).__init__()
+
+    def post(self):
+        data=self.parser.parse_args()
+        addrbook_id=data["addrbook_id"]
+        address1=data["address1"]
+        address_id=data["address_id"]
+        addresstype=data["addresstype"]
+        businesstitle=data["businesstitle"]
+        city=data["city"]
+        country=data["country"]
+        description=data["description"]
+        displayname=data["displayname"]
+        email1=data["email1"]
+        email2=data["email2"]
+        firstname=data["firstname"]
+        isprimary=data["isprimary"]
+        lastname=data["lastname"]
+        member_id=data["member_id"]
+        middlename=data["middlename"]
+        nickname=data["nickname"]
+        orgname=data["orgname"]
+        persontitle=data["persontitle"]
+        phone1=data["phone1"]
+        phone2=data["phone2"]
+        state=data["state"]
+        status=data["status"]
+        zipcode=data["zipcode"]
+        try:
+            Addrbook(member_id,displayname,description=description).update()
+            Address(addrbook_id,member_id,nickname,addresstype=addresstype,isprimary=isprimary,lastname=lastname,
+            persontitle=persontitle,firstname=firstname,middlename=middlename,businesstitle=businesstitle,phone1=phone1,
+            phone2=phone2,address1=address1,city=city,state=state,country=country,zipcode=zipcode,email1=email1,
+            email2=email2,status=status,orgname=orgname,address_id=address_id).update()
+            return {"msg":"Successfully updated contact information"},200
+        except EntryException as e:
+            return {"msg":"Error {}".format(e.message)},422
+
 class update_orgentity(Resource):
     def __init__(self):
         self.parser=reqparse.RequestParser()
@@ -156,30 +264,30 @@ class update_orgentity(Resource):
 class update_address(Resource):
     def __init__(self):
         self.parser=reqparse.RequestParser()
-        self.parser.add_argument("member_id",help="required field",required=True)
-        self.parser.add_argument("displayname",help="required field",required=True)
-        self.parser.add_argument("description")
         self.parser.add_argument("addrbook_id",help="required field",required=True)
-        self.parser.add_argument("status")
-        self.parser.add_argument("orgname")
-        self.parser.add_argument("nickname",help="required field",required=True)
-        self.parser.add_argument("isprimary")
-        self.parser.add_argument("lastname")
-        self.parser.add_argument("persontitle")
-        self.parser.add_argument("firstname")
-        self.parser.add_argument("middlename")
+        self.parser.add_argument("address1",help="required field",required=True)
+        self.parser.add_argument("address_id",help="required field",required=True)
+        self.parser.add_argument("addresstype")
         self.parser.add_argument("businesstitle")
-        self.parser.add_argument("phone1")
-        self.parser.add_argument("phone2")
-        self.parser.add_argument("address1")
         self.parser.add_argument("city")
-        self.parser.add_argument("state")
         self.parser.add_argument("country")
-        self.parser.add_argument("zipcode")
+        self.parser.add_argument("description")
+        self.parser.add_argument("displayname",help="required field",required=True)
         self.parser.add_argument("email1")
         self.parser.add_argument("email2")
-        self.parser.add_argument("addresstype")
-        self.parser.add_argument("address_id",help="required field",required=True)
+        self.parser.add_argument("firstname")
+        self.parser.add_argument("isprimary")
+        self.parser.add_argument("lastname")
+        self.parser.add_argument("member_id",help="required field",required=True)
+        self.parser.add_argument("middlename")
+        self.parser.add_argument("nickname",help="required field",required=True)
+        self.parser.add_argument("orgname")
+        self.parser.add_argument("persontitle")
+        self.parser.add_argument("phone1")
+        self.parser.add_argument("phone2")
+        self.parser.add_argument("state")
+        self.parser.add_argument("status")
+        self.parser.add_argument("zipcode")
         super(update_address,self).__init__()
     
     @jwt_required
@@ -218,19 +326,65 @@ class update_address(Resource):
         except EntryException as e:
             return {"msg":"Error updating contact information. Error {0}".format(e.message)},422
 
+class update_user_preferences(Resource):
+    def __init__(self):
+        self.parser=reqparse.RequestParser()
+        self.parser.add_argument("description")
+        self.parser.add_argument("displayname")
+        self.parser.add_argument("dn")
+        self.parser.add_argument("language_id")
+        self.parser.add_argument("photo")
+        self.parser.add_argument("preferredcomm")
+        self.parser.add_argument("profiletype")
+        self.parser.add_argument("rcvsmsnotification")
+        self.parser.add_argument("registertype")
+        self.parser.add_argument("setccurr")
+        self.parser.add_argument("status")
+        self.parser.add_argument("users_id")
+        self.parser.add_argument("field1")
+        self.parser.add_argument("field2")
+        self.parser.add_argument("field3")
+        super(update_user_preferences,self).__init__()
+    
+    @jwt_required
+    def post(self):
+        data=self.parser.parse_args()
+        description=data["description"]
+        displayname=data["displayname"]
+        dn=data["dn"]
+        language_id=data["language_id"]
+        photo=data["photo"]
+        preferredcomm=data["preferredcomm"]
+        profiletype=data["profiletype"]
+        rcvsmsnotification=data["rcvsmsnotification"]
+        if rcvsmsnotification=="Yes":rcvsmsnotification=1
+        elif rcvsmsnotification=="No":rcvsmsnotification=0
+        registertype=data["registertype"]
+        setccurr=data["setccurr"]
+        status=data["status"]
+        users_id=data["users_id"]
+        field1=data["field1"]
+        field2=data["field2"]
+        field3=data["field3"]
+        try:
+            Users(users_id,registertype,dn,profiletype,language_id,field1,setccurr,field3,field2,registrationupdate=datetimestamp_now()).update()
+            Userprof(users_id,photo=photo,description=description,displayname=displayname,preferredcomm=preferredcomm,rcvsmsnotification=rcvsmsnotification).save()
+            return {"msg":"Successfully updated preferences"},200
+        except EntryException as e:return {"msg":"Error {}".format(e.message)},422
+
 class update_preferences(Resource):
     def __init__(self):
         self.parser=reqparse.RequestParser()
-        self.parser.add_argument("language_id")
-        self.parser.add_argument("setccurr")
         self.parser.add_argument("description")
         self.parser.add_argument("displayname")
-        self.parser.add_argument("preferredcomm")
-        self.parser.add_argument("photo")
-        self.parser.add_argument("rcvsmsnotification")
         self.parser.add_argument("dn",help="required field",required=True)
-        self.parser.add_argument("registertype",help="required field",required=True)
+        self.parser.add_argument("language_id")
+        self.parser.add_argument("photo")
+        self.parser.add_argument("preferredcomm")
         self.parser.add_argument("profiletype",help="required field",required=True)
+        self.parser.add_argument("rcvsmsnotification")
+        self.parser.add_argument("registertype",help="required field",required=True)
+        self.parser.add_argument("setccurr")
         self.parser.add_argument("users_id",help="required field",required=True)
         super(update_preferences,self).__init__()
     
@@ -333,30 +487,30 @@ class _create_business_user(Resource):
 class create_business_user(Resource):
     def __init__(self):
         self.parser=reqparse.RequestParser()
-        self.parser.add_argument("membertype",help="required field",required=True)
-        self.parser.add_argument("memberstate",help="compulsory field",required=True)
-        self.parser.add_argument("registertype",help="required field",required=True)
-        self.parser.add_argument("profiletype",help="required field",required=True)
+        self.parser.add_argument("employerid",help="required field",required=True)
         self.parser.add_argument("firstname",help="required field",required=True)
-        self.parser.add_argument("middlename",help="required field",required=True)
         self.parser.add_argument("lastname",help="required field",required=True)
         self.parser.add_argument("logonid",help="required field",required=True)
-        self.parser.add_argument("employerid",help="required field",required=True)
+        self.parser.add_argument("memberstate",help="compulsory field",required=True)
+        self.parser.add_argument("membertype",help="required field",required=True)
+        self.parser.add_argument("middlename")
+        self.parser.add_argument("profiletype",help="required field",required=True)
+        self.parser.add_argument("registertype",help="required field",required=True)
         self.parser.add_argument("role_id",help="required field",required=True)
         super(create_business_user,self).__init__()
     
     @jwt_required
     def post(self):
         data=self.parser.parse_args()
-        membertype=data["membertype"]
-        memberstate=data["memberstate"]
-        registertype=data["registertype"]
-        profiletype=data["profiletype"]
+        employerid=data["employerid"]
         firstname=data["firstname"]
-        middlename=data["middlename"]
         lastname=data["lastname"]
         logonid=data["logonid"]
-        employerid=data["employerid"]
+        memberstate=data["memberstate"]
+        membertype=data["membertype"]
+        middlename=data["middlename"]
+        profiletype=data["profiletype"]
+        registertype=data["registertype"]
         role_id=data["role_id"]
         try:
             member=Member(membertype,memberstate=memberstate)
@@ -447,3 +601,43 @@ class approve_member(Resource):
                 return {"usersdata":ListAllMembers().data(),"msg":"Successfully approved member"},200
         except EntryException as e:
             return {"msg":"Error saving {}".format(e.message)},422
+
+class read_profile(Resource):
+    def __init__(self):
+        self.parser=reqparse.RequestParser()
+        self.parser.add_argument("logonid",help="compulsory field",required=True)
+        super(read_profile,self).__init__()
+    
+    @jwt_required
+    def post(self):
+        data=self.parser.parse_args()
+        logonid=data['logonid']
+        try:
+            return {"member":Member.readmember(logonid),"orgentity":Orgentity.readorgentity(logonid),
+            "users":Users.readusers(logonid),"busprof":Busprof.readbusprof(logonid),
+            "userprof":Userprof.readuserprof(logonid),"addrbook":Addrbook.readaddrbook(logonid),
+            "address":Address.readaddress(logonid),"userreg":Userreg.readuserreg(logonid)},200
+        except EntryException as e:return {"msg":"Error reading organization data. Error {0}".format(e.message)},422
+
+class verify_token(Resource):
+    def __init__(self):
+        self.parser=reqparse.RequestParser()
+        self.parser.add_argument("logonid",help='compulsory field',required=True)
+        self.parser.add_argument("otptoken",help='compulsory field',required=True)
+        super(verify_token,self).__init__()
+    
+    def post(self):
+        data=self.parser.parse_args()
+        logonid=data["logonid"]
+        otp=data["otptoken"]
+        users_id=Userreg.getusersid(logonid)
+        salt=Userreg.getsalt(users_id)
+        if salt==otp:
+            usersign=UserSign(logonid)
+            Member.approve_member(users_id)
+            access_token=create_access_token(identity=usersign);refresh_token=create_refresh_token(identity=usersign)
+            return {"access_token":access_token,"refresh_token":refresh_token,
+                    "msg":"Successfully verified",
+                    "user_id":usersign.member_id,"employer":usersign.employer,"roles":usersign.roles,
+                    "language_id":usersign.language_id,"profile":usersign.profiletype},200
+        else:return {"msg":"Token entered was unrecognizable"},422

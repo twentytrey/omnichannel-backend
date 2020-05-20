@@ -2,7 +2,7 @@ from flask_restful import Resource,reqparse
 from passlib.hash import pbkdf2_sha256 as sha256
 from flask_jwt_extended import (create_access_token,create_refresh_token,jwt_required,jwt_refresh_token_required,get_jwt_identity,get_raw_jwt,get_jwt_claims)
 from flask_jwt_extended.exceptions import RevokedTokenError
-from ops.members.members import Member,Orgentity,Users,Userreg,Mbrrole,Busprof,EntryException,Role,UserSign,Userprof,Address,RolePermDefaults,Addrbook,Address
+from ops.members.members import Member,Orgentity,Users,Userreg,Mbrrole,Busprof,EntryException,Role,UserSign,Userprof,Address,RolePermDefaults,Addrbook,Address,RevokedToken
 from ops.helpers.functions import timestamp_forever,timestamp_now,defaultlanguage
 from ops.authentication.authentication import Plcyacct,Plcypasswd
 from ops.countryandstate.countryandstate import Country,Stateprov
@@ -47,3 +47,32 @@ class user_identity(Resource):
         current_user=get_jwt_identity()
         useridentity=get_jwt_claims()
         return dict(current_user=current_user,user=useridentity),200
+
+class logout_access(Resource):
+    @jwt_required
+    def post(self):
+        jti=get_raw_jwt()['jti']
+        try:
+            RevokedToken(jti).add()
+            return {"msg":"Access token has been revoked"}
+        except Exception as e:
+            return {"msg":"Error {}".format(str(e))},500
+
+class logout_refresh(Resource):
+    @jwt_refresh_token_required
+    def post(self):
+        jti=get_raw_jwt()['jti']
+        try:
+            RevokedToken(jti).add()
+            return {"msg":"Refresh token has been revoked"},200
+        except Exception as e:
+            return {"msg":"Error {}".format(str(e))},500
+
+class token_refresh(Resource):
+    @jwt_refresh_token_required
+    def post(self):
+        current_user=get_jwt_identity()
+        usersign=UserSign(current_user)
+        access_token=create_access_token(identity=usersign)
+        return {"access_token":access_token}
+

@@ -69,3 +69,19 @@ class create_account(Resource):
             return {"msg":"Successfully created account","accountsdata":Faccount.read(member_id,language_id)},200
         except EntryException as e:
             return {"msg":"Error creating account. Error {0}".format(e.message)},422
+
+class ac_read_account(Resource):
+    def __init__(self):
+        self.parser=reqparse.RequestParser()
+        self.parser.add_argument("member_id",help="required field",required=True)
+        self.parser.add_argument("language_id",help="required field",required=True)
+        self.parser.add_argument("faccount_id",help="required field",required=True)
+        super(ac_read_account,self).__init__()
+    
+    @jwt_required
+    def post(self):
+        data=self.parser.parse_args()
+        member_id=data["member_id"]
+        language_id=data["language_id"]
+        faccount_id=data["faccount_id"]
+        return Faccount.readaccount(faccount_id,member_id,language_id),200

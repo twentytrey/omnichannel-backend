@@ -1,0 +1,175 @@
+[Mon May 11 06:25:01.265504 2020] [mpm_event:notice] [pid 1650:tid 140133596744640] AH00489: Apache/2.4.29 (Ubuntu) OpenSSL/1.1.1 mod_wsgi/4.5.17 Python/3.6 configured -- resuming normal operations
+[Mon May 11 06:25:01.265530 2020] [core:notice] [pid 1650:tid 140133596744640] AH00094: Command line: '/usr/sbin/apache2'
+[Mon May 11 07:20:00.332527 2020] [mpm_event:notice] [pid 1650:tid 140133596744640] AH00493: SIGUSR1 received.  Doing graceful restart
+AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 2a01:7e01::f03c:92ff:fe7a:d4e4. Set the 'ServerName' directive globally to suppress this message
+[Mon May 11 07:20:00.375326 2020] [mpm_event:notice] [pid 1650:tid 140133596744640] AH00489: Apache/2.4.29 (Ubuntu) OpenSSL/1.1.1 mod_wsgi/4.5.17 Python/3.6 configured -- resuming normal operations
+[Mon May 11 07:20:00.375340 2020] [core:notice] [pid 1650:tid 140133596744640] AH00094: Command line: '/usr/sbin/apache2'
+[Mon May 11 07:26:17.891298 2020] [mpm_event:notice] [pid 1650:tid 140133596744640] AH00493: SIGUSR1 received.  Doing graceful restart
+AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 2a01:7e01::f03c:92ff:fe7a:d4e4. Set the 'ServerName' directive globally to suppress this message
+[Mon May 11 07:26:17.923299 2020] [mpm_event:notice] [pid 1650:tid 140133596744640] AH00489: Apache/2.4.29 (Ubuntu) OpenSSL/1.1.1 mod_wsgi/4.5.17 Python/3.6 configured -- resuming normal operations
+[Mon May 11 07:26:17.923310 2020] [core:notice] [pid 1650:tid 140133596744640] AH00094: Command line: '/usr/sbin/apache2'
+[Mon May 11 07:40:13.134024 2020] [mpm_event:notice] [pid 1650:tid 140133596744640] AH00493: SIGUSR1 received.  Doing graceful restart
+AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 2a01:7e01::f03c:92ff:fe7a:d4e4. Set the 'ServerName' directive globally to suppress this message
+[Mon May 11 07:40:13.171035 2020] [mpm_event:notice] [pid 1650:tid 140133596744640] AH00489: Apache/2.4.29 (Ubuntu) OpenSSL/1.1.1 mod_wsgi/4.5.17 Python/3.6 configured -- resuming normal operations
+[Mon May 11 07:40:13.171053 2020] [core:notice] [pid 1650:tid 140133596744640] AH00094: Command line: '/usr/sbin/apache2'
+[Mon May 11 08:13:44.167599 2020] [mpm_event:notice] [pid 1650:tid 140133596744640] AH00493: SIGUSR1 received.  Doing graceful restart
+AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 2a01:7e01::f03c:92ff:fe7a:d4e4. Set the 'ServerName' directive globally to suppress this message
+[Mon May 11 08:13:44.200218 2020] [mpm_event:notice] [pid 1650:tid 140133596744640] AH00489: Apache/2.4.29 (Ubuntu) OpenSSL/1.1.1 mod_wsgi/4.5.17 Python/3.6 configured -- resuming normal operations
+[Mon May 11 08:13:44.200228 2020] [core:notice] [pid 1650:tid 140133596744640] AH00094: Command line: '/usr/sbin/apache2'
+[Mon May 11 08:27:16.496674 2020] [mpm_event:notice] [pid 1650:tid 140133596744640] AH00493: SIGUSR1 received.  Doing graceful restart
+AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 2a01:7e01::f03c:92ff:fe7a:d4e4. Set the 'ServerName' directive globally to suppress this message
+[Mon May 11 08:27:16.520963 2020] [mpm_event:notice] [pid 1650:tid 140133596744640] AH00489: Apache/2.4.29 (Ubuntu) OpenSSL/1.1.1 mod_wsgi/4.5.17 Python/3.6 configured -- resuming normal operations
+[Mon May 11 08:27:16.520974 2020] [core:notice] [pid 1650:tid 140133596744640] AH00094: Command line: '/usr/sbin/apache2'
+[Mon May 11 08:31:19.094242 2020] [mpm_event:notice] [pid 1650:tid 140133596744640] AH00493: SIGUSR1 received.  Doing graceful restart
+AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 2a01:7e01::f03c:92ff:fe7a:d4e4. Set the 'ServerName' directive globally to suppress this message
+[Mon May 11 08:31:19.120246 2020] [mpm_event:notice] [pid 1650:tid 140133596744640] AH00489: Apache/2.4.29 (Ubuntu) OpenSSL/1.1.1 mod_wsgi/4.5.17 Python/3.6 configured -- resuming normal operations
+[Mon May 11 08:31:19.120259 2020] [core:notice] [pid 1650:tid 140133596744640] AH00094: Command line: '/usr/sbin/apache2'
+[Mon May 11 08:34:39.248656 2020] [mpm_event:notice] [pid 1650:tid 140133596744640] AH00493: SIGUSR1 received.  Doing graceful restart
+AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 2a01:7e01::f03c:92ff:fe7a:d4e4. Set the 'ServerName' directive globally to suppress this message
+[Mon May 11 08:34:39.272826 2020] [mpm_event:notice] [pid 1650:tid 140133596744640] AH00489: Apache/2.4.29 (Ubuntu) OpenSSL/1.1.1 mod_wsgi/4.5.17 Python/3.6 configured -- resuming normal operations
+[Mon May 11 08:34:39.272835 2020] [core:notice] [pid 1650:tid 140133596744640] AH00094: Command line: '/usr/sbin/apache2'
+[Mon May 11 08:40:06.254052 2020] [mpm_event:notice] [pid 1650:tid 140133596744640] AH00493: SIGUSR1 received.  Doing graceful restart
+AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 2a01:7e01::f03c:92ff:fe7a:d4e4. Set the 'ServerName' directive globally to suppress this message
+[Mon May 11 08:40:06.280176 2020] [mpm_event:notice] [pid 1650:tid 140133596744640] AH00489: Apache/2.4.29 (Ubuntu) OpenSSL/1.1.1 mod_wsgi/4.5.17 Python/3.6 configured -- resuming normal operations
+[Mon May 11 08:40:06.280184 2020] [core:notice] [pid 1650:tid 140133596744640] AH00094: Command line: '/usr/sbin/apache2'
+[Mon May 11 08:46:47.675883 2020] [mpm_event:notice] [pid 1650:tid 140133596744640] AH00493: SIGUSR1 received.  Doing graceful restart
+AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 2a01:7e01::f03c:92ff:fe7a:d4e4. Set the 'ServerName' directive globally to suppress this message
+[Mon May 11 08:46:47.710554 2020] [mpm_event:notice] [pid 1650:tid 140133596744640] AH00489: Apache/2.4.29 (Ubuntu) OpenSSL/1.1.1 mod_wsgi/4.5.17 Python/3.6 configured -- resuming normal operations
+[Mon May 11 08:46:47.710572 2020] [core:notice] [pid 1650:tid 140133596744640] AH00094: Command line: '/usr/sbin/apache2'
+[Mon May 11 08:49:09.737422 2020] [mpm_event:notice] [pid 1650:tid 140133596744640] AH00493: SIGUSR1 received.  Doing graceful restart
+AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 2a01:7e01::f03c:92ff:fe7a:d4e4. Set the 'ServerName' directive globally to suppress this message
+[Mon May 11 08:49:09.766658 2020] [mpm_event:notice] [pid 1650:tid 140133596744640] AH00489: Apache/2.4.29 (Ubuntu) OpenSSL/1.1.1 mod_wsgi/4.5.17 Python/3.6 configured -- resuming normal operations
+[Mon May 11 08:49:09.766675 2020] [core:notice] [pid 1650:tid 140133596744640] AH00094: Command line: '/usr/sbin/apache2'
+[Mon May 11 09:27:24.900681 2020] [mpm_event:notice] [pid 1650:tid 140133596744640] AH00493: SIGUSR1 received.  Doing graceful restart
+AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 2a01:7e01::f03c:92ff:fe7a:d4e4. Set the 'ServerName' directive globally to suppress this message
+[Mon May 11 09:27:24.932298 2020] [mpm_event:notice] [pid 1650:tid 140133596744640] AH00489: Apache/2.4.29 (Ubuntu) OpenSSL/1.1.1 mod_wsgi/4.5.17 Python/3.6 configured -- resuming normal operations
+[Mon May 11 09:27:24.932310 2020] [core:notice] [pid 1650:tid 140133596744640] AH00094: Command line: '/usr/sbin/apache2'
+[Mon May 11 09:38:12.000734 2020] [mpm_event:notice] [pid 1650:tid 140133596744640] AH00493: SIGUSR1 received.  Doing graceful restart
+AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 2a01:7e01::f03c:92ff:fe7a:d4e4. Set the 'ServerName' directive globally to suppress this message
+[Mon May 11 09:38:12.036149 2020] [mpm_event:notice] [pid 1650:tid 140133596744640] AH00489: Apache/2.4.29 (Ubuntu) OpenSSL/1.1.1 mod_wsgi/4.5.17 Python/3.6 configured -- resuming normal operations
+[Mon May 11 09:38:12.036164 2020] [core:notice] [pid 1650:tid 140133596744640] AH00094: Command line: '/usr/sbin/apache2'
+[Mon May 11 10:09:44.246521 2020] [mpm_event:notice] [pid 1650:tid 140133596744640] AH00493: SIGUSR1 received.  Doing graceful restart
+AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 2a01:7e01::f03c:92ff:fe7a:d4e4. Set the 'ServerName' directive globally to suppress this message
+[Mon May 11 10:09:44.272125 2020] [mpm_event:notice] [pid 1650:tid 140133596744640] AH00489: Apache/2.4.29 (Ubuntu) OpenSSL/1.1.1 mod_wsgi/4.5.17 Python/3.6 configured -- resuming normal operations
+[Mon May 11 10:09:44.272133 2020] [core:notice] [pid 1650:tid 140133596744640] AH00094: Command line: '/usr/sbin/apache2'
+[Mon May 11 10:24:37.340236 2020] [mpm_event:notice] [pid 1650:tid 140133596744640] AH00493: SIGUSR1 received.  Doing graceful restart
+AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 2a01:7e01::f03c:92ff:fe7a:d4e4. Set the 'ServerName' directive globally to suppress this message
+[Mon May 11 10:24:37.371777 2020] [mpm_event:notice] [pid 1650:tid 140133596744640] AH00489: Apache/2.4.29 (Ubuntu) OpenSSL/1.1.1 mod_wsgi/4.5.17 Python/3.6 configured -- resuming normal operations
+[Mon May 11 10:24:37.371790 2020] [core:notice] [pid 1650:tid 140133596744640] AH00094: Command line: '/usr/sbin/apache2'
+[Mon May 11 10:31:49.988797 2020] [mpm_event:notice] [pid 1650:tid 140133596744640] AH00493: SIGUSR1 received.  Doing graceful restart
+AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 2a01:7e01::f03c:92ff:fe7a:d4e4. Set the 'ServerName' directive globally to suppress this message
+[Mon May 11 10:31:50.010564 2020] [mpm_event:notice] [pid 1650:tid 140133596744640] AH00489: Apache/2.4.29 (Ubuntu) OpenSSL/1.1.1 mod_wsgi/4.5.17 Python/3.6 configured -- resuming normal operations
+[Mon May 11 10:31:50.010587 2020] [core:notice] [pid 1650:tid 140133596744640] AH00094: Command line: '/usr/sbin/apache2'
+[Mon May 11 13:14:11.012653 2020] [wsgi:error] [pid 24600:tid 140133315610368] [client 41.217.70.79:42242] ERROR:__init__:Exception on /api/v1.0/list_all_members [GET], referer: http://localhost:8080/
+[Mon May 11 13:14:11.012700 2020] [wsgi:error] [pid 24600:tid 140133315610368] [client 41.217.70.79:42242] Traceback (most recent call last):, referer: http://localhost:8080/
+[Mon May 11 13:14:11.012705 2020] [wsgi:error] [pid 24600:tid 140133315610368] [client 41.217.70.79:42242]   File "/usr/local/lib/python3.6/dist-packages/flask/app.py", line 1949, in full_dispatch_request, referer: http://localhost:8080/
+[Mon May 11 13:14:11.012709 2020] [wsgi:error] [pid 24600:tid 140133315610368] [client 41.217.70.79:42242]     rv = self.dispatch_request(), referer: http://localhost:8080/
+[Mon May 11 13:14:11.012713 2020] [wsgi:error] [pid 24600:tid 140133315610368] [client 41.217.70.79:42242]   File "/usr/local/lib/python3.6/dist-packages/flask/app.py", line 1935, in dispatch_request, referer: http://localhost:8080/
+[Mon May 11 13:14:11.012716 2020] [wsgi:error] [pid 24600:tid 140133315610368] [client 41.217.70.79:42242]     return self.view_functions[rule.endpoint](**req.view_args), referer: http://localhost:8080/
+[Mon May 11 13:14:11.012720 2020] [wsgi:error] [pid 24600:tid 140133315610368] [client 41.217.70.79:42242]   File "/usr/local/lib/python3.6/dist-packages/flask_restful/__init__.py", line 462, in wrapper, referer: http://localhost:8080/
+[Mon May 11 13:14:11.012724 2020] [wsgi:error] [pid 24600:tid 140133315610368] [client 41.217.70.79:42242]     return self.make_response(data, code, headers=headers), referer: http://localhost:8080/
+[Mon May 11 13:14:11.012727 2020] [wsgi:error] [pid 24600:tid 140133315610368] [client 41.217.70.79:42242]   File "/usr/local/lib/python3.6/dist-packages/flask_restful/__init__.py", line 491, in make_response, referer: http://localhost:8080/
+[Mon May 11 13:14:11.012731 2020] [wsgi:error] [pid 24600:tid 140133315610368] [client 41.217.70.79:42242]     resp = self.representations[mediatype](data, *args, **kwargs), referer: http://localhost:8080/
+[Mon May 11 13:14:11.012735 2020] [wsgi:error] [pid 24600:tid 140133315610368] [client 41.217.70.79:42242]   File "/usr/local/lib/python3.6/dist-packages/flask_restful/representations/json.py", line 21, in output_json, referer: http://localhost:8080/
+[Mon May 11 13:14:11.012748 2020] [wsgi:error] [pid 24600:tid 140133315610368] [client 41.217.70.79:42242]     dumped = dumps(data, **settings) + "\\n", referer: http://localhost:8080/
+[Mon May 11 13:14:11.012751 2020] [wsgi:error] [pid 24600:tid 140133315610368] [client 41.217.70.79:42242]   File "/usr/lib/python3.6/json/__init__.py", line 231, in dumps, referer: http://localhost:8080/
+[Mon May 11 13:14:11.012755 2020] [wsgi:error] [pid 24600:tid 140133315610368] [client 41.217.70.79:42242]     return _default_encoder.encode(obj), referer: http://localhost:8080/
+[Mon May 11 13:14:11.012758 2020] [wsgi:error] [pid 24600:tid 140133315610368] [client 41.217.70.79:42242]   File "/usr/lib/python3.6/json/encoder.py", line 199, in encode, referer: http://localhost:8080/
+[Mon May 11 13:14:11.012761 2020] [wsgi:error] [pid 24600:tid 140133315610368] [client 41.217.70.79:42242]     chunks = self.iterencode(o, _one_shot=True), referer: http://localhost:8080/
+[Mon May 11 13:14:11.012764 2020] [wsgi:error] [pid 24600:tid 140133315610368] [client 41.217.70.79:42242]   File "/usr/lib/python3.6/json/encoder.py", line 257, in iterencode, referer: http://localhost:8080/
+[Mon May 11 13:14:11.012767 2020] [wsgi:error] [pid 24600:tid 140133315610368] [client 41.217.70.79:42242]     return _iterencode(o, 0), referer: http://localhost:8080/
+[Mon May 11 13:14:11.012770 2020] [wsgi:error] [pid 24600:tid 140133315610368] [client 41.217.70.79:42242]   File "/usr/lib/python3.6/json/encoder.py", line 180, in default, referer: http://localhost:8080/
+[Mon May 11 13:14:11.012773 2020] [wsgi:error] [pid 24600:tid 140133315610368] [client 41.217.70.79:42242]     o.__class__.__name__), referer: http://localhost:8080/
+[Mon May 11 13:14:11.012778 2020] [wsgi:error] [pid 24600:tid 140133315610368] [client 41.217.70.79:42242] TypeError: Object of type 'datetime' is not JSON serializable, referer: http://localhost:8080/
+[Mon May 11 13:14:11.012784 2020] [wsgi:error] [pid 24600:tid 140133315610368] [client 41.217.70.79:42242] , referer: http://localhost:8080/
+[Mon May 11 13:16:33.610838 2020] [wsgi:error] [pid 24599:tid 140133340788480] [client 41.217.70.79:42730] ERROR:__init__:Exception on /api/v1.0/user_identity [GET], referer: http://localhost:8080/
+[Mon May 11 13:16:33.610882 2020] [wsgi:error] [pid 24599:tid 140133340788480] [client 41.217.70.79:42730] Traceback (most recent call last):, referer: http://localhost:8080/
+[Mon May 11 13:16:33.610889 2020] [wsgi:error] [pid 24599:tid 140133340788480] [client 41.217.70.79:42730]   File "/usr/local/lib/python3.6/dist-packages/jwt/api_jws.py", line 180, in _load, referer: http://localhost:8080/
+[Mon May 11 13:16:33.610894 2020] [wsgi:error] [pid 24599:tid 140133340788480] [client 41.217.70.79:42730]     signing_input, crypto_segment = jwt.rsplit(b'.', 1), referer: http://localhost:8080/
+[Mon May 11 13:16:33.610898 2020] [wsgi:error] [pid 24599:tid 140133340788480] [client 41.217.70.79:42730] ValueError: not enough values to unpack (expected 2, got 1), referer: http://localhost:8080/
+[Mon May 11 13:16:33.610902 2020] [wsgi:error] [pid 24599:tid 140133340788480] [client 41.217.70.79:42730] , referer: http://localhost:8080/
+[Mon May 11 13:16:33.610906 2020] [wsgi:error] [pid 24599:tid 140133340788480] [client 41.217.70.79:42730] During handling of the above exception, another exception occurred:, referer: http://localhost:8080/
+[Mon May 11 13:16:33.610910 2020] [wsgi:error] [pid 24599:tid 140133340788480] [client 41.217.70.79:42730] , referer: http://localhost:8080/
+[Mon May 11 13:16:33.610914 2020] [wsgi:error] [pid 24599:tid 140133340788480] [client 41.217.70.79:42730] Traceback (most recent call last):, referer: http://localhost:8080/
+[Mon May 11 13:16:33.610919 2020] [wsgi:error] [pid 24599:tid 140133340788480] [client 41.217.70.79:42730]   File "/usr/local/lib/python3.6/dist-packages/flask/app.py", line 1949, in full_dispatch_request, referer: http://localhost:8080/
+[Mon May 11 13:16:33.610924 2020] [wsgi:error] [pid 24599:tid 140133340788480] [client 41.217.70.79:42730]     rv = self.dispatch_request(), referer: http://localhost:8080/
+[Mon May 11 13:16:33.610938 2020] [wsgi:error] [pid 24599:tid 140133340788480] [client 41.217.70.79:42730]   File "/usr/local/lib/python3.6/dist-packages/flask/app.py", line 1935, in dispatch_request, referer: http://localhost:8080/
+[Mon May 11 13:16:33.610943 2020] [wsgi:error] [pid 24599:tid 140133340788480] [client 41.217.70.79:42730]     return self.view_functions[rule.endpoint](**req.view_args), referer: http://localhost:8080/
+[Mon May 11 13:16:33.610948 2020] [wsgi:error] [pid 24599:tid 140133340788480] [client 41.217.70.79:42730]   File "/usr/local/lib/python3.6/dist-packages/flask_restful/__init__.py", line 458, in wrapper, referer: http://localhost:8080/
+[Mon May 11 13:16:33.610952 2020] [wsgi:error] [pid 24599:tid 140133340788480] [client 41.217.70.79:42730]     resp = resource(*args, **kwargs), referer: http://localhost:8080/
+[Mon May 11 13:16:33.610956 2020] [wsgi:error] [pid 24599:tid 140133340788480] [client 41.217.70.79:42730]   File "/usr/local/lib/python3.6/dist-packages/flask/views.py", line 89, in view, referer: http://localhost:8080/
+[Mon May 11 13:16:33.610959 2020] [wsgi:error] [pid 24599:tid 140133340788480] [client 41.217.70.79:42730]     return self.dispatch_request(*args, **kwargs), referer: http://localhost:8080/
+[Mon May 11 13:16:33.610964 2020] [wsgi:error] [pid 24599:tid 140133340788480] [client 41.217.70.79:42730]   File "/usr/local/lib/python3.6/dist-packages/flask_restful/__init__.py", line 573, in dispatch_request, referer: http://localhost:8080/
+[Mon May 11 13:16:33.610967 2020] [wsgi:error] [pid 24599:tid 140133340788480] [client 41.217.70.79:42730]     resp = meth(*args, **kwargs), referer: http://localhost:8080/
+[Mon May 11 13:16:33.610971 2020] [wsgi:error] [pid 24599:tid 140133340788480] [client 41.217.70.79:42730]   File "/usr/local/lib/python3.6/dist-packages/flask_jwt_extended/view_decorators.py", line 107, in wrapper, referer: http://localhost:8080/
+[Mon May 11 13:16:33.610976 2020] [wsgi:error] [pid 24599:tid 140133340788480] [client 41.217.70.79:42730]     verify_jwt_in_request(), referer: http://localhost:8080/
+[Mon May 11 13:16:33.610980 2020] [wsgi:error] [pid 24599:tid 140133340788480] [client 41.217.70.79:42730]   File "/usr/local/lib/python3.6/dist-packages/flask_jwt_extended/view_decorators.py", line 32, in verify_jwt_in_request, referer: http://localhost:8080/
+[Mon May 11 13:16:33.610984 2020] [wsgi:error] [pid 24599:tid 140133340788480] [client 41.217.70.79:42730]     jwt_data, jwt_header = _decode_jwt_from_request(request_type='access'), referer: http://localhost:8080/
+[Mon May 11 13:16:33.610988 2020] [wsgi:error] [pid 24599:tid 140133340788480] [client 41.217.70.79:42730]   File "/usr/local/lib/python3.6/dist-packages/flask_jwt_extended/view_decorators.py", line 294, in _decode_jwt_from_request, referer: http://localhost:8080/
+[Mon May 11 13:16:33.610991 2020] [wsgi:error] [pid 24599:tid 140133340788480] [client 41.217.70.79:42730]     decoded_token = decode_token(encoded_token, csrf_token), referer: http://localhost:8080/
+[Mon May 11 13:16:33.610995 2020] [wsgi:error] [pid 24599:tid 140133340788480] [client 41.217.70.79:42730]   File "/usr/local/lib/python3.6/dist-packages/flask_jwt_extended/utils.py", line 91, in decode_token, referer: http://localhost:8080/
+[Mon May 11 13:16:33.610999 2020] [wsgi:error] [pid 24599:tid 140133340788480] [client 41.217.70.79:42730]     encoded_token, verify=False, algorithms=config.decode_algorithms, referer: http://localhost:8080/
+[Mon May 11 13:16:33.611003 2020] [wsgi:error] [pid 24599:tid 140133340788480] [client 41.217.70.79:42730]   File "/usr/local/lib/python3.6/dist-packages/jwt/api_jwt.py", line 84, in decode, referer: http://localhost:8080/
+[Mon May 11 13:16:33.611007 2020] [wsgi:error] [pid 24599:tid 140133340788480] [client 41.217.70.79:42730]     payload, _, _, _ = self._load(jwt), referer: http://localhost:8080/
+[Mon May 11 13:16:33.611010 2020] [wsgi:error] [pid 24599:tid 140133340788480] [client 41.217.70.79:42730]   File "/usr/local/lib/python3.6/dist-packages/jwt/api_jws.py", line 183, in _load, referer: http://localhost:8080/
+[Mon May 11 13:16:33.611019 2020] [wsgi:error] [pid 24599:tid 140133340788480] [client 41.217.70.79:42730]     raise DecodeError('Not enough segments'), referer: http://localhost:8080/
+[Mon May 11 13:16:33.611027 2020] [wsgi:error] [pid 24599:tid 140133340788480] [client 41.217.70.79:42730] jwt.exceptions.DecodeError: Not enough segments, referer: http://localhost:8080/
+[Mon May 11 13:16:33.611037 2020] [wsgi:error] [pid 24599:tid 140133340788480] [client 41.217.70.79:42730] , referer: http://localhost:8080/
+[Mon May 11 13:16:52.185096 2020] [wsgi:error] [pid 24600:tid 140133273646848] [client 41.217.70.79:42742] ERROR:__init__:Exception on /api/v1.0/login_organization [POST], referer: http://localhost:8080/
+[Mon May 11 13:16:52.185130 2020] [wsgi:error] [pid 24600:tid 140133273646848] [client 41.217.70.79:42742] Traceback (most recent call last):, referer: http://localhost:8080/
+[Mon May 11 13:16:52.185136 2020] [wsgi:error] [pid 24600:tid 140133273646848] [client 41.217.70.79:42742]   File "/usr/local/lib/python3.6/dist-packages/flask/app.py", line 1949, in full_dispatch_request, referer: http://localhost:8080/
+[Mon May 11 13:16:52.185141 2020] [wsgi:error] [pid 24600:tid 140133273646848] [client 41.217.70.79:42742]     rv = self.dispatch_request(), referer: http://localhost:8080/
+[Mon May 11 13:16:52.185145 2020] [wsgi:error] [pid 24600:tid 140133273646848] [client 41.217.70.79:42742]   File "/usr/local/lib/python3.6/dist-packages/flask/app.py", line 1935, in dispatch_request, referer: http://localhost:8080/
+[Mon May 11 13:16:52.185149 2020] [wsgi:error] [pid 24600:tid 140133273646848] [client 41.217.70.79:42742]     return self.view_functions[rule.endpoint](**req.view_args), referer: http://localhost:8080/
+[Mon May 11 13:16:52.185153 2020] [wsgi:error] [pid 24600:tid 140133273646848] [client 41.217.70.79:42742]   File "/usr/local/lib/python3.6/dist-packages/flask_restful/__init__.py", line 458, in wrapper, referer: http://localhost:8080/
+[Mon May 11 13:16:52.185157 2020] [wsgi:error] [pid 24600:tid 140133273646848] [client 41.217.70.79:42742]     resp = resource(*args, **kwargs), referer: http://localhost:8080/
+[Mon May 11 13:16:52.185161 2020] [wsgi:error] [pid 24600:tid 140133273646848] [client 41.217.70.79:42742]   File "/usr/local/lib/python3.6/dist-packages/flask/views.py", line 89, in view, referer: http://localhost:8080/
+[Mon May 11 13:16:52.185165 2020] [wsgi:error] [pid 24600:tid 140133273646848] [client 41.217.70.79:42742]     return self.dispatch_request(*args, **kwargs), referer: http://localhost:8080/
+[Mon May 11 13:16:52.185170 2020] [wsgi:error] [pid 24600:tid 140133273646848] [client 41.217.70.79:42742]   File "/usr/local/lib/python3.6/dist-packages/flask_restful/__init__.py", line 573, in dispatch_request, referer: http://localhost:8080/
+[Mon May 11 13:16:52.185173 2020] [wsgi:error] [pid 24600:tid 140133273646848] [client 41.217.70.79:42742]     resp = meth(*args, **kwargs), referer: http://localhost:8080/
+[Mon May 11 13:16:52.185177 2020] [wsgi:error] [pid 24600:tid 140133273646848] [client 41.217.70.79:42742]   File "/var/www/pronovserver/members_resource.py", line 82, in post, referer: http://localhost:8080/
+[Mon May 11 13:16:52.185181 2020] [wsgi:error] [pid 24600:tid 140133273646848] [client 41.217.70.79:42742]     if self.verify_hash(logonpassword,token):, referer: http://localhost:8080/
+[Mon May 11 13:16:52.185184 2020] [wsgi:error] [pid 24600:tid 140133273646848] [client 41.217.70.79:42742]   File "/var/www/pronovserver/members_resource.py", line 73, in verify_hash, referer: http://localhost:8080/
+[Mon May 11 13:16:52.185188 2020] [wsgi:error] [pid 24600:tid 140133273646848] [client 41.217.70.79:42742]     return sha256.verify(password,hash), referer: http://localhost:8080/
+[Mon May 11 13:16:52.185192 2020] [wsgi:error] [pid 24600:tid 140133273646848] [client 41.217.70.79:42742]   File "/usr/local/lib/python3.6/dist-packages/passlib/utils/handlers.py", line 789, in verify, referer: http://localhost:8080/
+[Mon May 11 13:16:52.185206 2020] [wsgi:error] [pid 24600:tid 140133273646848] [client 41.217.70.79:42742]     self = cls.from_string(hash, **context), referer: http://localhost:8080/
+[Mon May 11 13:16:52.185211 2020] [wsgi:error] [pid 24600:tid 140133273646848] [client 41.217.70.79:42742]   File "/usr/local/lib/python3.6/dist-packages/passlib/handlers/pbkdf2.py", line 65, in from_string, referer: http://localhost:8080/
+[Mon May 11 13:16:52.185215 2020] [wsgi:error] [pid 24600:tid 140133273646848] [client 41.217.70.79:42742]     rounds, salt, chk = uh.parse_mc3(hash, cls.ident, handler=cls), referer: http://localhost:8080/
+[Mon May 11 13:16:52.185218 2020] [wsgi:error] [pid 24600:tid 140133273646848] [client 41.217.70.79:42742]   File "/usr/local/lib/python3.6/dist-packages/passlib/utils/handlers.py", line 198, in parse_mc3, referer: http://localhost:8080/
+[Mon May 11 13:16:52.185222 2020] [wsgi:error] [pid 24600:tid 140133273646848] [client 41.217.70.79:42742]     raise exc.InvalidHashError(handler), referer: http://localhost:8080/
+[Mon May 11 13:16:52.185229 2020] [wsgi:error] [pid 24600:tid 140133273646848] [client 41.217.70.79:42742] ValueError: not a valid pbkdf2_sha256 hash, referer: http://localhost:8080/
+[Mon May 11 13:16:52.185237 2020] [wsgi:error] [pid 24600:tid 140133273646848] [client 41.217.70.79:42742] , referer: http://localhost:8080/
+[Mon May 11 13:19:32.779841 2020] [mpm_event:notice] [pid 1650:tid 140133596744640] AH00493: SIGUSR1 received.  Doing graceful restart
+AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 2a01:7e01::f03c:92ff:fe7a:d4e4. Set the 'ServerName' directive globally to suppress this message
+[Mon May 11 13:19:32.808381 2020] [mpm_event:notice] [pid 1650:tid 140133596744640] AH00489: Apache/2.4.29 (Ubuntu) OpenSSL/1.1.1 mod_wsgi/4.5.17 Python/3.6 configured -- resuming normal operations
+[Mon May 11 13:19:32.808392 2020] [core:notice] [pid 1650:tid 140133596744640] AH00094: Command line: '/usr/sbin/apache2'
+[Mon May 11 13:20:30.848562 2020] [wsgi:error] [pid 503:tid 140133198112512] [client 41.217.70.79:42774] ERROR:__init__:Exception on /api/v1.0/list_all_members [GET], referer: http://localhost:8080/
+[Mon May 11 13:20:30.848591 2020] [wsgi:error] [pid 503:tid 140133198112512] [client 41.217.70.79:42774] Traceback (most recent call last):, referer: http://localhost:8080/
+[Mon May 11 13:20:30.848595 2020] [wsgi:error] [pid 503:tid 140133198112512] [client 41.217.70.79:42774]   File "/usr/local/lib/python3.6/dist-packages/flask/app.py", line 1949, in full_dispatch_request, referer: http://localhost:8080/
+[Mon May 11 13:20:30.848598 2020] [wsgi:error] [pid 503:tid 140133198112512] [client 41.217.70.79:42774]     rv = self.dispatch_request(), referer: http://localhost:8080/
+[Mon May 11 13:20:30.848601 2020] [wsgi:error] [pid 503:tid 140133198112512] [client 41.217.70.79:42774]   File "/usr/local/lib/python3.6/dist-packages/flask/app.py", line 1935, in dispatch_request, referer: http://localhost:8080/
+[Mon May 11 13:20:30.848604 2020] [wsgi:error] [pid 503:tid 140133198112512] [client 41.217.70.79:42774]     return self.view_functions[rule.endpoint](**req.view_args), referer: http://localhost:8080/
+[Mon May 11 13:20:30.848606 2020] [wsgi:error] [pid 503:tid 140133198112512] [client 41.217.70.79:42774]   File "/usr/local/lib/python3.6/dist-packages/flask_restful/__init__.py", line 462, in wrapper, referer: http://localhost:8080/
+[Mon May 11 13:20:30.848609 2020] [wsgi:error] [pid 503:tid 140133198112512] [client 41.217.70.79:42774]     return self.make_response(data, code, headers=headers), referer: http://localhost:8080/
+[Mon May 11 13:20:30.848611 2020] [wsgi:error] [pid 503:tid 140133198112512] [client 41.217.70.79:42774]   File "/usr/local/lib/python3.6/dist-packages/flask_restful/__init__.py", line 491, in make_response, referer: http://localhost:8080/
+[Mon May 11 13:20:30.848614 2020] [wsgi:error] [pid 503:tid 140133198112512] [client 41.217.70.79:42774]     resp = self.representations[mediatype](data, *args, **kwargs), referer: http://localhost:8080/
+[Mon May 11 13:20:30.848625 2020] [wsgi:error] [pid 503:tid 140133198112512] [client 41.217.70.79:42774]   File "/usr/local/lib/python3.6/dist-packages/flask_restful/representations/json.py", line 21, in output_json, referer: http://localhost:8080/
+[Mon May 11 13:20:30.848628 2020] [wsgi:error] [pid 503:tid 140133198112512] [client 41.217.70.79:42774]     dumped = dumps(data, **settings) + "\\n", referer: http://localhost:8080/
+[Mon May 11 13:20:30.848630 2020] [wsgi:error] [pid 503:tid 140133198112512] [client 41.217.70.79:42774]   File "/usr/lib/python3.6/json/__init__.py", line 231, in dumps, referer: http://localhost:8080/
+[Mon May 11 13:20:30.848633 2020] [wsgi:error] [pid 503:tid 140133198112512] [client 41.217.70.79:42774]     return _default_encoder.encode(obj), referer: http://localhost:8080/
+[Mon May 11 13:20:30.848635 2020] [wsgi:error] [pid 503:tid 140133198112512] [client 41.217.70.79:42774]   File "/usr/lib/python3.6/json/encoder.py", line 199, in encode, referer: http://localhost:8080/
+[Mon May 11 13:20:30.848637 2020] [wsgi:error] [pid 503:tid 140133198112512] [client 41.217.70.79:42774]     chunks = self.iterencode(o, _one_shot=True), referer: http://localhost:8080/
+[Mon May 11 13:20:30.848640 2020] [wsgi:error] [pid 503:tid 140133198112512] [client 41.217.70.79:42774]   File "/usr/lib/python3.6/json/encoder.py", line 257, in iterencode, referer: http://localhost:8080/
+[Mon May 11 13:20:30.848642 2020] [wsgi:error] [pid 503:tid 140133198112512] [client 41.217.70.79:42774]     return _iterencode(o, 0), referer: http://localhost:8080/
+[Mon May 11 13:20:30.848644 2020] [wsgi:error] [pid 503:tid 140133198112512] [client 41.217.70.79:42774]   File "/usr/lib/python3.6/json/encoder.py", line 180, in default, referer: http://localhost:8080/
+[Mon May 11 13:20:30.848646 2020] [wsgi:error] [pid 503:tid 140133198112512] [client 41.217.70.79:42774]     o.__class__.__name__), referer: http://localhost:8080/
+[Mon May 11 13:20:30.848650 2020] [wsgi:error] [pid 503:tid 140133198112512] [client 41.217.70.79:42774] TypeError: Object of type 'datetime' is not JSON serializable, referer: http://localhost:8080/
+[Mon May 11 13:20:30.848656 2020] [wsgi:error] [pid 503:tid 140133198112512] [client 41.217.70.79:42774] , referer: http://localhost:8080/
+[Mon May 11 13:49:15.403863 2020] [mpm_event:notice] [pid 1650:tid 140133596744640] AH00493: SIGUSR1 received.  Doing graceful restart
+AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 2a01:7e01::f03c:92ff:fe7a:d4e4. Set the 'ServerName' directive globally to suppress this message
+[Mon May 11 13:49:15.441333 2020] [mpm_event:notice] [pid 1650:tid 140133596744640] AH00489: Apache/2.4.29 (Ubuntu) OpenSSL/1.1.1 mod_wsgi/4.5.17 Python/3.6 configured -- resuming normal operations
+[Mon May 11 13:49:15.441347 2020] [core:notice] [pid 1650:tid 140133596744640] AH00094: Command line: '/usr/sbin/apache2'
+[Mon May 11 14:06:01.513144 2020] [mpm_event:notice] [pid 1650:tid 140133596744640] AH00493: SIGUSR1 received.  Doing graceful restart
+AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 2a01:7e01::f03c:92ff:fe7a:d4e4. Set the 'ServerName' directive globally to suppress this message
+[Mon May 11 14:06:01.549254 2020] [mpm_event:notice] [pid 1650:tid 140133596744640] AH00489: Apache/2.4.29 (Ubuntu) OpenSSL/1.1.1 mod_wsgi/4.5.17 Python/3.6 configured -- resuming normal operations
+[Mon May 11 14:06:01.549269 2020] [core:notice] [pid 1650:tid 140133596744640] AH00094: Command line: '/usr/sbin/apache2'

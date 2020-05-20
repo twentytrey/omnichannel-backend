@@ -1,7 +1,7 @@
 from .db_con import createcon
 # from db_con import createcon
 import psycopg2,json,math,os
-con,cursor=createcon('retail','pronov','localhost','5432')
+con,cursor=createcon("retail","pronov","localhost","5432")
 import  importlib
 import pandas as pd
 import numpy as np
@@ -141,7 +141,9 @@ class Jurstgroup:
         except(Exception,psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
-# print(Jurstgroup.read(1))
+
+# print(Jurstgroup.read(23,2))
+
 class Jurst:
     def __init__(self,storeent_id,code,subclass,country=None,description=None,city=None,state=None,
     stateabbr=None,countryabbr=None,district=None,county=None,zipcodestart=None,zipcodeend=None,
@@ -274,7 +276,7 @@ class TaxCalrule:
         qualification=TaxCalrule.methodnames(r[8]),field1=r[9],field2=r[10],flags=r[11],identifier=r[12],
         ffmcenter_id=r[13],shipping=TaxCalrule.ffmcenter(r[13]),jurstgroup_id=r[14],
         jurisdiction=TaxCalrule.jurstnames(r[14]))for r in res]
-# print(TaxCalrule.read())
+
 class InstallTaxtype:
     def __init__(self,fname):
         self.fname=fname

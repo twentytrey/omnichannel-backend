@@ -1,0 +1,4 @@
+storeent_id,calusage_id,atcc_calmethod_id,atrc_calmethod_id,calcode_id,calmethod_id_app,calmethod_id_sum,calmethod_id_fin,useflags,calmethod_id_ini,sequence
+,3,24,53,,10,13,20,1,3,0
+,2,25,52,,9,16,19,1,4,0
+,1,23,51,,7,15,18,1,5,0

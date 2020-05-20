@@ -1,6 +1,7 @@
 from .db_con import createcon
 # from db_con import createcon
-import psycopg2
+import psycopg2,os
+import pandas as pd
 con,cursor=createcon('retail','pronov','localhost','5432')
 
 class EntryException(Exception):
@@ -15,8 +16,8 @@ class Qtyunit:
     def save(self):
         try:
             cursor.execute("""insert into qtyunit(qtyunit_id,field1)values(%s,%s)on conflict(qtyunit_id)
-            do update set qtyunit_id=%s,field1=%s returning qtyunit_id""",(self.qtyunit_id,self.field1,))
-            con.commit();return cursor.fetchone()[0]
+            do update set qtyunit_id=%s,field1=%s returning qtyunit_id""",(self.qtyunit_id,self.field1,
+            self.qtyunit_id,self.field1,));con.commit();return cursor.fetchone()[0]
         except (Exception) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
@@ -112,3 +113,24 @@ class Qtyfmtdesc:
         except (Exception) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
+
+class InstallQtyunits:
+    def __init__(self,fname):
+        self.fname=fname
+    
+    def isfilled(self):
+        cursor.execute("select count(qtyunit_id)from qtyunit")
+        res=cursor.fetchone()[0]
+        if res>0:return True
+        elif res<=0:return False
+    
+    def save(self):
+        basedir=os.path.abspath(os.path.dirname(__file__))
+        fileurl=os.path.join(os.path.join(os.path.split(os.path.split(basedir)[0])[0],"static/datafiles"),self.fname)
+        if os.path.isfile(fileurl):
+            df=pd.read_csv(fileurl)
+            units=df.values[:,[0,1]]
+            descriptions=df.values[:,[0,2,3]]
+            [Qtyunit(*u).save() for u in units]
+            [Qtyunitdsc(*d).save() for d in descriptions]
+            

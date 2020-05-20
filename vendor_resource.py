@@ -3,10 +3,12 @@ from passlib.hash import pbkdf2_sha256 as sha256
 from flask_jwt_extended import (create_access_token,create_refresh_token,jwt_required,jwt_refresh_token_required,get_jwt_identity,get_raw_jwt,get_jwt_claims)
 from flask_jwt_extended.exceptions import RevokedTokenError
 from ops.members.members import Member,Orgentity,Users,Userreg,Mbrrole,Busprof,EntryException,Role,UserSign,Userprof,Address,RolePermDefaults,Addrbook,Address,ListAllMembers
-from ops.helpers.functions import timestamp_forever,timestamp_now,defaultlanguage,datetimestamp_now,datetimestamp_forever
+from ops.helpers.functions import timestamp_forever,timestamp_now,defaultlanguage,datetimestamp_now,datetimestamp_forever,timesplits
 from ops.authentication.authentication import Plcyacct,Plcypasswd
 from ops.vendor.vendor import Vendor,Vendordesc
 from ops.inventory.inventory import Ra,Radetail,Receipt,ReceiveInventory
+from ops.fulfillment.fulfillment import Inventory
+from ops.catalog.catalog import Listprice
 
 
 class create_vendor_organization(Resource):
@@ -142,7 +144,9 @@ class create_ra(Resource):
         externalid=data["externalid"]
         try:
             ra_id=Ra(vendor_id,store_id,timestamp_now(),datetimestamp_now(),openindicator,dateclosed=dateclosed,
-            lastupdate=datetimestamp_now(),externalid=externalid).save()
+            lastupdate=datetimestamp_now(),externalid=timesplits()).save()
+            openindicator=Ra.open_or_closed(ra_id)
+            if openindicator==None or openindicator==0:Ra.close_ra(ra_id)
             return {"msg":"Successfully initialized purchase order","radata":Ra.read()},200
         except EntryException as e:
             return {"msg":"Error initializing purchase order. Error: {}".format(e.message)},422
@@ -214,18 +218,21 @@ class create_radetail(Resource):
         vendor_id=data["vendor_id"]
         setccurr=data["setccurr"]
         try:
-            verify=int(qtyreceived)>0
-            if verify==True:
-                radetail_id=Radetail(ra_id,itemspc_id,expecteddate,ffmcenter_id,qtyordered,qtyreceived,qtyremaining,qtyallocated,radetailcomment,datetimestamp_now()).save()
-                detailsitems=Radetail.read(ra_id)
-                Receipt(catentry_id,store_id,ffmcenter_id,datetimestamp_now(),datetimestamp_now(),cost=cost,
-                    comment1=radetailcomment,lastupdate=datetimestamp_now(),receipttype="EIR",qtyreceived=qtyreceived,
-                    vendor_id=vendor_id,setccurr=setccurr,radetail_id=radetail_id).save()
-                return {"msg":"Successfully saved purchase order details.","detailsitems":detailsitems},200
-            elif verify==False:
-                radetail_id=Radetail(ra_id,itemspc_id,expecteddate,ffmcenter_id,qtyordered,qtyreceived,qtyremaining,qtyallocated,radetailcomment,datetimestamp_now()).save()
-                detailsitems=Radetail.read(ra_id)
-                return {"msg":"Successfully saved purchase order details.","detailsitems":detailsitems},200
+            radetail_id=Radetail(ra_id,itemspc_id,expecteddate,ffmcenter_id,qtyordered,qtyreceived,
+                qtyremaining,qtyallocated,radetailcomment,datetimestamp_now()).save()
+            detailsitems=Radetail.read(ra_id)
+            qtyonhand=Receipt.getqtyonhand(catentry_id,ffmcenter_id,store_id)
+            Receipt(catentry_id,store_id,ffmcenter_id,datetimestamp_now(),datetimestamp_now(),cost=cost,
+                comment1=radetailcomment,lastupdate=datetimestamp_now(),receipttype="EIR",qtyreceived=qtyreceived,
+                qtyonhand=qtyonhand,vendor_id=vendor_id,setccurr=setccurr,radetail_id=radetail_id).save()
+            if cost!=None:Listprice.update(catentry_id,setccurr,cost)
+            Inventory(catentry_id,ffmcenter_id,store_id,qtyreceived).save()
+            openindicator=Ra.open_or_closed(ra_id)
+            if openindicator==None or openindicator==0:Ra.close_ra(ra_id)
+            elif openindicator > 0:Ra.open_ra(ra_id)
+            indicator=Ra.getindicator(ra_id)
+            return {"msg":"Successfully saved purchase order details.",
+            "indicator":indicator,"detailsitems":detailsitems},200
         except EntryException as e:
             return {"msg":"Error {}".format(e.message)},422
 
@@ -237,13 +244,15 @@ class receive_inventory(Resource):
     def __init__(self):
         self.parser=reqparse.RequestParser()
         self.parser.add_argument("radetail_id",help="required field",required=True)
+        self.parser.add_argument("store_id",help="required field",required=True)
         super(receive_inventory,self).__init__()
     
     @jwt_required
     def post(self):
         data=self.parser.parse_args()
         radetail_id=data["radetail_id"]
-        return ReceiveInventory(radetail_id).data,200
+        store_id=data["store_id"]
+        return ReceiveInventory(radetail_id,store_id).data,200
 
 class inventory_receipt(Resource):
     def __init__(self):
@@ -267,6 +276,7 @@ class inventory_receipt(Resource):
         self.parser.add_argument("store_id",help="required field",required=True)
         self.parser.add_argument("vendor_id",help="required field",required=True)
         self.parser.add_argument("versionspc_id",help="required field",required=True)
+        self.parser.add_argument("ra_id",help="required field",required=True)
         super(inventory_receipt,self).__init__()
     
     @jwt_required
@@ -279,10 +289,10 @@ class inventory_receipt(Resource):
         currency=data["currency"]
         ffmcenter_id=data["ffmcenter_id"]
         lastupdate=data["lastupdate"]
-        qtyinkits=data["qtyinkits"]
-        qtyinprocess=data["qtyinprocess"]
-        qtyonhand=data["qtyonhand"]
-        qtyreceived=data["qtyreceived"]
+        qtyinkits=int(data["qtyinkits"])
+        qtyinprocess=int(data["qtyinprocess"])
+        qtyonhand=int(data["qtyonhand"])
+        qtyreceived=int(data["qtyreceived"])
         radetail_id=data["radetail_id"]
         receiptdate=data["receiptdate"]
         receipttype=data["receipttype"]
@@ -291,9 +301,30 @@ class inventory_receipt(Resource):
         store_id=data["store_id"]
         vendor_id=data["vendor_id"]
         versionspc_id=data["versionspc_id"]
+        ra_id=data["ra_id"]
         try:
-            Receipt(versionspc_id,store_id,ffmcenter_id,receiptdate,createtime,cost,comment1,None,lastupdate,receipttype,qtyreceived,qtyinprocess,qtyonhand,qtyinkits,vendor_id,setccurr,radetail_id,rtnrcptdsp_id).save()
-            return {"msg":"Successfully received inventory item"},200
+            Radetail.update(qtyreceived,datetimestamp_now(),radetail_id)
+            qtyonhand=Inventory.update(qtyreceived,versionspc_id,ffmcenter_id,store_id)
+            detailsitems=Radetail.read(ra_id)
+            receipt_id=Receipt(versionspc_id,store_id,ffmcenter_id,receiptdate,datetimestamp_now(),cost,comment1,None,
+                datetimestamp_now(),receipttype,qtyreceived,qtyinprocess,qtyonhand=qtyonhand,qtyinkits=qtyinkits,
+                vendor_id=vendor_id,setccurr=setccurr,radetail_id=radetail_id,rtnrcptdsp_id=rtnrcptdsp_id).save()
+            openindicator=Ra.open_or_closed(ra_id)
+            if openindicator==None or openindicator==0:Ra.close_ra(ra_id)
+            elif openindicator > 0:Ra.open_ra(ra_id)
+            indicator=Ra.getindicator(ra_id)
+            return {"msg":"Successfully received inventory item","indicator":indicator,"detailsitems":detailsitems},200
         except EntryException as e:
             return {"msg":"Error receiving inventory item. Error {}".format(e.message)},422
-        
+
+class list_inventory(Resource):
+    def __init__(self,):
+        self.parser=reqparse.RequestParser()
+        self.parser.add_argument("language_id",help="required field",required=True)
+        super(list_inventory,self).__init__()
+    
+    @jwt_required
+    def post(self):
+        data=self.parser.parse_args()
+        language_id=data["language_id"]
+        return Inventory.read(language_id),200

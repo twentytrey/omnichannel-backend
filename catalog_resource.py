@@ -455,6 +455,32 @@ class create_catgpcalcd(Resource):
         except EntryException as e:return {"Error: {}".format(e.message)},422
 
 
+class remove_catencalcd(Resource):
+    def __init__(self):
+        self.parser=reqparse.RequestParser()
+        self.parser.add_argument("store_id",help="compulsory field",required=True)
+        self.parser.add_argument("trading_id",help="compulsory field",required=True)
+        self.parser.add_argument("catentry_id",help="compulsory field",required=True)
+        self.parser.add_argument("calcode_id",help="compulsory field",required=True)
+        self.parser.add_argument("calflags")
+        super(remove_catencalcd,self).__init__()
+    
+    @jwt_required
+    def post(self):
+        data=self.parser.parse_args()
+        store_id=data["store_id"]
+        trading_id=data["trading_id"]
+        catentry_id=data["catentry_id"]
+        calcode_id=data["calcode_id"]
+        calflags=data["calflags"]
+        if calcode_id==None:return {"msg":"Successfully removed item discount"},200
+        elif calcode_id!=None:
+            try:
+                Catencalcd(store_id,trading_id,catentry_id,calcode_id).remove()
+                return {"msg":"Successfully removed item discount"},200
+            except EntryException as e:
+                return {"msg":"ERROR {}".format(e.message)},422
+
 class create_catencalcd(Resource):
     def __init__(self):
         self.parser=reqparse.RequestParser()

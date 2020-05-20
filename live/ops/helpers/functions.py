@@ -1,6 +1,7 @@
 import datetime,time,psycopg2,locale
 from decimal import Decimal
 BASE_URL="http://127.0.0.1:5000"
+# BASE_URL="https://pronovapp.com"
 
 def createcon(dbname,user,host,port):
     try:
@@ -10,16 +11,32 @@ def createcon(dbname,user,host,port):
     cursor=con.cursor()
     return con,cursor
 
-con,cursor=createcon('retail','jmso','localhost','5432')
+con,cursor=createcon('retail','pronov','localhost','5432')
 
 def timestamp_now():
     now=time.time()
-    formatted=datetime.datetime.fromtimestamp(now).strftime("%Y-%m-%d")
+    formatted=datetime.datetime.fromtimestamp(now).strftime("%Y-%m-%d ")
     return formatted
+
+def datetimestamp_now():
+    now=time.time()
+    formatted=datetime.datetime.fromtimestamp(now).strftime("%Y-%m-%d %H:%M:%S")
+    return formatted
+
+def timesplits():
+    splits=datetimestamp_now().split(' ')
+    l=splits[0].replace('-','')
+    r=splits[1].replace(':','')
+    return l+r[2:]
 
 def timestamp_forever():
 	forever=datetime.datetime.max
 	formatted=forever.strftime("%Y-%m-%d")
+	return formatted
+
+def datetimestamp_forever():
+	forever=datetime.datetime.max
+	formatted=forever.strftime("%Y-%m-%d %H:%M:%S")
 	return formatted
 
 def defaultlanguage():

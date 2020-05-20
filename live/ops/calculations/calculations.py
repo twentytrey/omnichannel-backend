@@ -1,7 +1,7 @@
 from .db_con import createcon
 # from db_con import createcon
 import psycopg2,json,math,os
-con,cursor=createcon('retail','pronov','localhost','5432')
+con,cursor=createcon("retail","pronov","localhost","5432")
 import  importlib
 import pandas as pd
 import numpy as np
@@ -244,6 +244,14 @@ class Calcode:
         else:
             cursor.execute("select name from calmethod where calmethod_id=%s",(mid,))
             return cursor.fetchone()[0]
+        
+    @staticmethod
+    def select_calcodes(store_id,language_id):
+        cursor.execute("""select calcode.calcode_id,calcodedesc.description from calcode
+        inner join calcodedesc on calcode.calcode_id=calcodedesc.calcode_id where calcode.storeent_id=%s
+        and calcodedesc.language_id=%s""",(store_id,language_id,));res=cursor.fetchall()
+        if len(res) <= 0:return [dict()]
+        elif len(res) > 0:return [dict(calcode_id=r[0],description=r[1])for r in res]
 
     @staticmethod
     def read(sid,lid,usages):
@@ -485,22 +493,6 @@ class InstallCalmethods:
 
 # InstallCalmethods('calmethods.csv',1).save()
 
-# def packagenames():
-#     bdir=os.path.abspath(os.path.dirname(__file__))
-#     cdir=os.path.join(bdir,"calculationframework/")
-#     exclude=['__init__',];data=dict()
-#     filter1=[x.split('.py')[0] for x in [x for x in os.listdir(cdir) if '.py' in x]]
-#     [data.update({x:'calculationframework.{0}'.format(x)}) for x in list(set(filter1)-set(exclude))]
-#     return data
-
-# def getpackage(packagename):
-#     packages=packagenames()
-#     return {key:value for key,value in packages.items() if key==packagename}[packagename]
-
-# modstring='calculationframework.initializecalculationusage.initializecalculationusage'
-# mod=importlib.import_module(modstring)
-# print(mod)
-
 class discountcalrangemethods:
     def __init__(self,name,storeent_id,calusage_id):
         self.name=name
@@ -543,3 +535,15 @@ class discountcalrulemethods:
         and name=%s""",(self.storeent_id,self.calusage_id,self.name,));return cursor.fetchone()[0]
 
 # print( discountcalcodemethods('Calculation Code Calculate',1,1).get() )
+
+# def packagenames():
+#     bdir=os.path.abspath(os.path.dirname(__file__))
+#     cdir=os.path.join(bdir,"calculationframework/")
+#     exclude=['__init__',];data=dict()
+#     filter1=[x.split('.py')[0] for x in [x for x in os.listdir(cdir) if '.py' in x]]
+#     [data.update({x:'calculationframework.{0}'.format(x)}) for x in list(set(filter1)-set(exclude))]
+#     return data
+
+# def getpackage(packagename):
+#     packages=packagenames()
+#     return {key:value for key,value in packages.items() if key==packagename}[packagename]

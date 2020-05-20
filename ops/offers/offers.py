@@ -31,12 +31,14 @@ class Offer:
         self.startdate=startdate
     
     @staticmethod
-    def offerforitem(catentry_id,tradeposcn_id):
+    def offerforitem(catentry_id,tradeposcn_id,tdptype):
         cursor.execute("""with offer as (select tradeposcn.type,offer.offer_id from offer inner join tradeposcn
-        on tradeposcn.tradeposcn_id=offer.tradeposcn_id where offer.catentry_id=%s and offer.tradeposcn_id=%s)
+        on tradeposcn.tradeposcn_id=offer.tradeposcn_id where offer.catentry_id=%s and offer.tradeposcn_id=%s
+        and tradeposcn.type=%s)
         select offer.type,offer.offer_id,offerprice.price::float,offerprice.currency from offer inner join offerprice on
-        offer.offer_id=offerprice.offer_id""",(catentry_id,tradeposcn_id,));res=cursor.fetchone()
-        if res==None:return dict(offer_id=None,offer=None,offercurrency=None,custom_offer_id=None,custom=None,customcurrency=None)
+        offer.offer_id=offerprice.offer_id""",(catentry_id,tradeposcn_id,tdptype,));res=cursor.fetchone()
+        if res==None and tdptype=='S':return dict(offer_id=None,offer=None,offercurrency=None)
+        elif res==None and tdptype=='C':return dict(custom_offer_id=None,custom=None,customcurrency=None)
         elif res != None:
             if res[0]=='S':return dict(offer_id=res[1],offer=res[2],offercurrency=res[3])
             elif res[0]=='C':return dict(custom_offer_id=res[1],custom=res[2],customcurrency=res[3])

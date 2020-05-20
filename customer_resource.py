@@ -41,7 +41,7 @@ class create_customer_organization(Resource):
             member_id=Member(membertype,memberstate=memberstate).approve_member(member_id)
             orgentity_id=Orgentity(member_id,orgentitytype,orgentityname,dn=logonid).update()
             users_id=Users(orgentity_id,registertype,dn=logonid,profiletype=profiletype,language_id=defaultlanguage(),registrationupdate=timestamp_now()).update()
-            userreg_id=Userreg(users_id,logonid,plcyacct_id=Plcyacct.read_default()['plcyacct_id'],logonpassword=self.generate_hash(logonpassword),passwordcreation=timestamp_now()).update()
+            userreg_id=Userreg(users_id,logonid,plcyacct_id=Plcyacct.read_default()['plcyacct_id'],passwordcreation=timestamp_now()).update()
             users_id=Busprof(member_id,org_id=orgentity_id).update()
             usersign=UserSign(logonid)
             addrbook_id=Addrbook(member_id,orgentityname,description="{}: Address Book".format(orgentityname)).update()
@@ -88,7 +88,7 @@ class _create_customer_organization(Resource):
                 orgentity_id=Orgentity(member_id,orgentitytype,orgentityname,dn=logonid).save()
                 users_id=Users(orgentity_id,registertype,dn=logonid,profiletype=profiletype,language_id=defaultlanguage(),registration=timestamp_now()).save()
                 salt='M{}{}{}{}'.format(member_id,registertype,profiletype,logonid[-1])
-                userreg_id=Userreg(users_id,logonid,salt=salt,plcyacct_id=Plcyacct.read_default()['plcyacct_id'],logonpassword=logonpassword,passwordcreation=None).save()
+                userreg_id=Userreg(users_id,logonid,salt=salt,plcyacct_id=Plcyacct.read_default()['plcyacct_id'],passwordcreation=None).save()
                 roles=Role.read_roles(defaultlanguage());rid=[x for x in roles if x['name']=='store_editor'][0]['role_id']
                 Mbrrole(userreg_id,rid,orgentity_id).save()
                 users_id=Busprof(member_id,org_id=orgentity_id).save()

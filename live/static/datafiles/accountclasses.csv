@@ -1,0 +1,7 @@
+name,rangestart,rangeend,description
+Revenue,4000,4999,Wherein is recorded the assets earned by a company’s operations and business activities.
+Expense,3000,3999,"Where the costs incurred by the company, in order to generate revenue are recorded."
+Asset,1000,1999,Where the debit and credit amounts from the company’s transactions involving the company’s resources are recorded.
+Liability,2000,2999,"Where the debt, obligations, customer deposits, customer repayments and certain deferred income taxes for the company are recorded."
+Equity,3000,3999,Equity is the amount funded by the backers and shareholders of the company for its initial start-up and continuous operation.
+COGS,5000,5999,The carrying value of goods sold during a particular period.

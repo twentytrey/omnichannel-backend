@@ -5,6 +5,7 @@ con,cursor=createcon("retail","jmso","localhost","5432")
 import  importlib
 import pandas as pd
 import numpy as np
+from ops import textualize_datetime,humanize_date,CurrencyHelper
 
 class EntryException(Exception):
     def __init__(self,message):
@@ -66,6 +67,39 @@ class Inventory:
         self.quantity=quantity
         self.quantitymeasure=quantitymeasure
         self.inventoryflags=inventoryflags
+    
+    @staticmethod
+    def getitemquantity(catentry_id,store_id):
+        cursor.execute("select quantity from inventory where store_id=%s and catentry_id=%s",
+        (store_id,catentry_id,));res=cursor.fetchone()
+        if res==None:return None
+        elif res!=None:return res[0]
+    
+    @staticmethod
+    def update(qtyreceived,catentry_id,ffmcenter_id,store_id):
+        try:
+            cursor.execute("""select quantity from inventory where catentry_id=%s and ffmcenter_id=%s and
+            store_id=%s""",(catentry_id,ffmcenter_id,store_id,))
+            quantity=cursor.fetchone()[0];qtyonhand=quantity+qtyreceived
+            cursor.execute("""update inventory set quantity=%s where catentry_id=%s and ffmcenter_id=%s and 
+            store_id=%s""",(qtyonhand,catentry_id,ffmcenter_id,store_id,));con.commit();return qtyonhand
+        except(Exception,psycopg2.DatabaseError) as e:
+            if con is not None:con.rollback()
+            raise EntryException(str(e).strip().split('\n')[0])
+    
+    @staticmethod
+    def read(language_id):
+        cursor.execute("""select catentry.catenttype_id::text,catentdesc.name,catentdesc.fullimage,
+        catentry.endofservicedate,ffmcenter.name,storeent.identifier,inventory.quantity from
+        catentry left join catentdesc on catentry.catentry_id=catentdesc.catentry_id left
+        join inventory on catentry.catentry_id=inventory.catentry_id left join ffmcenter on
+        inventory.ffmcenter_id=ffmcenter.ffmcenter_id left join storeent on inventory.store_id=
+        storeent.storeent_id where catentdesc.language_id=%s""",(language_id,))
+        res=cursor.fetchall()
+        if len(res)<=0:return [dict(type=None,item=None,image=None,expires=None,warehouse=None,
+        store=None,quantity=None,)]
+        elif len(res)>0:return [dict(type=r[0],item=r[1],image=r[2],expires=humanize_date(r[3]),
+        warehouse=r[4],store=r[5],quantity=r[6]) for r in res]
     
     def save(self):
         try:

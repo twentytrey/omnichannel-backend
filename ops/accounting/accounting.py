@@ -95,7 +95,17 @@ class Faccount:
             accountclassrel.faccount_id=faccount.faccount_id inner join acclass on accountclassrel.
             acclass_id=acclass.acclass_id where faccount.faccount_id=%s""",(faccount_id,))
             return cursor.fetchone()[0]
-    
+
+    @staticmethod
+    def readaccount(faccount_id,mid,lid):
+        cursor.execute("""select faccount_id,accountnumber,identifier,routingnumber,setccurr from faccount
+        where member_id=%s and faccount_id=%s""",(mid,faccount_id,));res=cursor.fetchone()
+        if res==None:return dict(faccount_id=None,account_number=None,identifier=None,routing_number=None,
+        currency=None,description=None,account_type=None,balance=CurrencyHelper(lid).formatamount(0.00))
+        elif res != None:return dict(faccount_id=res[0],account_number=res[1],identifier=res[2],routing_number=res[3],
+        currency=res[4],description=Faccountdsc.read(res[0],lid),balance=CurrencyHelper(lid).formatamount(0.00),
+        account_class=Faccount.getclass(res[0]))
+
     @staticmethod
     def read(mid,lid):
         cursor.execute("""select faccount_id,accountnumber,identifier,routingnumber,setccurr from faccount
@@ -161,9 +171,10 @@ class Accountclassrel:
             raise EntryException(str(e).strip().split('\n')[0])
 
 class Transactiontype:
-    def __init__(self,code=None,description=None):
+    def __init__(self,code=None,description=None,longdescription=None):
         self.code=code
         self.description=description
+        self.longdescription=longdescription
     
     def save(self):
         try:
@@ -235,4 +246,47 @@ class InstallAccountClasses:
             descriptions=df.values[:,[7,4,3]]
             [Acclassdsc(*x).save() for x in descriptions]
 
+class InstallAccounts:
+    def __init__(self,fname,member_id,language_id):
+        self.fname=fname
+        self.member_id=member_id
+        self.language_id=language_id
+    
+    def getclass(self,cname):
+        cursor.execute("select acclass_id from acclass where name=%s",(cname,))
+        res=cursor.fetchone()
+        if res==None:return res
+        elif res!=None:return res[0]
+    
+    def save(self):
+        basedir=os.path.abspath(os.path.dirname(__file__))
+        fileurl=os.path.join(os.path.join(os.path.split(os.path.split(basedir)[0])[0],"static/datafiles"),self.fname)
+        if os.path.isfile(fileurl):
+            df=pd.read_csv(fileurl);df['language_id']=pd.Series([self.language_id]*df.shape[0])
+            df['member_id']=pd.Series([self.member_id]*df.shape[0])
+            # accountnumber name currency description class language_id,member_id
+            accounts=df.values
+            faccount_ids=[Faccount(accounts[i][0],accounts[i][1],accounts[i][6],None,accounts[i][2]).save() for i in range(len(accounts))]
+            [Faccountdsc(faccount_ids[i],accounts[i][5],accounts[i][3]).save() for i in range(len(accounts)) ]
+            [Accountclassrel(self.getclass(accounts[i][4]),faccount_ids[i]).save() for i in range(len(accounts))]
 
+transaction_types=[
+    Transactiontype("PMT","Customer Payment","Customer payments"),
+    Transactiontype("STMTCHG","Statement Charge","Statement charge billed to a customer"),
+    Transactiontype("CREDMEM","Credit Memo","Credit memo issued by your business"),
+    Transactiontype("RCPT","Sales Receipt","Generic code for sales receipts"),
+    Transactiontype("ITMRCPT","Item Receipt","Specified an item receipt from a vendor without invoice"),
+    Transactiontype("TAXPMT","Sales Tax Payment","Sales Tax Payment"),
+    Transactiontype("BILL","Vendor Bill","Type represents a bill from a vendor that you're yet to play"),
+    Transactiontype("BILLPMT","Paid Vendor Bill","Represents a bill from a vendor that you have paid"),
+    Transactiontype("BILLCRED","Vendor Issued Credit","To show a credit given from a vendor"),
+    Transactiontype("INV","Invoice","Stands for an invoice that you have issued to a customer or a vendor"),
+    Transactiontype("PAYCHK","Paycheck","Identifies each paycheck issued to your employees"),
+    Transactiontype("CCCHRG","Credit Card Charge","Represents a credit card charge"),
+    Transactiontype("CCCRD","Credit Card Credit","Represents a credit card credit"),
+    Transactiontype("LIABCHK","Liability Transaction","Shows payroll tax and other liability transactions"),
+    Transactiontype("CHK","Check","Stands for checks"),
+    Transactiontype("DEP","Deposit","Represents a deposit you've made to the bank"),
+    Transactiontype("TRANSFR","Transfer","Represents a transfer you've made between two balance sheet registers"),
+    Transactiontype("DISC","Discount","Identifies a discount given for early payment either to customers or vendors"),
+    Transactiontype("GENJNRL","General Journal Entry","Stands for a general journal entry which you use when the other transaction types do not apply")]

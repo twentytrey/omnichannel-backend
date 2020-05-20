@@ -5,7 +5,7 @@ con,cursor=createcon('retail','pronov','localhost','5432')
 import pandas as pd
 import numpy as np
 import os,re
-from ops import CurrencyHelper,humanize_date,timestamp_forever,timestamp_now
+from ops import CurrencyHelper,humanize_date,timestamp_forever,timestamp_now,textualize_datetime
 
 class EntryException(Exception):
     def __init__(self,message):
@@ -25,7 +25,7 @@ class RevokedToken:
     
     def isbanned(self):
         try:
-            print(self.token)
+            # print(self.token)
             cursor.execute("select jti from token_revoked where jti=%s",(self.token,))
             res=cursor.fetchone()
             if res == None:return False
@@ -50,6 +50,8 @@ class Member:
         try:
             cursor.execute("update member set state=1 where member_id=%s returning member_id",
             (mid,));con.commit();return cursor.fetchone()[0]
+            cursor.execute("update users set registertype='R' where users_id=%s",(mid,))
+            con.commit()
         except(Exception,psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
@@ -59,6 +61,8 @@ class Member:
         try:
             cursor.execute("update member set state=0 where member_id=%s returning member_id",
             (mid,));con.commit();return cursor.fetchone()[0]
+            cursor.execute("update users set registertype='G' where users_id=%s",(mid,))
+            con.commit()
         except(Exception,psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
@@ -382,6 +386,20 @@ class Userreg:
             raise EntryException(str(e).strip().split('\n')[0])
     
     @staticmethod
+    def getusersid(logonid):
+        cursor.execute("select users_id from userreg where logonid=%s",(logonid,))
+        res=cursor.fetchone()
+        if res==None:return None
+        elif res != None:return res[0]
+        
+    @staticmethod
+    def getsalt(logonid):
+        cursor.execute("select salt from userreg where users_id=%s",(logonid,))
+        res=cursor.fetchone()
+        if res==None:return None
+        elif res!=None:return res[0]
+
+    @staticmethod
     def getpassword(logonid):
         try:
             cursor.execute("select logonpassword from userreg where logonid=%s",(logonid,))
@@ -433,7 +451,7 @@ class Role:
         except (Exception, psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
-
+# print(Role.read_roles(1))
 class Roledesc:
     def __init__(self,role_id,language_id,displayname,description=None):
         self.role_id=role_id
@@ -770,7 +788,7 @@ class Address:
             persontitle=res[12],firstname=res[13],middlename=res[14],businesstitle=res[15],phone1=res[16],fax1=res[17],phone2=res[18],
             address1=res[19],fax2=res[20],nickname=res[21],address2=res[22],address3=res[23],city=res[24],state=res[25],country=res[26],
             zipcode=res[27],email1=res[28],email2=res[29],phone1type=res[30],phone2type=res[31],publishphone1=res[32],publishphone2=res[33],
-            bestcallingtime=res[34],packagesuppression=res[35],lastcreate=res[36],officeaddress=res[37],selfaddress=res[38],
+            bestcallingtime=res[34],packagesuppression=res[35],lastcreate=textualize_datetime(res[36]),officeaddress=res[37],selfaddress=res[38],
             field1=res[39],field2=res[40],taxgeocode=res[41],shippinggeocode=res[42],mobilephone1=res[43],mobilephone1cntry=res[44])
         except (Exception, psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
@@ -880,9 +898,15 @@ class Attrtype:
             raise EntryException(str(e).strip().split('\n')[0])
 
 class RolePermDefaults:
-    def __init__(self,fname,orgentity_id):
-        self.fname=fname
+    def __init__(self,orgentity_id):
         self.orgentity_id=orgentity_id
+    
+    def roles(self):
+        cursor.execute("select role_id,name from role")
+        res=cursor.fetchall()
+        master=[x for x in res if x[1]=="permission_editor"][0]
+        data=[ [master[0],self.orgentity_id,x[0]] for x in res ]
+        return data
     
     def isfilled(self):
         cursor.execute("select count(roleasnprm_id)from roleasnprm")
@@ -891,15 +915,10 @@ class RolePermDefaults:
         elif res <= 0:return False
     
     def save(self):
-        basedir=os.path.abspath(os.path.dirname(__file__))
-        fileurl=os.path.join(os.path.join(os.path.split(os.path.split(basedir)[0])[0],"static/datafiles"),self.fname)
-        if os.path.isfile(fileurl):
-            df=pd.read_csv(fileurl)
-            df['orgentity_id']=pd.Series([self.orgentity_id]*df.shape[0])
-            perms=list(map(list,df.values));[Roleasnprm(*p).save()for p in perms]
-
-# RolePermDefaults('roleasnprm.csv',1).save()
-
+        filled=self.isfilled()
+        if filled==False:[Roleasnprm(*p).save() for p in self.roles()]
+        elif filled==True:pass
+# RolePermDefaults(34).save()
 class RoleDefaults:
     def __init__(self,fname):
         self.fname=fname
@@ -971,9 +990,15 @@ class ListAllMembers:
         ids=[x for (x,) in cursor.fetchall()]
         return [self.details(i) for i in ids]
     
+    def findmaster(self,roles):
+        find=len([x for x in roles if x['rolename']=="Permission Editor"])
+        if find<=0:return False
+        elif find>0:return True
+    
     def details(self,x):
-        return dict(member=Member.readmember(x),orgentity=Orgentity.readorgentity(x),mbrrole=Mbrrole.read(x),
+        data=dict(member=Member.readmember(x),orgentity=Orgentity.readorgentity(x),mbrrole=Mbrrole.read(x),
         busprof=Busprof.readbusprof(x),userprof=Userprof.readuserprof(x),userreg=Userreg.readuserreg(x),
         users=Users.readusers(x),addrbook=Addrbook.readaddrbook(x),address=Address.readaddress(x))
+        data.update(dict(ismaster=self.findmaster(data["mbrrole"])));return data
 
 # print(ListAllMembers().data())

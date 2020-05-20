@@ -60,6 +60,7 @@ contractstate=[dict(text="Draft",value=0),dict(text="Pending Approval",value=1),
 contractusage=[dict(text="Default",value=0),dict(text="Organizational Buyer",value=1),dict(text="Reseller",value=2),
     dict(text="Special Bid",value=3),dict(text="Referral",value=4),dict(text="Supplier",value=5)]
 trdtypes=Trdtype.read()
+accountstate=[dict(text="Initial",value=0),dict(text="Active",value=3),dict(text="Closed",value="6")]
 
 class Participnt:
     def __init__(self,member_id,partrole_id,trading_id=None,termcond_id=None,information=None,
@@ -152,7 +153,12 @@ class Trading:
         inner join orgentity on contract.member_id=orgentity.orgentity_id inner join participnt on trading.
         trading_id=participnt.trading_id where trddesc.language_id=%s and trading.trdtype_id=1 and contract.usage<=0""",
         (language_id,));res=cursor.fetchall()
-        if len(res) <= 0: return [dict()]
+        if len(res) <= 0: return [dict(trading_id=None,trdtype_id=None,tradingstate=None,tradingstarttime=None,starting=None,
+        ending=None,tradingendtime=None,creditallowed=None,longdescription=None,tradingtimecreated=None,created=None,
+        updated=None,tradingtimeupdated=None,type=None,state=None,origin=None,credit=None,stage=None,contract_title=None,
+        contractmember_id=None,contractorigin=None,contractstate=None,contractusage=None,contractcomments=None,contracttimecreated=None,
+        _rowVariant="success",contracttimeapproved=None,approved=None,contracttimeactivated=None,activated=None,deployed=None,
+        contracttimedeployed=None,created_by=None,participant=None)]
         elif len(res) > 0:return [dict(trading_id=r[0],trdtype_id=r[1],tradingstate=r[2],
         tradingstarttime=textualize_datetime(r[3]),starting=humanize_date(r[3]),ending=humanize_date(r[4]),
         tradingendtime=textualize_datetime(r[4]),creditallowed=r[5],longdescription=r[6],
@@ -199,10 +205,37 @@ class Trading:
         contracttimedeployed=textualize_datetime(r[18]),created_by=r[19],participant=Trading.particpantname(r[20])) for r in res]
     
     @staticmethod
+    def readaccount(tid,lid):
+        cursor.execute("""select trading.trading_id,trading.trdtype_id,trading.state,trading.starttime,
+        trading.endtime,trading.creditallowed,trddesc.longdescription,trddesc.timecreated,trddesc.timeupdated,
+        account.name,account.member_id,orgentity.orgentityname,account.store_id,storeent.identifier,
+        account.state,account.currency,account.comments,account.timecreated,account.timeupdated,account.
+        timeapproved,account.timeactivated,participnt.member_id,participnt.partrole_id,partroleds.
+        description from trading inner join trddesc on trading.trading_id=trddesc.trading_id inner join
+        account on trading.trading_id=account.account_id inner join orgentity on account.member_id=
+        orgentity.orgentity_id inner join storeent on account.store_id=storeent.storeent_id inner
+        join participnt on trading.trading_id=participnt.trading_id inner join partroleds on
+        participnt.partrole_id=partroleds.partrole_id where trading.trading_id=%s and trddesc.
+        language_id=%s""",(tid,lid,));res=cursor.fetchone()
+        if res==None:return dict()
+        elif res!=None:return dict(trading_id=res[0],trdtype_id=res[1],
+        trdtype_str=[x['text'] for x in trdtypes if x['value']==res[1]][0],
+        trading_state=res[2],tradingstate=[x['text'] for x in tradingstate if x['value']==res[2]][0],
+        trading_starttime=textualize_datetime(res[3]),trading_starts=humanize_date(res[3]),
+        trading_endtime=textualize_datetime(res[4]),trading_ends=humanize_date(res[4]),
+        trading_creditallowed=res[5],creditallowed=[x['text'] for x in creditallowed if x['value']==res[5]][0],
+        description_comment=res[6],trading_timecreated=textualize_datetime(res[7]),created_on=humanize_date(res[7]),
+        trading_timeupdated=textualize_datetime(res[8]),updated_on=humanize_date(res[8]),contract_name=res[9],
+        contract_member_id=res[10],owner=res[11],deployed_store_id=res[12],store=res[13],contract_state=res[14],
+        stage=[x['text'] for x in accountstate if x['value']==res[14]][0],currency=res[15],approved_on=humanize_date(res[19]),
+        contract_timeapproved=textualize_datetime(res[19]),contract_timeactivated=textualize_datetime(res[20]),
+        activated_on=humanize_date(res[20]),participant_id=res[21],participant=Trading.particpantname(res[21]),
+        partrole_id=res[22],participant_role=res[23])
+    
+    @staticmethod
     def readcontract(tid,lid):
-        cursor.execute("""select 
-        trading.trading_id,trading.trdtype_id,trading.state,trading.starttime,trading.endtime,trading.creditallowed,
-        trddesc.longdescription,trddesc.timecreated,trddesc.timeupdated,
+        cursor.execute("""select trading.trading_id,trading.trdtype_id,trading.state,trading.starttime,
+        trading.endtime,trading.creditallowed,trddesc.longdescription,trddesc.timecreated,trddesc.timeupdated,
         contract.name,contract.member_id,orgentity.orgentityname,contract.origin,contract.state,contract.usage,
         contract.timeapproved,contract.timeactivated,contract.timedeployed,
         participnt.member_id,participnt.partrole_id,partroleds.description,storecntr.store_id
@@ -948,6 +981,140 @@ class ExcludedItems:
         if len(res)<=0:return list()
         elif len(res)>0:return [x for (x,)in res]
 
+class ApproveContract:
+    def __init__(self,trading_id,timeapproved):
+        self.trading_id=trading_id
+        self.timeapproved=timeapproved
+    
+    def approve_contract(self):
+        try:
+            cursor.execute("update contract set state=2,timeapproved=%s where contract_id=%s",
+            (self.timeapproved,self.trading_id,));con.commit()
+        except (Exception,psycopg2.DatabaseError) as e:
+            if con is not None:con.rollback()
+            raise EntryException(str(e).strip().split('\n')[0])
+    
+class DeployContract:
+    def __init__(self,trading_id,timeactivated):
+        self.trading_id=trading_id
+        self.timeactivated=timeactivated
+    
+    def activate_account(self):
+        try:
+            cursor.execute("update account set state=3,timeactivated=%s where account_id=%s",
+            (self.timeactivated,self.trading_id,));con.commit()
+        except(Exception,psycopg2.DatabaseError) as e:
+            if con is not None:con.rollback()
+            raise EntryException(str(e).strip().split('\n')[0])
+
+    def activate_trading(self):
+        try:
+            cursor.execute("update trading set state=1 where trading_id=%s",(self.trading_id,))
+            con.commit()
+        except (Exception,psycopg2.DatabaseError) as e:
+            if con is not None:con.rollback()
+            raise EntryException(str(e).strip().split('\n')[0])
+    
+    def activate_contract(self):
+        try:
+            cursor.execute("update contract set state=3,timeactivated=%s,timedeployed=%s where contract_id=%s",
+            (self.timeactivated,self.timeactivated,self.trading_id,));con.commit()
+        except(Exception,psycopg2.DatabaseError) as e:
+            if con is not None:con.rollback()
+            raise EntryException(str(e).strip().split('\n')[0])
+
+class SuspendContract:
+    def __init__(self,trading_id):
+        self.trading_id=trading_id
+
+    def suspend_trading(self):
+        try:
+            cursor.execute("update trading set state=0 where trading_id=%s",(self.trading_id,))
+            con.commit()
+        except(Exception,psycopg2.DatabaseError) as e:
+            if con is not None:con.rollback()
+            raise EntryException(str(e).strip().split('\n')[0])
+    
+    def suspend_account(self):
+        try:
+            cursor.execute("update account set state=0 where account_id=%s",(self.trading_id,))
+            con.commit()
+        except(Exception,psycopg2.DatabaseError) as e:
+            if con is not None:con.rollback()
+            raise EntryException(str(e).strip().split('\n')[0])
+    
+    def suspend_contract(self):
+        try:
+            cursor.execute("update contract set state=7 where contract_id=%s",(self.trading_id,))
+        except(Exception,psycopg2.DatabaseError) as e:
+            if con is not None:con.rollback()
+            raise EntryException(str(e).strip().split('\n')[0])
+
+psettypes=[dict(value=0,text="Category Inclusion"),dict(value=1,text="Category Exclusion"),
+dict(value=2,text="Product Inclusion"),dict(value=3,text="Product Exclusion"),dict(value=4,text="Browsable Inclusion")]
+
+class ReadCategoryExclusion:
+    def __init__(self,trading_id,tcsubtype_id,member_id):
+        self.trading_id=trading_id
+        self.tcsubtype_id=tcsubtype_id
+        self.member_id=member_id
+        self.termcond_id=self.get_termcond()
+        self.productset_id=self.getpset()
+        self.catgroup_id=self.get_catgroup_productset()
+    
+    def get_termcond(self):
+        cursor.execute("select termcond_id from termcond where tcsubtype_id=%s and trading_id=%s",
+        (self.tcsubtype_id,self.trading_id,));res=cursor.fetchone()
+        if res==None:return None
+        elif res!=None:return res[0]
+    
+    def getpset(self):
+        cursor.execute("select productset_id from psetadjmnt where termcond_id=%s and type=1",(self.termcond_id,))
+        res=cursor.fetchone()
+        if res==None:return None
+        elif res!=None:return res[0]
+    
+    def get_catgroup_productset(self):
+        cursor.execute("select catgroup_id from catgrpps where productset_id=%s",
+        (self.productset_id,));res=cursor.fetchone()
+        if res==None:return None
+        elif res!=None:return res[0]
+
+    def get_items(self):
+        cursor.execute("""select prsetcerel.catentry_id from prsetcerel inner join productset on 
+        prsetcerel.productset_id=productset.productset_id where productset.productset_id=%s and
+        productset.member_id=%s""",(self.productset_id,self.member_id,));res=cursor.fetchall()
+        if len(res) <= 0:return list()
+        elif len(res) > 0:return [x for (x,) in res]
+
+class IncludeItem:
+    def __init__(self,trading_id,tcsubtype_id,catentry_id):
+        self.trading_id=trading_id
+        self.tcsubtype_id=tcsubtype_id
+        self.catentry_id=catentry_id
+        self.termcond_id=self.get_termcond()
+        self.productset_id,self.psettype=self.get_productset()
+    
+    def get_termcond(self):
+        cursor.execute("select termcond_id from termcond where tcsubtype_id=%s and trading_id=%s",
+        (self.tcsubtype_id,self.trading_id,));res=cursor.fetchone()
+        if res==None:return None
+        elif res!=None:return res[0]
+    
+    def get_productset(self):
+        cursor.execute("select productset_id,type from psetadjmnt where termcond_id=%s",(self.termcond_id,))
+        res=cursor.fetchone()
+        if res==None:return None
+        elif res!=None:return res
+    
+    def include_item(self):
+        try:
+            cursor.execute("delete from prsetcerel where productset_id=%s and catentry_id=%s",
+            (self.productset_id,self.catentry_id,));con.commit()
+        except(Exception,psycopg2.DatabaseError) as e:
+            if con is not None:con.rollback()
+            raise EntryException(str(e).strip().split('\n')[0])
+
 class InstallTradetypes:
     def __init__(self,fname):
         self.fname=fname
@@ -967,6 +1134,24 @@ class InstallTradetypes:
             descriptions=df.values[:,[0,2,1]]
             [Trdtype(*v).save() for v in values]
             [Trdtypedsc(*d).save() for d in descriptions]
+
+class InstallPolicyTypes:
+    def __init__(self,fname):
+        self.fname=fname
+    
+    def isfilled(self):
+        cursor.execute("select count(policytype_id)from policytype")
+        res=cursor.fetchone()[0]
+        if res > 0:return True
+        elif res<=0:return False
+    
+    def save(self):
+        basedir=os.path.abspath(os.path.dirname(__file__))
+        fileurl=os.path.join(os.path.join(os.path.split(os.path.split(basedir)[0])[0],"static/datafiles"),self.fname)
+        if os.path.isfile(fileurl):
+            df=pd.read_csv(fileurl)
+            values=df.values
+            [Policytype(*v).save() for v in values]
 
 class InstallTctypes:
     def __init__(self,fname):
