@@ -153,6 +153,8 @@ from functions import build_constraint
 # cursor.execute(build_constraint("setcurrdsc","f_743","language_id","language","language_id"))
 
 # CONTRACTS
+# cursor.execute(build_constraint("creditline","f_278","setccurr","setcurr","setccurr"))
+# cursor.execute(build_constraint("creditline","f_279","account_id","trading","trading_id"))
 # cursor.execute(build_constraint("trading","f_866","trdtype_id","trdtype","trdtype_id"))
 # cursor.execute(build_constraint("trddesc","f_873","language_id","language","language_id"))
 # cursor.execute(build_constraint("trddesc","f_874","trading_id","trading","trading_id"))
@@ -202,7 +204,7 @@ from functions import build_constraint
 # cursor.execute(build_constraint("plcytypdsc","f_607","policytype_id","policytype","policytype_id"))
 # cursor.execute(build_constraint("cntrstore","f_912","contract_id","contract","contract_id"))
 # cursor.execute(build_constraint("fileupload","f_984","member_id","member","member_id"))
-#TODO DO NOT RUN: cursor.execute(build_constraint("fileupload","f_985","sccjobacct_id","schconfig","sccjobacct_id"))
+
 # cursor.execute(build_constraint("fileupload","f_986","store_id","store","store_id"))
 # cursor.execute(build_constraint("storecntr","f_784","store_id","store","store_id"))
 # cursor.execute(build_constraint("storecntr","f_785","contract_id","contract","contract_id"))
@@ -218,7 +220,7 @@ from functions import build_constraint
 # cursor.execute(build_constraint("psetadjmnt","f_921","productset_id","productset","productset_id"))
 # cursor.execute(build_constraint("psetadjmnt","f_922","termcond_id","termcond","termcond_id"))
 
-# BUY ONLINE PICKUP
+# # BUY ONLINE PICKUP
 # cursor.execute(build_constraint("invavl","f_3581","catentry_id","catentry","catentry_id"))
 # cursor.execute(build_constraint("invavl","f_3582","store_id","store","store_id"))
 # cursor.execute(build_constraint("invavl","f_3583","stloc_id","stloc","stloc_id"))
@@ -227,7 +229,7 @@ from functions import build_constraint
 # cursor.execute(build_constraint("stlffmrel","f_3579","ffmcenter_id","ffmcenter","ffmcenter_id"))
 # cursor.execute(build_constraint("stlffmrel","f_3580","address_id","address","address_id"))
 
-# CALCULATIONS
+# # CALCULATIONS
 # cursor.execute(build_constraint("calcode","f_151","calusage_id","calusage","calusage_id"))
 # cursor.execute(build_constraint("calcode","f_152","storeent_id","storeent","storeent_id"))
 # cursor.execute(build_constraint("calcode","f_153","txcdclass_id","txcdclass","txcdclass_id"))
@@ -309,10 +311,7 @@ from functions import build_constraint
 # cursor.execute(build_constraint("taxtype","f_823","taxtype_id","calusage","calusage_id"))
 # cursor.execute(build_constraint("taxtype","f_824","txcdscheme_id","txcdscheme","txcdscheme_id"))
 
-# CATALOG
-# cursor.execute(build_constraint("catalogtpc","f_5529","catalog_id","catalog","catalog_id"))
-# cursor.execute(build_constraint("catalogtpc","f_5530","tradeposcn_id","tradeposcn","tradeposcn_id"))
-# cursor.execute(build_constraint("catalogtpc","f_5531","store_id","store","store_id"))
+# # CATALOG
 # cursor.execute(build_constraint("atchtgt","f_1102","storeent_id","storeent","storeent_id"))
 # cursor.execute(build_constraint("atchtgt","f_1103","member_id","member","member_id"))
 # cursor.execute(build_constraint("atchtgt","f_1104","attachusg_id","attachusg","attachusg_id"))
@@ -372,6 +371,13 @@ from functions import build_constraint
 # cursor.execute(build_constraint("baseitem","f_106","itemtype_id","itemtype","itemtype_id"))
 # cursor.execute(build_constraint("baseitem","f_107","quantitymeasure","qtyunit","qtyunit_id"))
 # cursor.execute(build_constraint("baseitem","f_108","member_id","member","member_id"))
+
+# cursor.execute(build_constraint("catalogtpc","f_5529","catalog_id","catalog","catalog_id"))
+# cursor.execute(build_constraint("catalogtpc","f_5530","tradeposcn_id","tradeposcn","tradeposcn_id"))
+# cursor.execute(build_constraint("catalogtpc","f_5531","store_id","store","store_id"))
+# cursor.execute(build_constraint("versionspc","f_905","itemspc_id","itemspc","itemspc_id"))
+# cursor.execute(build_constraint("versionspc","f_906","itemversn_id","itemversn","itemversn_id"))
+# cursor.execute(build_constraint("itemversn","f_408","baseitem_id","baseitem","baseitem_id"))
 
 # cursor.execute(build_constraint("itemspc","f_406","member_id","member","member_id"))
 # cursor.execute(build_constraint("itemspc","f_407","baseitem_id","catentry","catentry_id"))
@@ -437,7 +443,7 @@ from functions import build_constraint
 # cursor.execute(build_constraint("prsetcerel","f_628","productset_id","productset","productset_id"))
 # cursor.execute(build_constraint("prsetcerel","f_629","catentry_id","catentry","catentry_id"))
 
-# FULFILLMENT
+# # FULFILLMENT
 # cursor.execute(build_constraint("ffmcenter","f_317","member_id","member","member_id"))
 # cursor.execute(build_constraint("ffmcentds","f_314","staddress_id","staddress","staddress_id"))
 # cursor.execute(build_constraint("ffmcentds","f_315","language_id","language","language_id"))
@@ -447,7 +453,7 @@ from functions import build_constraint
 # cursor.execute(build_constraint("inventory","f_395","catentry_id","catentry","catentry_id"))
 # cursor.execute(build_constraint("inventory","f_396","ffmcenter_id","ffmcenter","ffmcenter_id"))
 
-# INTEREST ITEM
+# # INTEREST ITEM
 # cursor.execute(build_constraint("iitem","f_379","iitemlist_id","iitemlist","iitemlist_id"))
 # cursor.execute(build_constraint("iitem","f_380","member_id","member","member_id"))
 # cursor.execute(build_constraint("iitem","f_381","storeent_id","storeent","storeent_id"))
@@ -456,7 +462,7 @@ from functions import build_constraint
 # cursor.execute(build_constraint("ciitemlist","f_239","iitemlist_id","iitemlist","iitemlist_id"))
 # cursor.execute(build_constraint("ciitemlist","f_240","member_id","member","member_id"))
 
-# INVENTORY
+# # INVENTORY
 # cursor.execute(build_constraint("distarrang","f_308","wholesalestore_id","store","store_id"))
 # cursor.execute(build_constraint("distarrang","f_309","merchantstore_id","store","store_id"))
 # cursor.execute(build_constraint("distarrang","f_310","baseitem_id","catentry","catentry_id"))
@@ -542,11 +548,11 @@ from functions import build_constraint
 # cursor.execute(build_constraint("bkordalloc","f_124","itemspc_id","itemspc","itemspc_id"))
 # cursor.execute(build_constraint("bkordalloc","f_125","orderitems_id","orderitems","orderitems_id"))
 
-# JURISDICTION
+# # JURISDICTION
 # cursor.execute(build_constraint("jurstgprel","f_410","jurst_id","jurst","jurst_id"))
 # cursor.execute(build_constraint("jurstgprel","f_411","jurstgroup_id","jurstgroup","jurstgroup_id"))
 
-# OFFERS
+# # OFFERS
 # cursor.execute(build_constraint("offer","f_467","tradeposcn_id","tradeposcn","tradeposcn_id"))
 # cursor.execute(build_constraint("offer","f_468","catentry_id","catentry","catentry_id"))
 # cursor.execute(build_constraint("offer","f_469","qtyunit_id","qtyunit","qtyunit_id"))
@@ -559,10 +565,7 @@ from functions import build_constraint
 # cursor.execute(build_constraint("ordioffer","f_525","offer_id","offer","offer_id"))
 # cursor.execute(build_constraint("ordioffer","f_526","orderitems_id","orderitems","orderitems_id"))
 
-# # ORDER PROCESSING
-# cursor.execute(build_constraint("creditline","f_278","setccurr","setcurr","setccurr"))
-# cursor.execute(build_constraint("creditline","f_279","account_id","trading","trading_id"))
-
+# # # ORDER PROCESSING
 # cursor.execute(build_constraint("ordpaymthd","f_535","rma_id","rma","rma_id"))
 # cursor.execute(build_constraint("ordpaymthd","f_536","policy_id","policy","policy_id"))
 # cursor.execute(build_constraint("ordpaymthd","f_537","paysummary_id","paysummary","paysummary_id"))
@@ -683,7 +686,7 @@ from functions import build_constraint
 # cursor.execute(build_constraint("orditemconf","f_3475","manifest_id","manifest","manifest_id"))
 # cursor.execute(build_constraint("chargetype","f_233","storeent_id","storeent","storeent_id"))
 
-# PRICING
+# # PRICING
 # cursor.execute(build_constraint("dkpdcrel","f_1061","catentry_id","catentry","catentry_id"))
 # cursor.execute(build_constraint("dkpdcrel","f_1075","dkpredefconf_id","dkpredefconf","dkpredefconf_id"))
 # cursor.execute(build_constraint("dkpdcofferrel","f_1197","dkpredefconf_id","dkpredefconf","dkpredefconf_id"))
@@ -712,7 +715,7 @@ from functions import build_constraint
 # cursor.execute(build_constraint("preletemplate","f_3631","preletpltgrp_id","preletpltgrp","preletpltgrp_id"))
 # cursor.execute(build_constraint("preletemplate","f_3632","storeent_id","storeent","storeent_id"))
 
-# QUANTITY UNIT
+# # QUANTITY UNIT
 # cursor.execute(build_constraint("qtyunitdsc","f_647","language_id","language","language_id"))
 # cursor.execute(build_constraint("qtyunitdsc","f_648","qtyunit_id","qtyunit","qtyunit_id"))
 # cursor.execute(build_constraint("qtyconvert","f_640","qtyunit_id_from","qtyunit","qtyunit_id"))
@@ -724,7 +727,7 @@ from functions import build_constraint
 # cursor.execute(build_constraint("qtyfmtdesc","f_643","storeent_id,qtyunit_id,numbrusg_id","qtyformat","storeent_id,qtyunit_id,numbrusg_id"))
 # cursor.execute(build_constraint("qtyunitmap","f_649","qtyunit_id","qtyunit","qtyunit_id"))
 
-# RFQ
+# # RFQ
 # cursor.execute(build_constraint("rfq","f_674","rfq_id","trading","trading_id"))
 # cursor.execute(build_constraint("rfq","f_675","member_id","member","member_id"))
 # cursor.execute(build_constraint("rfq","f_677","store_id","store","store_id"))
@@ -770,7 +773,7 @@ from functions import build_constraint
 # cursor.execute(build_constraint("pattrprod","f_567","pattribute_id","pattribute","pattribute_id"))
 # cursor.execute(build_constraint("pattrprod","f_568","catentry_id","catentry","catentry_id"))
 
-# SHIPPING
+# # SHIPPING
 # cursor.execute(build_constraint("shipmodedsc","f_755","shipmode_id","shipmode","shipmode_id"))
 # cursor.execute(build_constraint("shipmodedsc","f_756","language_id","language","language_id"))
 # cursor.execute(build_constraint("shipmode","f_745","storeent_id","storeent","storeent_id"))
@@ -784,7 +787,7 @@ from functions import build_constraint
 # cursor.execute(build_constraint("shpinfo","f_1147","policy_id","policy","policy_id"))
 # cursor.execute(build_constraint("shpinfo","f_1148","shipmode_id","shipmode","shipmode_id"))
 
-# STORES
+# # STORES
 # cursor.execute(build_constraint("storeentds","f_791","staddress_id_cont","staddress","staddress_id"))
 # cursor.execute(build_constraint("storeentds","f_792","staddress_id_loc","staddress","staddress_id"))
 # cursor.execute(build_constraint("storeentds","f_793","language_id","language","language_id"))
@@ -851,19 +854,19 @@ from functions import build_constraint
 # cursor.execute(build_constraint("geondds","f_3574","geonode_id","geonode","geonode_id"))
 # cursor.execute(build_constraint("geondds","f_3575","language_id","language","language_id"))
 
-# TAX
+# # TAX
 # cursor.execute(build_constraint("txcdclass","f_885","storeent_id","storeent","storeent_id"))
 # cursor.execute(build_constraint("txcdclass","f_886","txcdscheme_id","txcdscheme","txcdscheme_id"))
 # cursor.execute(build_constraint("taxcgryds","f_818","taxcgry_id","taxcgry","taxcgry_id"))
 # cursor.execute(build_constraint("taxcgryds","f_819","language_id","language","language_id"))
 
-# VENDOR
+# # VENDOR
 # cursor.execute(build_constraint("vendor","f_901","buyer_id","orgentity","orgentity_id"))
 # cursor.execute(build_constraint("vendor","f_902","vendor_id","orgentity","orgentity_id"))
 # cursor.execute(build_constraint("vendordesc","f_903","language_id","language","language_id"))
 # cursor.execute(build_constraint("vendordesc","f_904","vendor_id","vendor","vendor_id"))
 
-# PAYMENT
+# # PAYMENT
 # cursor.execute(build_constraint("edppayinst","f_1096","edporder_id","edporder","edporder_id"))
 # cursor.execute(build_constraint("edprelease","f_1098","edporder_id","edporder","edporder_id"))
 # cursor.execute(build_constraint("edpatmpay","f_1097","edppayinst_id","edppayinst","edppayinst_id"))
@@ -887,7 +890,7 @@ from functions import build_constraint
 # cursor.execute(build_constraint("storemerch","f_3468","merchant_id","merchant","merchant_id"))
 # cursor.execute(build_constraint("ppcbatch","f_3477","merchconf_id","merchconf","merchconf_id"))
 
-# ATTRDICT
+# # ATTRDICT
 # cursor.execute(build_constraint("attr","f_3551","attrtype_id","attrtype","attrtype_id"))
 # cursor.execute(build_constraint("attr","f_3552","attrdict_id","attrdict","attrdict_id"))
 # cursor.execute(build_constraint("attr","f_3553","storeent_id","storeent","storeent_id"))
@@ -914,8 +917,8 @@ from functions import build_constraint
 # cursor.execute(build_constraint("attrdictgrpattrel","f_3564","attrdictgrp_id","attrdictgrp","attrdictgrp_id"))
 # cursor.execute(build_constraint("attrdictgrpattrel","f_3565","attr_id","attr","attr_id"))
 
-# ACCOUNTING TODO DO NOT RUN
-# TODO DO NOT RUN cursor.execute(build_constraint("superclass","a_001","member_id","member","member_id"))
+# ACCOUNTING 
+# cursor.execute(build_constraint("superclass","a_001","member_id","member","member_id"))
 # cursor.execute(build_constraint("superclassdsc","a_002","superclass_id","superclass","superclass_id"))
 # cursor.execute(build_constraint("superclassdsc","a_003","language_id","language","language_id"))
 # cursor.execute(build_constraint("supersubrel","a_010","subclass_id","subclass","subclass_id"))

@@ -1,12 +1,17 @@
-from .db_con import createcon
+# from .db_con import createcon
 # from db_con import createcon
 import psycopg2,json,math,os
-con,cursor=createcon("retail","jmso","localhost","5432")
+# con,cursor=createcon("retail","jmso","localhost","5432")
+from ops.connector.connector import evcon
+con,cursor=evcon()
+
 import  importlib
 import pandas as pd
 import numpy as np
 from ops import textualize_datetime,humanize_date,CurrencyHelper,timestamp_now
+from ops.helpers.functions import BASE_URL
 from ops.fulfillment.fulfillment import Inventory
+from ops.calculations.discountcalculations import DiscountCalculations
 
 class EntryException(Exception):
     def __init__(self,message):
@@ -135,7 +140,7 @@ class Receipt:
         self.setccurr=setccurr
         self.radetail_id=radetail_id
         self.rtnrcptdsp_id=rtnrcptdsp_id
-    
+
     @staticmethod
     def getpo(radetail_id):
         cursor.execute("""with radetail as(select ra_id from radetail where radetail_id=%s)select
@@ -164,7 +169,7 @@ class Receipt:
         if len(res)<=0:return [dict(receipt_id=None,versionspc_id=None,product=None,radetail_id=None,store_id=None,store=None,
         setccurr=None,currency=None,ffmcenter_id=None,warehouse=None,vendor_id=None,vendor=None,receiptdate=None,received=None,
         qtyreceived=None,qtyinprocess=None,qtyonhand=None,qtyinkits=None,unit_cost=None,comment1=None,comment=None,lastupdate=None,
-        updated=None,createtime=None,created=None,receipttype=None,type=None,rtnrcptdsp_id=None,PO_number=None)]
+        updated=None,createtime=None,created=None,receipttype=None,type=None,rtnrcptdsp_id=None,PO_Number=None)]
 
         elif len(res)>0:return [dict(receipt_id=r[0],versionspc_id=r[1],product=r[2],radetail_id=r[3],store_id=r[4],
         store=r[5],setccurr=r[6],currency=r[7],ffmcenter_id=r[8],warehouse=r[9],vendor_id=r[10],vendor=r[11],
@@ -172,7 +177,7 @@ class Receipt:
         qtyinprocess=r[14],in_process=r[14],qtyonhand=r[15],on_hand=r[15],qtyinkits=r[16],in_kits=r[16],unit_cost=r[17],
         comment=r[18],lastupdate=textualize_datetime(r[19]),updated=humanize_date(r[19]),createtime=textualize_datetime(r[20]),
         created=humanize_date(r[20]),receipttype=r[21],type=[x["text"] for x in receipttypes if x["value"]==r[21]][0],
-        rtnrcptdsp_id=r[22],PO_number=Receipt.getpo(r[3])) for r in res]
+        rtnrcptdsp_id=r[22],PO_Number=Receipt.getpo(r[3])) for r in res]
     
     def save(self):
         try:
@@ -447,6 +452,7 @@ class Invadjdesc:
             raise EntryException(str(e).strip().split('\n')[0])
 
 openindicators=[dict(text="Yes",value="Y"),dict(text="No",value="N")]
+
 class Ra:
     def __init__(self,vendor_id,store_id,orderdate,createtime,openindicator=None,dateclosed=None,
     lastupdate=None,externalid=None,markfordelete=0):
@@ -459,6 +465,30 @@ class Ra:
         self.lastupdate=lastupdate
         self.externalid=externalid
         self.markfordelete=markfordelete
+    
+    @staticmethod
+    def outstanding(ra_id):
+        cursor.execute("select count(radetail_id)from radetail where qtyremaining>0 and ra_id=%s",(ra_id,))
+        res=cursor.fetchone();return res[0]
+    
+    @staticmethod
+    def resolved(ra_id):
+        cursor.execute("select count(radetail_id) from radetail where qtyremaining<=0 and ra_id=%s",(ra_id,))
+        res=cursor.fetchone();return res[0]
+    
+    @staticmethod
+    def getvendorid(vname):
+        cursor.execute("select vendor_id from vendor where vendorname=%s",(vname,))
+        res=cursor.fetchone()
+        if res==None:return None
+        elif res!=None:return res[0]
+    
+    @staticmethod
+    def getstoreid(sname):
+        cursor.execute("select storeent_id from storeent where identifier=%s",(sname,))
+        res=cursor.fetchone()
+        if res==None:return None
+        elif res!=None:return res[0]
     
     @staticmethod
     def getindicator(ra_id):
@@ -491,17 +521,19 @@ class Ra:
             raise EntryException(str(e).strip().split('\n')[0])
     
     @staticmethod
-    def read():
+    def read(mid):
         cursor.execute("""select ra.vendor_id,vendor.vendorname,ra.store_id,storeent.identifier,ra.orderdate,
-        ra.createtime,ra.openindicator::text,ra.dateclosed,ra.externalid::text,ra.ra_id from ra inner join vendor on 
-        ra.vendor_id=vendor.vendor_id inner join storeent on ra.store_id=storeent.storeent_id""");res=cursor.fetchall()
-        if len(res)<=0:return [dict(vendor_id=None,vendor=None,store_id=None,store=None,orderedate=None,
-        ordered=None,createtime=None,created=None,openindicator=None,open=None,dateclosed=None,closed=None,
-        externalid=None,po_number=None)]
-        elif len(res)>0:return [dict(vendor_id=r[0],vendor=r[1],store_id=r[2],store=r[3],
-        orderdate=textualize_datetime(r[4]),ordered=humanize_date(r[4]),createtime=textualize_datetime(r[5]),
-        created=humanize_date(r[5]),openindicator=r[6],open=[x['text'] for x in openindicators if x['value']==r[6]][0],
-        dateclosed=textualize_datetime(r[7]),closed=humanize_date(r[7]),externalid=r[8],po_number=r[8],ra_id=r[9]) for r in res]
+        ra.createtime,ra.openindicator::text,ra.dateclosed,ra.externalid::text,ra.ra_id from ra inner join 
+        vendor on ra.vendor_id=vendor.vendor_id inner join storeent on ra.store_id=storeent.storeent_id where
+        storeent.member_id=%s""",(mid,));res=cursor.fetchall()
+        if len(res)<=0:return [dict(outstanding=None,resolved=None,vendor_id=None,vendor=None,store_id=None,
+        store=None,orderedate=None,ordered=None,createtime=None,created=None,openindicator=None,open=None,dateclosed=None,
+        closed=None,externalid=None,PO_Number=None,ra_id=None)]
+        elif len(res)>0:return [dict(vendor_id=r[0],outstanding=Ra.outstanding(r[9]),vendor=r[1],store_id=r[2],
+        store=r[3],resolved=Ra.resolved(r[9]),orderdate=textualize_datetime(r[4]),ordered=humanize_date(r[4]),
+        createtime=textualize_datetime(r[5]),created=humanize_date(r[5]),openindicator=r[6],open=[x['text'] 
+        for x in openindicators if x['value']==r[6]][0],dateclosed=textualize_datetime(r[7]),closed=humanize_date(r[7]),
+        externalid=r[8],PO_Number=r[8],ra_id=r[9]) for r in res]
 
     @staticmethod
     def read_ra(ra_id):
@@ -682,11 +714,12 @@ class ReceiveInventory:
         on_hand=r[15],qtyinkits=r[16],in_kits=r[16],unit_cost=r[17],comment=r[18],lastupdate=textualize_datetime(r[19]),
         updated=humanize_date(r[19]),createtime=textualize_datetime(r[20]),created=humanize_date(r[20]),
         receipttype=r[21],type=[x["text"] for x in receipttypes if x["value"]==r[21]][0],rtnrcptdsp_id=r[22],
-        qtyremaining=r[23],PO_number=Receipt.getpo(r[3]))
+        qtyremaining=r[23],PO_Number=Receipt.getpo(r[3]))
 
 class ItemPriceDefaultContract:
-    def __init__(self,language_id,name=None,catentry_id=None):
+    def __init__(self,language_id,member_id,name=None,catentry_id=None):
         self.language_id=language_id
+        self.member_id=member_id
         self.name=name
         self.catentry_id=catentry_id
         if self.name!=None and self.catentry_id==None:self.catentry_id=self.getcatentryid()
@@ -707,7 +740,7 @@ class ItemPriceDefaultContract:
         elif res!=None:return res
     
     def getdefaultcontract(self):
-        cursor.execute("select contract_id from contract where usage=0")
+        cursor.execute("select contract_id from contract where member_id=%s and usage=0",(self.member_id,))
         res=cursor.fetchone()
         if res==None:return None
         elif res!=None:return res[0]
@@ -727,4 +760,246 @@ class ItemPriceDefaultContract:
             symbol=CurrencyHelper(self.language_id).getcurrsymbol(),price=self.listprice))
             return data
 
-        
+inventorystatuses=[dict(value="NALC",text="Unallocated"),dict(value="BO",text="Back Ordered"),dict(value="ALLC",
+text="Allocated"),dict(value="FUL",text="Released"),dict(value="FUT",text="Future"),dict(value="AVL",text="Available"),
+dict(value="BA",text="BackOrderable")]
+orderstatuses=[dict(value=1,text="Ordered"),dict(value=2,text="Invoiced"),dict(value=3,text="Shipped"),
+dict(value=4,text="Backordered"),dict(value=5,text="Canceled"),dict(value=6,text="Refunded"),dict(value=7,text="Returned")]
+ffmstatuses=[dict(value="INT",text="Not Yet Released"),dict(value="OUT",text="Released for Fulfillment"),
+dict(value="SHIP",text="Shipment Confirmed"),dict(value="HOLD",text="Held, Waiting for Release")]
+from ops.trading.trading import ExcludedItems
+
+class InventoryItem:
+    def __init__(self,catentry_id,language_id,store_id,customer_id,owner_id,quantity=1):
+        self.catentry_id=catentry_id
+        self.language_id=language_id
+        self.store_id=store_id
+        self.customer_id=customer_id
+        self.owner_id=owner_id
+        self.dcontract=self.default_contract()
+        self.mcontract=self.member_contract()
+        self.price=self.contract_pricing()
+
+        self.quantity=quantity
+        self.costprice=self.getcostprice(catentry_id)
+        self.price=dict(tradeposcn_id=self.price[0][0],contract_id=self.price[0][1],owner_id=self.price[0][2],
+                        type=self.price[0][3],offer_id=self.price[0][4],catentry_id=self.price[0][5],
+                        price=self.price[0][6],currency=self.price[0][7])
+        self.itemspc_id=self.getitemspc()
+        self.partnumber=self.getpart()
+
+        self.dscounts=self.discounts()
+        self.discount=dict(catencalcd_id=self.dscounts[0][0],trading_id=self.dscounts[0][1],contract=self.dscounts[0][2],
+                            calcode_id=self.dscounts[0][3],adjustment=self.dscounts[0][4])
+        if self.discount["calcode_id"]!=None:
+            d=DiscountCalculations(self.discount["calcode_id"],self.catentry_id,self.price["price"],self.quantity,self.store_id,self.discount["trading_id"])
+            self.totaladjustment=d._execute()
+        elif self.discount["calcode_id"]==None:
+            self.totaladjustment=0
+        self.inventorydata=self.inventory()
+        self.generalinformation=self.catentry()
+        self.isexcluded=False;self.exclusionstatement=""
+        if self.mcontract != None and self.mcontract>0:
+            e=ExcludedItems(self.mcontract,'CustomizedProductSetExclusion')
+            if catentry_id in e.get_items():
+                self.isexcluded=True
+                self.exclusionstatement="Excluded under customer trading account."
+        if self.dcontract != None and self.dcontract>0:
+            e=ExcludedItems(self.dcontract,'CustomizedProductSetExclusion')
+            if catentry_id in e.get_items():
+                self.isexcluded=True
+                self.exclusionstatement="Excluded under the default trading agreement"
+    
+    def getcostprice(self,catentry_id):
+        cursor.execute("select listprice::float from listprice where catentry_id=%s",(catentry_id,))
+        res=cursor.fetchone()
+        if res==None:return res
+        elif res!=None:return res[0]
+
+    @staticmethod
+    def productname(cid):
+        cursor.execute("select name from catentdesc where catentry_id=%s",(cid,))
+        res=cursor.fetchone()[0]
+        if res==None:return res
+        elif res!=None:return res[0]
+    
+    def member_contract(self):
+        cursor.execute("select trading_id from participnt where member_id=%s",
+        (self.customer_id,));res=cursor.fetchone()
+        if res==None:return 0
+        elif res!=None:return res[0]
+    
+    def getpart(self):
+        cursor.execute("select partnumber from catentry where catentry_id=%s",(self.catentry_id,))
+        res=cursor.fetchone()
+        if res==None:return res
+        elif res!=None:return res[0]
+    
+    def getitemspc(self):
+        cursor.execute("select itemspc_id from catentry where catentry_id=%s",(self.catentry_id,))
+        res=cursor.fetchone()
+        if res==None:return res
+        elif res!=None:return res[0]
+    
+    def default_contract(self):
+        cursor.execute("select contract.contract_id from contract where usage=0 and member_id=%s",(self.owner_id,))
+        res=cursor.fetchone()
+        if res==None:return res
+        elif res!=None:return res[0]
+    
+    def contract_pricing(self):
+        cursor.execute("""select tdpscncntr.tradeposcn_id,tdpscncntr.contract_id,tradeposcn.member_id,
+        tradeposcn.type::text,offer.offer_id,offer.catentry_id,offerprice.price::float,offerprice.currency 
+        from tdpscncntr inner join tradeposcn on tdpscncntr.tradeposcn_id=tradeposcn.tradeposcn_id 
+        inner join offer on tradeposcn.tradeposcn_id=offer.tradeposcn_id inner join offerprice on 
+        offer.offer_id=offerprice.offer_id where tradeposcn.member_id=%s and offer.catentry_id=%s 
+        """,(self.owner_id,self.catentry_id,));res=cursor.fetchall();price=None
+        if len(res) <= 0:return dict(tradeposcn_id=None,contract_id=None,owner_id=None,type=None,
+        offer_id=None,catentry_id=None,price=None,currency=None)
+        elif len(res) > 0:
+            if self.mcontract !=None:
+                # get the custom offer under the purchases account
+                # print("get the custom offer under the purchases account")
+                price=[x for x in res if x[1]==self.mcontract and x[3]=="C"]
+                if len(price)>0:return price
+                elif len(price)<=0:
+                    # if there is not a custom offer, get the standard markup under the purchases account
+                    # print("there is not a custom offer, get the standard markup under the purchases account")
+                    price=[x for x in res if x[1]==self.mcontract and x[3]=="S"]
+                    if len(price)>0:return price
+                    elif len(price)<=0:
+                        # if there is not a standard offer under this purchases account, get default custom
+                        # print("there is not a standard offer under this purchases account, get default custom")
+                        price=[x for x in res if x[1]==self.dcontract and x[3]=="C"]
+                        if len(price)>0:return price
+                        # if there is not a custom price for the default contract use the offer price on default
+                        elif len(price) <= 0:
+                            # print("there is not a custom price for the default contract use the offer price on default")
+                            price=[x for x in res if x[1]==self.dcontract and x[3]=="S"]
+                            if len(price)>0:return price
+                            elif len(price)<=0:return list()
+    
+    def discounts(self):
+        cursor.execute("""select catencalcd.catencalcd_id,catencalcd.trading_id,contract.name,
+        catencalcd.calcode_id,calcodedesc.description from catencalcd inner join contract on
+        catencalcd.trading_id=contract.contract_id inner join calcodedesc on catencalcd.calcode_id=
+        calcodedesc.calcode_id where catencalcd.catentry_id=%s and catencalcd.store_id=%s""",
+        (self.catentry_id,self.store_id,));res=cursor.fetchall();code=None
+        if len(res)<=0:return [(None,None,None,None,None)]
+        elif len(res)>0:
+            if self.mcontract != None:
+                code=[x for x in res if x[1]==self.mcontract]
+                if len(code) > 0:return code
+                elif len(code) <= 0:
+                    code=[x for x in res if x[1]==self.dcontract]
+                    if len(code) > 0:return code
+                    elif len(code) <= 0:return [(None,None,None,None,None)]
+
+    def catentry(self):
+        cursor.execute("""select catentry.member_id,orgentity.orgentityname,catentry.itemspc_id,
+        catentry.catenttype_id::text,catentry.endofservicedate,catentdesc.name,catentdesc.shortdesciption,
+        catentdesc.fullimage,catentdesc.avaialble,catentdesc.published,catgpenrel.catalog_id,catalog.identifier,
+        catgpenrel.catgroup_id,catgroup.identifier from catentry inner join catentdesc 
+        on catentry.catentry_id=catentdesc.catentry_id inner join orgentity on catentry.member_id=orgentity.
+        orgentity_id left join catgpenrel on catentry.catentry_id=catgpenrel.catentry_id left join catalog
+        on catgpenrel.catalog_id=catalog.catalog_id left join catgroup on catgpenrel.catgroup_id=catgroup.
+        catgroup_id where catentry.catentry_id=%s and catentdesc.language_id=%s and catentry.member_id=%s""",
+        (self.catentry_id,self.language_id,self.owner_id,));res=cursor.fetchone()
+        if res==None:return dict(owner_id=None,owner=None,itemspc_id=None,catenttype_id=None,expirydate=None,name=None,
+        shortdescription=None,fullimage=None,available=None,published=None,catalog_id=None,catalogname=None,
+        catgroup_id=None,catgroupname=None)
+        elif res!=None:return dict(owner_id=res[0],owner=res[1],itemspc_id=res[2],catenttype_id=res[3],
+        expirydate=textualize_datetime(res[4]),name=res[5],shortdescription=res[6],fullimage=res[7],
+        available=res[8],published=res[9],catalog_id=res[10],catalogname=res[11],catgroup_id=res[12],catgroupname=res[13])
+    
+    def inventory(self):
+        cursor.execute("""select inventory.quantity::float,inventory.ffmcenter_id,ffmcenter.name,
+        inventory.store_id,storeent.identifier from inventory inner join ffmcenter on inventory.
+        ffmcenter_id=ffmcenter.ffmcenter_id inner join storeent on inventory.store_id=storeent.
+        storeent_id where inventory.catentry_id=%s and storeent.member_id=%s""",(self.catentry_id,self.owner_id,))
+        res=cursor.fetchone()
+        if res==None:return dict(quantity=0,ffmcenter_id=None,warehouse=None,store_id=None,store=None)
+        elif res!=None:return dict(quantity=res[0],ffmcenter_id=res[1],warehouse=res[2],store_id=res[3],
+        store=res[4])
+
+class InventoryItemIds:
+    def __init__(self,owner_id):
+        self.owner_id=owner_id
+    
+    def _execute(self):
+        cursor.execute("select catentry_id from catentry where member_id=%s",(self.owner_id,))
+        res=cursor.fetchall()
+        if len(res) > 0:return [x for (x,) in res]
+        elif len(res)<=0:return list()
+
+class DisplayItems:
+    def __init__(self,owner_id,language_id,store_id,customer_id,quantity):
+        self.owner_id=owner_id
+        self.language_id=language_id
+        self.store_id=store_id
+        self.customer_id=customer_id
+        self.quantity=quantity
+        self.items=InventoryItemIds(owner_id)._execute()
+        self.cc=CurrencyHelper(language_id)
+    
+    def iitem(self,item_id):
+        ivitem=InventoryItem(item_id,self.language_id,self.store_id,self.customer_id,self.owner_id,self.quantity)
+        fullimage=ivitem.generalinformation["fullimage"]
+        if fullimage==None:fullimage=BASE_URL+"/static/profileuploads/product-default.jpg"
+        data=dict(catentry_id=item_id,store_id=self.store_id,owner_id=self.owner_id,quantity=self.quantity,
+        price=ivitem.price["price"],costprice=ivitem.costprice,discount=ivitem.totaladjustment,inventorydata=ivitem.inventorydata,
+        catalogdata=ivitem.generalinformation,isexcluded=ivitem.isexcluded,exclusionstatement=
+        ivitem.exclusionstatement,symbol=self.cc.getcurrsymbol());return data
+    
+    def _execute(self):
+        return [self.iitem(x) for x in self.items]
+
+class AllItemsForOrg:
+    def __init__(self,owner_id,language_id):
+        self.owner_id=owner_id
+        self.language_id=language_id
+    
+    def cashcustomer(self):
+        cursor.execute("select users_id from userreg where logonid='Cash Customer'")
+        res=cursor.fetchone()
+        if res==None:return None
+        elif res!=None:return res[0]
+    
+    def stores(self):
+        cursor.execute("select storeent_id from storeent where member_id=%s",
+        (self.owner_id,));res=cursor.fetchall()
+        if len(res)<=0:return None
+        elif len(res)>0:return [x for (x,) in res]
+    
+    def storedata(self,storeid,customerid):
+        return DisplayItems(self.owner_id,self.language_id,storeid,customerid,1)._execute() or None
+    
+    def get(self):
+        storeids=self.stores();customerid=self.cashcustomer();results=list()
+        if storeids !=None and customerid!=None:
+            [results.extend(self.storedata(storeids[i],customerid)) for i in range(len(storeids))]
+        return results
+
+class AllItemsByCategory:
+    def __init__(self,owner_id,language_id,catgroup_id):
+        self.owner_id=owner_id
+        self.language_id=language_id
+        self.catgroup_id=catgroup_id
+    
+    def get(self):
+        items=AllItemsForOrg(self.owner_id,self.language_id).get()
+        data=[x for x in items if x['catalogdata']['catgroup_id']==self.catgroup_id]
+        return data
+
+class AllItemsByStore:
+    def __init__(self,owner_id,language_id,store_id):
+        self.owner_id=owner_id
+        self.language_id=language_id
+        self.store_id=store_id
+    
+    def get(self):
+        items=AllItemsForOrg(self.owner_id,self.language_id).get()
+        print(len(items))
+        data=[x for x in items if x['store_id']==self.store_id]
+        print(len(data))
+        return data

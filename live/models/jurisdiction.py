@@ -38,4 +38,4 @@ class Jurisdiction:
 if __name__=="__main__":
     j=Jurisdiction()
     j.jurstgprel()
-    #j.jurstgroup()
+    j.jurstgroup()

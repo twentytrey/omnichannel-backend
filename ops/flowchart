@@ -224,4 +224,17 @@ PAYMENTS SUBSYSTEM ARCH
 ##################################################################################################################################
 delete from member
 alter sequence calmethod_calmethod_id_seq restart with 1;
+##################################################################################################################################
+################################################ RESTART PROTOCOL ################################################################
+##################################################################################################################################
+install models
+check taxtype by installation of calusage
+check language for variant column
+create root organization
+edit root organization profile
+##################################################################################################################################
+EDITED:
+m_store_resource,requester.py,simpos.py
+calculations.py,inventory.py,testing.py,prepareorder.py,orderhandler.py
+vendor_resource,orders_resource,__init__.py,
 

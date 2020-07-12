@@ -28,8 +28,8 @@ class calculationrulecalculate:
     def executetaskname(self,taskname,scale_id):
         mod=self.getmodule("ops.calculations.{}".format(taskname))
         lookupmethod=mod.nondiscountedpricecalculationscalelookup
-        l=lookupmethod(self.calrule_id,self.calcode_id,self.catentry_id,self.price,self.quantity,self.storeent_id,scale_id)
-        return l.returns
+        l=lookupmethod(self.calrule_id,self.calcode_id,self.catentry_id,self.price,self.quantity,
+        self.storeent_id,scale_id);return l.returns
 
     def _execute(self):
         cursor.execute("select calscale_id from crulescale where calrule_id=%s",(self.calrule_id,))

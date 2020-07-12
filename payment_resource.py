@@ -72,3 +72,21 @@ class read_payment_policy(Resource):
         trading_id=data["trading_id"]
         return ReadPolicyTc(trading_id,tcsubtype_id,language_id).get(),200
 
+from ops.payment.payment import SaveReference
+class save_reference(Resource):
+    def __init__(self):
+        self.parser=reqparse.RequestParser()
+        self.parser.add_argument("orders_id",help="required field",required=True)
+        self.parser.add_argument("transaction_reference",help="required field",required=True)
+        super(save_reference,self).__init__()
+    
+    @jwt_required
+    def post(self):
+        data=self.parser.parse_args()
+        orders_id=data["orders_id"]
+        transaction_reference=data["transaction_reference"]
+        try:
+            SaveReference(orders_id,transaction_reference).save()
+            return {"status":"OK","msg":"Transaction Successful."},200
+        except EntryException as e:
+            return {"status":"ERR","msg":"Error {}".format(e.message)},422

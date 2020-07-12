@@ -224,4 +224,9 @@ PAYMENTS SUBSYSTEM ARCH
 ##################################################################################################################################
 delete from member
 alter sequence calmethod_calmethod_id_seq restart with 1;
+##################################################################################################################################
+EDITED:
+m_store_resource,requester.py,simpos.py
+calculations.py,inventory.py,testing.py,prepareorder.py,orderhandler.py
+vendor_resource,orders_resource,__init__.py,
 

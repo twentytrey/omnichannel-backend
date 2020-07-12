@@ -270,7 +270,8 @@ class Calcode:
         txcdclass_id=r[5],published=r[6],sequence=r[7],combination=r[8],lastupdate=textualize_datetime(r[9]),calmethod_id=r[10],
         calculation=Calcode.methodname(r[10]),application=Calcode.methodname(r[11]),qualification=Calcode.methodname(r[12]),
         calmethod_id_app=r[11],calmethod_id_qfy=r[12],field1=r[13],description2=r[14],displaylevel=r[15],
-        startdate=r[16],enddate=r[17],flags=r[18],precedence=r[19],description=r[20],code=r[21],usage=Calcode.usagename(r[1]),
+        startdate=textualize_datetime(r[16]),enddate=textualize_datetime(r[17]),flags=r[18],precedence=r[19],description=r[20],
+        code=r[21],usage=Calcode.usagename(r[1]),
         updated=humanize_date(r[9]),storename=Calcode.storename(r[3]),attached=r[3]!=None)for r in res]
     
     def save(self):

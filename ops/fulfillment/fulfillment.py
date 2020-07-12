@@ -1,7 +1,10 @@
-from .db_con import createcon
+# from .db_con import createcon
 # from db_con import createcon
 import psycopg2,json,math,os
-con,cursor=createcon("retail","jmso","localhost","5432")
+# con,cursor=createcon("retail","jmso","localhost","5432")
+from ops.connector.connector import evcon
+con,cursor=evcon()
+
 import  importlib
 import pandas as pd
 import numpy as np
@@ -73,7 +76,7 @@ class Inventory:
         cursor.execute("select quantity from inventory where store_id=%s and catentry_id=%s",
         (store_id,catentry_id,));res=cursor.fetchone()
         if res==None:return None
-        elif res!=None:return res[0]
+        elif res!=None:return int(round(res[0]))
     
     @staticmethod
     def update(qtyreceived,catentry_id,ffmcenter_id,store_id):

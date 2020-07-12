@@ -582,9 +582,7 @@ if __name__=="__main__":
     c6=CalculationRuleShipping()
     c6.shpjcrule()
     c6.jurstgrprel()
-    c6.jurstgroup()
     c6.jurst()
 
     c7=CalculationUsage()
-    c7.taxtype()
-    c7.ordadjust()
+    c7.fill_calusage()

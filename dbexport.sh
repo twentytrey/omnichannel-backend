@@ -1,0 +1,1 @@
+pg_dump -U jmso retail > dbexport.pgsql

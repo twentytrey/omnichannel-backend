@@ -46,7 +46,10 @@ class user_identity(Resource):
     def get(self):
         current_user=get_jwt_identity()
         useridentity=get_jwt_claims()
-        return dict(current_user=current_user,user=useridentity),200
+        # decoded=dict(current_user=current_user,user=useridentity)
+        usersign=UserSign(current_user)
+        if(usersign.member_id==useridentity["user_id"]):return {"status":"OK"},200
+        else:return {"status":"ERR","msg":"Unauthorized user. Access denied."},422
 
 class logout_access(Resource):
     @jwt_required

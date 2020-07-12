@@ -111,3 +111,9 @@ class _create_customer_organization(Resource):
 class list_storeorgs(Resource):
     @jwt_required
     def get(self):return Storeorgs().getdata(),200
+
+from ops.customer.customer import CC
+class get_cc(Resource):
+    @jwt_required
+    def get(self):
+        return CC().get(),200

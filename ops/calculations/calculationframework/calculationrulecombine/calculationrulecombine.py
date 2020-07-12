@@ -1,7 +1,10 @@
-from .db_con import createcon
+# from .db_con import createcon
 # from db_con import createcon
 import psycopg2,json,math,os,importlib
-con,cursor=createcon("retail","jmso","localhost","5432")
+# con,cursor=createcon("retail","jmso","localhost","5432")
+from ops.connector.connector import evcon
+con,cursor=evcon()
+
 
 class calculationrulecombine:
     def __init__(self,calcode_id,catentry_id,price,quantity,store_id):

@@ -1,11 +1,14 @@
-from .db_con import createcon
+# from .db_con import createcon
 # from db_con import createcon
 import psycopg2
-con,cursor=createcon('retail','jmso','localhost','5432')
+# con,cursor=createcon('retail','jmso','localhost','5432')
+from ops.connector.connector import evcon
+con,cursor=evcon()
+
 import pandas as pd
 import numpy as np
 import os,re
-from ops import CurrencyHelper,humanize_date,timestamp_forever,timestamp_now
+from ops import CurrencyHelper,humanize_date,timestamp_forever,timestamp_now,textualize_datetime
 
 class EntryException(Exception):
     def __init__(self,message):
@@ -136,8 +139,8 @@ class Catgroup:
         left join catgrpdesc on catgroup.catgroup_id=catgrpdesc.catgroup_id where catgroup.member_id=%s and 
         catgrpdesc.language_id=%s""",(mid,lid,));res=cursor.fetchall()
         if len(res) <= 0:return [dict(catgroup_id=None,identifier=None,description=None)]
-        elif len(res) > 0:return [dict(catgroup_id=r[0],identifier=r[1],description=r[2],count=Catgroup.productcount(r[0]))
-        for r in res]
+        elif len(res) > 0:return [dict(catgroup_id=r[0],identifier=r[1],description=r[2],
+        count=Catgroup.productcount(r[0]))for r in res]
     
     def save(self):
         try:
@@ -150,7 +153,7 @@ class Catgroup:
         except(Exception,psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
-# print(Catgroup.attachedtostore(1,4))
+
 class Catgrpdesc:
     def __init__(self,language_id,catgroup_id,name,published,shortdescription=None,longdescription=None,thumbnail=None,
     fullimage=None,display=None,note=None):
@@ -230,6 +233,14 @@ class Catgpenrel:
         self.field1=field1
         self.field2=field2
         self.field3=field3
+    
+    def update(self):
+        try:
+            cursor.execute("""update catgpenrel set catgroup_id=%s,catalog_id=%s where catentry_id=%s""",
+            (self.catgroup_id,self.catalog_id,self.catentry_id,));con.commit()
+        except(Exception,psycopg2.DatabaseError) as e:
+            if con is not None:con.rollback()
+            raise EntryException(str(e).strip().split('\n')[0])
     
     def save(self):
         try:
@@ -410,6 +421,83 @@ class Massoctype:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
 
+class CatalogItem:
+    def __init__(self,owner_id,catentry_id,language_id):
+        self.catentry_id=catentry_id
+        self.language_id=language_id
+        self.c=CurrencyHelper(self.language_id)
+        self.owner_id=owner_id
+        self.mcontract=0
+        self.dcontract=self.default_contract()
+        self.offerprice=self.c.formatamount(self.contract_pricing()[0][6])
+        self.data=self.read()
+        self.data.update({"offer":self.offerprice})
+
+    def contract_pricing(self):
+        cursor.execute("""select tdpscncntr.tradeposcn_id,tdpscncntr.contract_id,tradeposcn.member_id,
+        tradeposcn.type::text,offer.offer_id,offer.catentry_id,offerprice.price::float,offerprice.currency 
+        from tdpscncntr inner join tradeposcn on tdpscncntr.tradeposcn_id=tradeposcn.tradeposcn_id 
+        inner join offer on tradeposcn.tradeposcn_id=offer.tradeposcn_id inner join offerprice on 
+        offer.offer_id=offerprice.offer_id where tradeposcn.member_id=%s and offer.catentry_id=%s 
+        """,(self.owner_id,self.catentry_id,));res=cursor.fetchall();price=None
+        if len(res) <= 0:return dict(tradeposcn_id=None,contract_id=None,owner_id=None,type=None,
+        offer_id=None,catentry_id=None,price=None,currency=None)
+        elif len(res) > 0:
+            if self.mcontract !=None:
+                # get the custom offer under the purchases account
+                # print("get the custom offer under the purchases account")
+                price=[x for x in res if x[1]==self.mcontract and x[3]=="C"]
+                if len(price)>0:return price
+                elif len(price)<=0:
+                    # if there is not a custom offer, get the standard markup under the purchases account
+                    # print("there is not a custom offer, get the standard markup under the purchases account")
+                    price=[x for x in res if x[1]==self.mcontract and x[3]=="S"]
+                    if len(price)>0:return price
+                    elif len(price)<=0:
+                        # if there is not a standard offer under this purchases account, get default custom
+                        # print("there is not a standard offer under this purchases account, get default custom")
+                        price=[x for x in res if x[1]==self.dcontract and x[3]=="C"]
+                        if len(price)>0:return price
+                        # if there is not a custom price for the default contract use the offer price on default
+                        elif len(price) <= 0:
+                            # print("there is not a custom price for the default contract use the offer price on default")
+                            price=[x for x in res if x[1]==self.dcontract and x[3]=="S"]
+                            if len(price)>0:return price
+                            elif len(price)<=0:return list()
+
+    def default_contract(self):
+        cursor.execute("select contract_id from contract where usage=0")
+        res=cursor.fetchone()
+        if res==None:return res
+        elif res!=None:return res[0]
+    
+    def read(self):
+        cursor.execute("""select catentry.catentry_id,catentry.member_id,catentry.itemspc_id,
+        catentry.catenttype_id::text,catentry.partnumber,catentry.mfpartnumber,catentry.mfname,
+        catentry.url,catentry.field1,catentry.field2,catentry.lastupdate,catentry.field3,catentry.
+        onspecial,catentry.onauction,catentry.field4,catentry.field5,catentry.buyable,catentry.baseitem_id,
+        catentry.state,catentry.startdate,catentry.enddate,catentry.rank,catentry.availabilitydate,
+        catentry.lastorderdate,catentry.endofservicedate,catentry.discontinuedate,catentdesc.name,
+        catentdesc.shortdesciption,catentdesc.longdesctiption,catentdesc.thumbnail,catentdesc.auxdescription1,
+        catentdesc.fullimage,catentdesc.auxdescription2,catentdesc.avaialble,catentdesc.published,
+        catentdesc.availabilitydate,listprice.currency,listprice.listprice::float,catgpenrel.catgroup_id,
+        catgroup.identifier,catgpenrel.catalog_id from catentry inner join catentdesc on catentry.catentry_id=
+        catentdesc.catentry_id inner join listprice on catentry.catentry_id=listprice.catentry_id inner join 
+        catgpenrel on catentry.catentry_id=catgpenrel.catentry_id inner join catgroup on catgroup.catgroup_id=
+        catgpenrel.catgroup_id where catentry.catentry_id=%s and catentry.member_id=%s and catentdesc.language_id=%s""",
+        (self.catentry_id,self.owner_id,self.language_id,));r=cursor.fetchone()
+        if r==None:return dict()
+        elif r!=None:return dict(catentry_id=r[0],member_id=r[1],itemspc_id=r[2],catenttype_id=r[3],type=r[3],
+        partnumber=r[4],mfpartnumber=r[5],mfname=r[6],url=r[7],field1=r[8],field2=r[9],lastupdate=humanize_date(r[10]),
+        field3=r[11],onspecial=r[12],onauction=r[13],field4=r[14],field5=r[15],buyable=r[16],baseitem_id=r[17],
+        state=r[18],startdate=humanize_date(r[19]),enddate=humanize_date(r[20]),rank=r[21],availabilitydate=humanize_date(r[22]),
+        lastorderdate=humanize_date(r[23]),endofservicedate=humanize_date(r[24]),discontinuedate=humanize_date(r[25]),name=r[26],
+        shortdescription=r[27],longdescription=r[28],thumbnail=r[29],auxdescription1=r[30],fullimage=r[31],auxdescription2=r[32],
+        available=r[33],published=r[34],availabilitydate2=humanize_date(r[35]),currency=r[36],price=self.c.formatamount(r[37]),
+        symbol=self.c.getcurrsymbol(),catgroup_id=r[38],category=r[39],catalog_id=r[40],
+        expires=humanize_date(r[24]))
+
+import re,string
 class Catentry:
     def __init__(self,member_id,catenttype_id,partnumber,name,itemspc_id=None,mfpartnumber=None,mfname=None,markfordelete=0,url=None,
     field1=None,field2=None,lastupdate=None,field3=None,onspecial=None,onauction=None,field4=None,field5=None,buyable=None,
@@ -444,23 +532,26 @@ class Catentry:
         self.discontinuedate=discontinuedate
 
     @staticmethod
-    def name_exists(name):
-        cursor.execute("select catentry_id from catentdesc where name=%s",(name,))
-        res=cursor.fetchone()
+    def name_exists(name,member_id):
+        cursor.execute("""select catentdesc.catentry_id from catentdesc inner join catentry on 
+        catentry.catentry_id=catentdesc.catentry_id where catentdesc.name=%s and catentry.member_id=%s""",
+        (name,member_id,));res=cursor.fetchone()
         if res==None:return False
         elif res!=None:return True
     
     def partprebuild(self,name):
-        splits=name.lower().strip().split(' ')
+        pattern=re.compile(r'[\W_]+')
+        nname=pattern.sub('',name)
+        splits=nname.lower().strip().split(' ')
         return ''.join([''.join([x[0].upper(),x[-1].upper()])for x in splits])
     
     def initialpart(self):
         return '{0}-{1}-{2}'.format(self.member_id,self.catenttype_id[:2].upper(),self.partprebuild(self.name))
     
     @staticmethod
-    def updatepart(catentry_id):
-        cursor.execute("select partnumber from catentry where catentry_id=%s",(catentry_id,))
-        existing=cursor.fetchone()[0];new='{0}-{1}'.format('-'.join(existing.split('-')[:-1]),catentry_id)
+    def updatepart(catentry_id,oldpart):
+        # new='{0}-{1}'.format('-'.join(oldpart.split('-')[:-1]),catentry_id)
+        new='{0}-{1}'.format('-'.join(oldpart.split('-')),catentry_id)
         cursor.execute("update catentry set partnumber=%s where catentry_id=%s returning partnumber",
         (new,catentry_id,));con.commit();return cursor.fetchone()[0]
 
@@ -485,7 +576,9 @@ class Catentry:
     def readcatentry(mid,lid):
         cursor.execute("""select catentry.catentry_id,catentdesc.name from catentry left join catentdesc
         on catentry.catentry_id=catentdesc.catentry_id where catentry.member_id=%s and catentdesc.language_id=%s""",
-        (mid,lid,));res=cursor.fetchall();return [dict(zip(["catentry_id","name"],r)) for r in res]
+        (mid,lid,));res=cursor.fetchall()
+        if len(res)<=0:return [dict(catentry_id=None,name=None)]
+        elif len(res)>0:return [dict(catentry_id=r[0],name=r[1]) for r in res]
     
     @staticmethod
     def read(mid,lid):
@@ -505,11 +598,25 @@ class Catentry:
         partnumber=r[4],mfpartnumber=r[5],mfname=r[6],url=r[7],field1=r[8],field2=r[9],lastupdate=humanize_date(r[10]),
         field3=r[11],onspecial=r[12],onauction=r[13],field4=r[14],field5=r[15],buyable=r[16],baseitem_id=r[17],
         state=r[18],startdate=humanize_date(r[19]),enddate=humanize_date(r[20]),rank=r[21],availabilitydate=humanize_date(r[22]),
-        lastorderdate=humanize_date(r[23]),endofservicedate=humanize_date(r[24]),discontinuedate=humanize_date(r[25]),name=r[26],
+        lastorderdate=humanize_date(r[23]),endofservicedate=textualize_datetime(r[24]),discontinuedate=humanize_date(r[25]),name=r[26],
         shortdescription=r[27],longdescription=r[28],thumbnail=r[29],auxdescription1=r[30],fullimage=r[31],auxdescription2=r[32],
         available=r[33],published=r[34],availabilitydate2=humanize_date(r[35]),currency=r[36],price=r[37],
         symbol=CurrencyHelper(lid).getcurrsymbol(),catgroup_id=r[38],category=r[39],catalog_id=r[40],
         expires=humanize_date(r[24])) for r in res]
+    
+    def update(self,catentry_id):
+        try:
+            cursor.execute("""update catentry set member_id=%s,itemspc_id=%s,catenttype_id=%s,partnumber=%s,mfpartnumber=%s,
+            mfname=%s,markfordelete=%s,url=%s,field1=%s,field2=%s,lastupdate=%s,field3=%s,onspecial=%s,onauction=%s,field4=%s,
+            field5=%s,buyable=%s,baseitem_id=%s,state=%s,startdate=%s,enddate=%s,rank=%s,availabilitydate=%s,lastorderdate=%s,
+            endofservicedate=%s,discontinuedate=%s where catentry_id=%s and member_id=%s""",(self.member_id,self.itemspc_id,
+            self.catenttype_id,self.partnumber,self.mfpartnumber,self.mfname,self.markfordelete,self.url,self.field1,self.field2,
+            self.lastupdate,self.field3,self.onspecial,self.onauction,self.field4,self.field5,self.buyable,self.baseitem_id,
+            self.state,self.startdate,self.enddate,self.rank,self.availabilitydate,self.lastorderdate,self.endofservicedate,
+            self.discontinuedate,catentry_id,self.member_id,));con.commit()
+        except(Exception,psycopg2.DatabaseError) as e:
+            if con is not None:con.rollback()
+            raise EntryException(str(e).strip().split('\n')[0])
     
     def save(self):
         try:
@@ -546,6 +653,17 @@ class Catentdesc:
         self.auxdescription2=auxdescription2
         self.available=available
         self.availabilitydate=availabilitydate
+    
+    def update(self):
+        try:
+            cursor.execute("""update catentdesc set language_id=%s,name=%s,shortdesciption=%s,longdesctiption=%s,
+            thumbnail=%s,auxdescription1=%s,fullimage=%s,auxdescription2=%s,avaialble=%s,published=%s,availabilitydate=%s
+            where catentry_id=%s""",(self.language_id,self.name,self.shortdescription,self.longdescription,self.thumbnail,
+            self.auxdescription1,self.fullimage,self.auxdescription2,self.available,self.published,self.availabilitydate,
+            self.catentry_id,));con.commit()
+        except(Exception,psycopg2.DatabaseError) as e:
+            if con is not None:con.rollback()
+            raise EntryException(str(e).strip().split('\n')[0])
     
     def save(self):
         try:
@@ -1202,3 +1320,29 @@ class ItemDiscount:
         catencalcd.catentry_id=%s""",(self.store_id,self.trading_id,self.catentry_id,));res=cursor.fetchone()
         if res==None:return dict(calcode_id=None,discount=None)
         elif res!=None:return dict(calcode_id=res[0],discount=res[1])
+
+class AddItemToContract:
+    def __init__(self,catentry_id,member_id,listprice=None):
+        self.catentry_id=catentry_id
+        self.member_id=member_id
+        self.listprice=listprice
+        self.contract_id=self.getcontract()
+
+    def getcontract(self):
+        cursor.execute("select contract_id from contract where usage=0 and member_id=%s",(self.member_id,))
+        res=cursor.fetchone()
+        if res==None:return res
+        elif res!=None:return res[0]
+
+    def gettradeposcn(self,contract_id):
+        cursor.execute("""select tdpscncntr.tradeposcn_id from tdpscncntr inner join 
+        tradeposcn on tdpscncntr.tradeposcn_id=tradeposcn.tradeposcn_id where tdpscncntr.contract_id=%s 
+        and tradeposcn.type='S'""",(contract_id,));res=cursor.fetchone()
+        if res==None:return res
+        elif res!=None:return res[0]
+
+    def getsampleitem(self,tradeposcn_id):
+        cursor.execute("""select offerprice.price::float,listprice.listprice::float from 
+        offer inner join offerprice on offer.offer_id=offerprice.offer_id inner join 
+        listprice on offer.catentry_id=listprice.catentry_id where offer.tradeposcn_id=%s""",
+        (tradeposcn_id,));res=cursor.fetchone();return res

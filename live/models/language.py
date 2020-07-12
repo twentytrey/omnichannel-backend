@@ -77,7 +77,7 @@ class Language:
 
 if __name__=="__main__":
     l=Language()
-    l.language()
+    ## l.language()
     l.languageds()
     l.langpair()
     l.country()

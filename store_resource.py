@@ -9,6 +9,7 @@ from ops.catalog.catalog import Catalog,Catgroup
 from ops.currency.currency import Setcurr
 from ops.shipping.shipping import Shipmode
 from ops.calculations.calculations import Calcode,Calcodedesc,Calscale,Calscaleds,Calrule,Crulescale,Calrange,Calrlookup
+from ops.stores.stores import MStoreent
 
 class create_store(Resource):
     def __init__(self):
@@ -271,7 +272,7 @@ class create_discount(Resource):
         value=data['value']
         try:
             calcode_id=Calcode(code,calusage_id,storeent_id,calmethod_id,calmethod_id_app,calmethod_id_qfy,
-                                    lastupdate=timestamp_now(),startdate=startdate,enddate=enddate).save()
+                description=description,lastupdate=timestamp_now(),startdate=startdate,enddate=enddate).save()
             Calcodedesc(calcode_id,language_id,description).save()
             calrule_id=Calrule(calcode_id,calrulecalmethod_id,calrulecalmethod_id_qfy,startdate=startdate,enddate=enddate,
                                                                             field2=calrulefield2,flags=calruleflags).save()
@@ -284,4 +285,37 @@ class create_discount(Resource):
         except EntryException as e:
             return {"msg":"Error saving pricing discount. Error: {0}".format(e.message)},422
 
-        
+class m_storeent(Resource):
+    def __init__(self):
+        self.parser=reqparse.RequestParser()
+        self.parser.add_argument("owner_id",help="required field",required=True)
+        self.parser.add_argument("language_id",help="required field",required=True)
+        super(m_storeent,self).__init__()
+    
+    @jwt_required
+    def post(self):
+        data=self.parser.parse_args()
+        owner_id=data["owner_id"]
+        language_id=data["language_id"]
+        m=MStoreent(owner_id,language_id)
+        storeids=m.storeids()
+        data=[m.readstore(x) for x in storeids]
+        return data,200
+
+class m_storeent_inventory(Resource):
+    def __init__(self):
+        self.parser=reqparse.RequestParser()
+        self.parser.add_argument("owner_id",help="required field",required=True)
+        self.parser.add_argument("language_id",help="required field",required=True)
+        self.parser.add_argument("store_id",help="required field",required=True)
+        super(m_storeent_inventory,self).__init__()
+    
+    @jwt_required
+    def post(self):
+        data=self.parser.parse_args()
+        owner_id=data["owner_id"]
+        language_id=data["language_id"]
+        store_id=data["store_id"]
+        m=MStoreent(owner_id,language_id)
+        data=m.inventory(store_id)
+        return data,200

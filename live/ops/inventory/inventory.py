@@ -7,6 +7,7 @@ import pandas as pd
 import numpy as np
 from ops import textualize_datetime,humanize_date,CurrencyHelper,timestamp_now
 from ops.fulfillment.fulfillment import Inventory
+from ops.calculations.discountcalculations import DiscountCalculations
 
 class EntryException(Exception):
     def __init__(self,message):
@@ -135,7 +136,7 @@ class Receipt:
         self.setccurr=setccurr
         self.radetail_id=radetail_id
         self.rtnrcptdsp_id=rtnrcptdsp_id
-    
+
     @staticmethod
     def getpo(radetail_id):
         cursor.execute("""with radetail as(select ra_id from radetail where radetail_id=%s)select
@@ -727,4 +728,138 @@ class ItemPriceDefaultContract:
             symbol=CurrencyHelper(self.language_id).getcurrsymbol(),price=self.listprice))
             return data
 
-        
+inventorystatuses=[dict(value="NALC",text="Unallocated"),dict(value="BO",text="Back Ordered"),dict(value="ALLC",
+text="Allocated"),dict(value="FUL",text="Released"),dict(value="FUT",text="Future"),dict(value="AVL",text="Available"),
+dict(value="BA",text="BackOrderable")]
+orderstatuses=[dict(value=1,text="Ordered"),dict(value=2,text="Invoiced"),dict(value=3,text="Shipped"),
+dict(value=4,text="Backordered"),dict(value=5,text="Canceled"),dict(value=6,text="Refunded"),dict(value=7,text="Returned")]
+ffmstatuses=[dict(value="INT",text="Not Yet Released"),dict(value="OUT",text="Released for Fulfillment"),
+dict(value="SHIP",text="Shipment Confirmed"),dict(value="HOLD",text="Held, Waiting for Release")]
+
+class InventoryItem:
+    def __init__(self,catentry_id,language_id,store_id,customer_id,owner_id,quantity=1):
+        self.catentry_id=catentry_id
+        self.language_id=language_id
+        self.store_id=store_id
+        self.customer_id=customer_id
+        self.owner_id=owner_id
+        self.dcontract=self.default_contract()
+        self.mcontract=self.member_contract()
+        self.price=self.contract_pricing()
+        self.quantity=quantity
+        self.price=dict(tradeposcn_id=self.price[0][0],contract_id=self.price[0][1],owner_id=self.price[0][2],
+                        type=self.price[0][3],offer_id=self.price[0][4],catentry_id=self.price[0][5],
+                        price=self.price[0][6],currency=self.price[0][7])
+        self.itemspc_id=self.getitemspc()
+        self.partnumber=self.getpart()
+
+        self.dscounts=self.discounts()
+        self.discount=dict(catencalcd_id=self.dscounts[0][0],trading_id=self.dscounts[0][1],contract=self.dscounts[0][2],
+                            calcode_id=self.dscounts[0][3],adjustment=self.dscounts[0][4])
+        if self.discount["calcode_id"]!=None:
+            d=DiscountCalculations(self.discount["calcode_id"],self.catentry_id,self.price["price"],self.quantity,self.store_id,self.discount["trading_id"])
+            self.totaladjustment=d._execute()
+        elif self.discount["calcode_id"]==None:
+            self.totaladjustment=0
+    
+    @staticmethod
+    def productname(cid):
+        cursor.execute("select name from catentdesc where catentry_id=%s",(cid,))
+        res=cursor.fetchone()[0]
+        if res==None:return res
+        elif res!=None:return res[0]
+    
+    def member_contract(self):
+        cursor.execute("select trading_id from participnt where member_id=%s",
+        (self.customer_id,));res=cursor.fetchone()
+        if res==None:return res
+        elif res!=None:return res[0]
+    
+    def getpart(self):
+        cursor.execute("select partnumber from catentry where catentry_id=%s",(self.catentry_id,))
+        res=cursor.fetchone()
+        if res==None:return res
+        elif res!=None:return res[0]
+    
+    def getitemspc(self):
+        cursor.execute("select itemspc_id from catentry where catentry_id=%s",(self.catentry_id,))
+        res=cursor.fetchone()
+        if res==None:return res
+        elif res!=None:return res[0]
+    
+    def default_contract(self):
+        cursor.execute("select contract_id from contract where usage=0")
+        res=cursor.fetchone()
+        if res==None:return res
+        elif res!=None:return res[0]
+    
+    def contract_pricing(self):
+        cursor.execute("""select tdpscncntr.tradeposcn_id,tdpscncntr.contract_id,tradeposcn.member_id,
+        tradeposcn.type::text,offer.offer_id,offer.catentry_id,offerprice.price::float,offerprice.currency 
+        from tdpscncntr inner join tradeposcn on tdpscncntr.tradeposcn_id=tradeposcn.tradeposcn_id 
+        inner join offer on tradeposcn.tradeposcn_id=offer.tradeposcn_id inner join offerprice on 
+        offer.offer_id=offerprice.offer_id where tradeposcn.member_id=%s and offer.catentry_id=%s 
+        """,(self.owner_id,self.catentry_id,));res=cursor.fetchall();price=None
+        if len(res) <= 0:return dict(tradeposcn_id=None,contract_id=None,owner_id=None,type=None,
+        offer_id=None,catentry_id=None,price=None,currency=None)
+        elif len(res) > 0:
+            if self.mcontract !=None:
+                # get the custom offer under the purchases account
+                print("get the custom offer under the purchases account")
+                price=[x for x in res if x[1]==self.mcontract and x[3]=="C"]
+                if len(price)>0:return price
+                elif len(price)<=0:
+                    # if there is not a custom offer, get the standard markup under the purchases account
+                    print("there is not a custom offer, get the standard markup under the purchases account")
+                    price=[x for x in res if x[1]==self.mcontract and x[3]=="S"]
+                    if len(price)>0:return price
+                    elif len(price)<=0:
+                        # if there is not a standard offer under this purchases account, get default custom
+                        print("there is not a standard offer under this purchases account, get default custom")
+                        price=[x for x in res if x[1]==self.dcontract and x[3]=="C"]
+                        if len(price)>0:return price
+                        # if there is not a custom price for the default contract use the offer price on default
+                        elif len(price) <= 0:
+                            print("there is not a custom price for the default contract use the offer price on default")
+                            price=[x for x in res if x[1]==self.dcontract and x[3]=="S"]
+                            if len(price)>0:return price
+                            elif len(price)<=0:return list()
+    
+    def discounts(self):
+        cursor.execute("""select catencalcd.catencalcd_id,catencalcd.trading_id,contract.name,
+        catencalcd.calcode_id,calcodedesc.description from catencalcd inner join contract on
+        catencalcd.trading_id=contract.contract_id inner join calcodedesc on catencalcd.calcode_id=
+        calcodedesc.calcode_id where catencalcd.catentry_id=%s and catencalcd.store_id=%s""",
+        (self.catentry_id,self.store_id,));res=cursor.fetchall();code=None
+        if len(res)<=0:return [(None,None,None,None,None)]
+        elif len(res)>0:
+            if self.mcontract != None:
+                code=[x for x in res if x[1]==self.mcontract]
+                if len(code) > 0:return code
+                elif len(code) <= 0:
+                    code=[x for x in res if x[1]==self.dcontract]
+                    if len(code) > 0:return code
+                    elif len(code) <= 0:return [(None,None,None,None,None)]
+
+    def catentry(self):
+        cursor.execute("""select catentry.member_id,orgentity.orgentityname,catentry.itemspc_id,
+        catentry.catenttype_id::text,catentry.endofservicedate,catentdesc.name,catentdesc.shortdesciption,
+        catentdesc.fullimage,catentdesc.avaialble,catentdesc.published from catentry inner join catentdesc 
+        on catentry.catentry_id=catentdesc.catentry_id inner join orgentity on catentry.member_id=orgentity.
+        orgentity_id where catentry.catentry_id=%s and catentdesc.language_id=%s""",
+        (self.catentry_id,self.language_id,));res=cursor.fetchone()
+        if res==None:return dict(owner_id=None,owner=None,itemspc_id=None,catenttype_id=None,expirydate=None,name=None,
+        shortdescription=None,fullimage=None,available=None,published=None)
+        elif res!=None:return dict(owner_id=res[0],owner=res[1],itemspc_id=res[2],catenttype_id=res[3],
+        expirydate=textualize_datetime(res[4]),name=res[5],shortdescription=res[6],fullimage=res[7],
+        available=res[8],published=res[9])
+    
+    def inventory(self):
+        cursor.execute("""select inventory.quantity::float,inventory.ffmcenter_id,ffmcenter.name,
+        inventory.store_id,storeent.identifier from inventory inner join ffmcenter on inventory.
+        ffmcenter_id=ffmcenter.ffmcenter_id inner join storeent on inventory.store_id=storeent.
+        storeent_id where inventory.catentry_id=%s""",(self.catentry_id,));res=cursor.fetchone()
+        if res==None:return dict(quantity=None,ffmcenter_id=None,warehouse=None,store_id=None,store=None)
+        elif res!=None:return dict(quantity=res[0],ffmcenter_id=res[1],warehouse=res[2],store_id=res[3],
+        store=res[4])
+

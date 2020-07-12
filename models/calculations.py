@@ -35,7 +35,7 @@ class CalculationCode:
             precedence float not null default 0,
             primary key(calcode_id)
         )""")
-        cursor.execute("create unique index i0000054 on calcode(calusage_id,code,storeent_id)")
+        cursor.execute("create unique index i0000054 on calcode(calusage_id,code,description,storeent_id)")
         cursor.execute("create index i0000495 on calcode(calmethod_id_app)")
         cursor.execute("create index i0000496 on calcode(calmethod_id)")
         cursor.execute("create index i0000497 on calcode(calmethod_id_qfy)")
@@ -186,7 +186,7 @@ class CalculationCodeIndirectAttachment:
         and also it is attached to a trading agreement (or all trading agreements)"""
         cursor.execute("""create table catencalcd(
             store_id integer not null,
-            catencalcd_id bigint not null,
+            catencalcd_id bigserial not null,
             trading_id bigint,
             catentry_id bigint,
             calcode_id integer,
@@ -582,10 +582,6 @@ if __name__=="__main__":
     c6=CalculationRuleShipping()
     c6.shpjcrule()
     c6.jurstgrprel()
-    c6.jurstgroup()
     c6.jurst()
 
     c7=CalculationUsage()
-    c7.taxtype()
-    c7.ordadjust()
-    c7.fill_calusage()

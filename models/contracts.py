@@ -622,7 +622,6 @@ class Contract:
 
 if __name__=="__main__":
     c=Contract()
-    # c.fill_partroles()
     c.trading()
     c.trddesc()
     c.trdtype()
@@ -661,7 +660,3 @@ if __name__=="__main__":
     c.tradeposcn()
     c.productset()
     c.psetadjmnt()
-    # c.tradetypes()
-    # c.policytypes()
-    # c.tctypes()
-    # c.fill_attachusg()

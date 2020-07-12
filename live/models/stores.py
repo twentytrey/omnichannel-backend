@@ -688,7 +688,7 @@ if __name__=="__main__":
         s.storecgry()
         s.storecgrydesc()
         s.storedef()
-        #s.storeent()
+        s.storeent()
         s.storeentds()
         s.storegrp()
         s.storelang()

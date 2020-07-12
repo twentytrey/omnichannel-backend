@@ -5,7 +5,7 @@ from flask_jwt_extended.exceptions import RevokedTokenError
 from ops.helpers.functions import timestamp_forever,timestamp_now,defaultlanguage
 from ops.catalog.catalog import (Catalog,Catalogdsc,EntryException,Catgroup,Catgrpdesc,Catentryattr,Storecat,Storecgrp,
 Cattogrp,Catentry,Catentdesc,Itemspc,Catgpenrel,Listprice,Catentrel,Attrtype,Attr,Attrdesc,Attrval,Attrvaldesc,
-Catencalcd,Catgpcalcd)
+Catencalcd,Catgpcalcd,CatalogItem)
 import json
 from ops.offers.offers import Offer
 
@@ -28,9 +28,9 @@ class create_catalog(Resource):
             catalog_id=Catalog(member_id,identifier,description=description).save()
             Catalogdsc(catalog_id,language_id,identifier,shortdescription=description).save()
             returns=Catalog.readcatalogs(member_id,language_id)
-            return {"msg":"Successfully saved new catalog","returns":returns},200
+            return {"status":"OK","msg":"Successfully saved new catalog","returns":returns},200
         except EntryException as e:
-            return {"msg":"Error saving new catalog. Error {0}".format(e.message)},422
+            return {"status":"ERR","msg":"Error saving new catalog. Error {0}".format(e.message)},422
 
 class read_catalogs(Resource):
     def __init__(self):
@@ -74,9 +74,9 @@ class create_category(Resource):
             Catgrpdesc(language_id,catgroup_id,identifier,published,description).save()
             Cattogrp(parent_catalog,catgroup_id).save()
             returns=Catgroup.readcatgroups(member_id,language_id)
-            return {"msg":"Successfully saved category information","returns":returns},200
+            return {"status":"OK","msg":"Successfully saved category information","returns":returns},200
         except EntryException as e:
-            return {"msg":"Error saving category information. Error {0}".format(e.message)},422
+            return {"status":"ERR","msg":"Error saving category information. Error {0}".format(e.message)},422
 
 class read_categories(Resource):
     def __init__(self):
@@ -104,6 +104,69 @@ class catgroups_for_catalog(Resource):
         catalog_id=data["catalog_id"]
         return Catalog.catgroupforcatalog(catalog_id),200
 
+from ops.helpers.functions import datetimestamp_now
+class update_catentry(Resource):
+    def __init__(self):
+        self.parser=reqparse.RequestParser()
+        self.parser.add_argument("member_id",help="required field",required=True)
+        self.parser.add_argument("catentry_id",help="required field",required=True)
+        self.parser.add_argument("language_id",help="required field",required=True)
+        self.parser.add_argument("itemspc_id")
+        self.parser.add_argument("catenttype_id")
+        self.parser.add_argument("partnumber")
+        self.parser.add_argument("mfpartnumber")
+        self.parser.add_argument("mfname")
+        self.parser.add_argument("currency")
+        self.parser.add_argument("listprice")
+        self.parser.add_argument("catalog_id")
+        self.parser.add_argument("catgroup_id")
+        self.parser.add_argument("lastupdate")
+        self.parser.add_argument("endofservicedate")
+        self.parser.add_argument("name")
+        self.parser.add_argument("shortdescription")
+        self.parser.add_argument("fullimage")
+        self.parser.add_argument("available")
+        self.parser.add_argument("published")
+        self.parser.add_argument("availabilitydate")
+        super(update_catentry,self).__init__()
+    
+    @jwt_required
+    def post(self):
+        data=self.parser.parse_args()
+        member_id=data["member_id"]
+        catentry_id=data["catentry_id"]
+        language_id=data["language_id"]
+        itemspc_id=data["itemspc_id"]
+        catenttype_id=data["catenttype_id"]
+        partnumber=data["partnumber"]
+        mfpartnumber=data["mfpartnumber"]
+        mfname=data["mfname"]
+        currency=data["currency"]
+        listprice=data["listprice"]
+        catalog_id=data["catalog_id"]
+        catgroup_id=data["catgroup_id"]
+        lastupdate=data["lastupdate"]
+        endofservicedate=data["endofservicedate"]
+        name=data["name"]
+        shortdescription=data["shortdescription"]
+        fullimage=data["fullimage"]
+        available=data["available"]
+        published=data["published"]
+        availabilitydate=data["availabilitydate"]
+        try:
+            c=Catentry(member_id,catenttype_id,partnumber,name,itemspc_id=itemspc_id,mfpartnumber=mfpartnumber,
+            mfname=mfname,lastupdate=datetimestamp_now(),availabilitydate=availabilitydate,
+            endofservicedate=endofservicedate);c.update(catentry_id)
+            d=Catentdesc(catentry_id,language_id,published,name,shortdescription,None,None,
+            None,fullimage,None,available,availabilitydate);d.update()
+            Listprice.update(catentry_id,currency,listprice)
+            Catgpenrel(catgroup_id,catalog_id,catentry_id,lastupdate=datetimestamp_now()).update()
+            return {"status":"OK","msg":"Successfully updated item information"},200
+        except EntryException as e:
+            return {"status":"ERR","msg":"Error {}".format(e.message)},422
+
+from ops.catalog.catalog import AddItemToContract
+from ops.offers.offers import Offerprice,Offer,Offerdesc
 class create_catentry(Resource):
     def __init__(self):
         self.parser=reqparse.RequestParser()
@@ -152,15 +215,29 @@ class create_catentry(Resource):
         availabilitydate=data["availabilitydate"]
         try:
             c=Catentry(member_id,catenttype_id,partnumber,name,itemspc_id=itemspc_id,mfpartnumber=mfpartnumber,mfname=mfname,lastupdate=lastupdate,availabilitydate=availabilitydate,endofservicedate=endofservicedate)
-            nameexists=c.name_exists(name)
+            nameexists=c.name_exists(name,member_id)
             if nameexists:return {"msg":"A product with that name already exists."},200
             elif nameexists==False:
-                oldpart=c.initialpart();c.partnumber=oldpart;catentry_id=c.save();newpart=c.updatepart(catentry_id)
+                oldpart=c.initialpart();c.partnumber=oldpart;catentry_id=c.save();newpart=c.updatepart(catentry_id,oldpart)
                 itemspc_id=Itemspc(member_id,newpart,baseitem_id=catentry_id,lastupdate=timestamp_now()).save()
                 c.update_itemspc(itemspc_id,catentry_id)
                 Catentdesc(catentry_id,language_id,published,name=name,shortdescription=shortdescription,fullimage=fullimage,availabilitydate=availabilitydate).save()
                 catgroup_id=Catgpenrel(catgroup_id,catalog_id,catentry_id).save()
                 Listprice(catentry_id,currency,listprice).save()
+
+
+                a=AddItemToContract(catentry_id,member_id,listprice)
+                contract_id=a.getcontract()
+                if contract_id!=None:
+                    tradeposcn_id=a.gettradeposcn(contract_id)
+                    newprice,oldprice=a.getsampleitem(tradeposcn_id)
+                    pchange=int(round(100*(newprice-oldprice)/oldprice))/100
+                    newprice=float(listprice)*pchange+float(listprice)
+                    offer_id=Offer(tradeposcn_id,catentry_id,published=1,lastupdate=datetimestamp_now()).save()
+                    Offerdesc(offer_id,language_id,"Offer Price").save()
+                    Offerprice(offer_id,currency,newprice).save()
+
+
                 return {"msg":"Successfully saved product item information","entries":Catentry.readcatentry(member_id,language_id),
                 "catentryitems":Catentry.read(member_id,language_id)},200
         except EntryException as e:
@@ -215,7 +292,7 @@ class create_parent_composite(Resource):
         try:
             c=Catentry(member_id,catenttype_id,partnumber,name,itemspc_id=itemspc_id,mfpartnumber=mfpartnumber,
             mfname=mfname,lastupdate=lastupdate,availabilitydate=availabilitydate,endofservicedate=endofservicedate)
-            oldpart=c.initialpart();c.partnumber=oldpart;catentry_id=c.save();newpart=c.updatepart(catentry_id)
+            oldpart=c.initialpart();c.partnumber=oldpart;catentry_id=c.save();newpart=c.updatepart(catentry_id,oldpart)
             itemspc_id=Itemspc(member_id,newpart,lastupdate=timestamp_now()).save()
             c.update_itemspc(itemspc_id,catentry_id)
             catentdesc_id=Catentdesc(catentry_id,language_id,published,name=name,shortdescription=shortdescription,
@@ -502,4 +579,38 @@ class create_catencalcd(Resource):
         try:
             Catencalcd(store_id,trading_id,catentry_id,calcode_id,calflags).save()
             return {"msg":"Successfully attached discount"},200
-        except EntryException as e:return {"Error: {}".format(e.message)},422
+        except EntryException as e:return {"msg":"Error: {}".format(e.message)},422
+
+class item_details(Resource):
+    def __init__(self):
+        self.parser=reqparse.RequestParser()
+        self.parser.add_argument("owner_id",help="compulsory field",required=True)
+        self.parser.add_argument("catentry_id",help="compulsory field",required=True)
+        self.parser.add_argument("language_id",help="compulsory field",required=True)
+        super(item_details,self).__init__()
+    
+    @jwt_required
+    def post(self):
+        data=self.parser.parse_args()
+        owner_id=data["owner_id"]
+        catentry_id=data["catentry_id"]
+        language_id=data["language_id"]
+        return CatalogItem(owner_id,catentry_id,language_id).data,200
+
+from ops.filehandlers.filehandlers import InstallCatentries
+class upload_products(Resource):
+    def __init__(self):
+        self.parser=reqparse.RequestParser()
+        self.parser.add_argument("photo",help="compulsory field",required=True)
+        self.parser.add_argument("orgname",help="compulsory field",required=True)
+        self.parser.add_argument("orgentity_id",help="compulsory field",required=True)
+        super(upload_products,self).__init__()
+    
+    @jwt_required
+    def post(self):
+        data=self.parser.parse_args()
+        photo=data["photo"]
+        orgname=data["orgname"]
+        orgentity_id=data["orgentity_id"]
+        filename=photo.split('/')[-1]
+        InstallCatentries(filename,orgentity_id).save()

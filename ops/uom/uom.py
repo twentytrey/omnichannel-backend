@@ -1,8 +1,10 @@
-from .db_con import createcon
+# from .db_con import createcon
 # from db_con import createcon
 import psycopg2,os
 import pandas as pd
-con,cursor=createcon('retail','jmso','localhost','5432')
+# con,cursor=createcon('retail','jmso','localhost','5432')
+from ops.connector.connector import evcon
+con,cursor=evcon()
 
 class EntryException(Exception):
     def __init__(self,message):

@@ -15,6 +15,5 @@ class applycalculationusage:
         self.store_id=store_id
         self.deductible=calculateclass(catentry_id,calcode_id,price,quantity,store_id,rulecombine)._execute()
         self.amount=codeapplyclass(self.deductible)._execute()
-        # print(self.amount)
         summarizeclass(self.amount,self.quantity)._execute()
         finalizeclass()

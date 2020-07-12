@@ -44,6 +44,7 @@ class Accounting:
             member_id bigint not null,
             routingnumber varchar(254),
             setccurr char(3),
+            catentry_id bigint,
             primary key(faccount_id)
         )""")
         cursor.execute("create unique index ac_02 on faccount(accountnumber,identifier,member_id)")
@@ -51,6 +52,7 @@ class Accounting:
         cursor.execute("create index if not exists ac_04 on faccount(setccurr)")
         cursor.execute(build_constraint("faccount","a_005","member_id","member","member_id"))
         cursor.execute(build_constraint("faccount","a_006","setccurr","setcurr","setccurr"))
+        cursor.execute(build_constraint("faccount","aiu07e2","catentry_id","catentry","catentry_id"))
     
     def faccountdsc(self):
         cursor.execute("""create table if not exists faccountdsc(
@@ -78,11 +80,13 @@ class Accounting:
             primary key(code)
         )""")
         cursor.execute("create index if not exists ac_05 on transactiontype(code)")
-    
+
     def transaction(self):
         cursor.execute("""create table if not exists transaction(
             transaction_id bigserial not null,
             typecode varchar(64) not null,
+            holder_id bigint not null,
+            payee_id bigint,
             timecreated timestamp,
             timeupdated timestamp,
             amount decimal(20,5)not null,
@@ -91,7 +95,12 @@ class Accounting:
         )""")
         cursor.execute("create index if not exists ac_06 on transaction(typecode)")
         cursor.execute("create index if not exists ac_07 on transaction(amount)")
-    
+        cursor.execute("create index if not exists afklv on transaction(holder_id)")
+        cursor.execute("create index if not exists aruib on transaction(payee_id)")
+        cursor.execute(build_constraint("transaction","qpeui","payee_id","member","member_id"))
+        cursor.execute(build_constraint("transaction","adfkv","holder_id","member","member_id"))
+        cursor.execute(build_constraint("transaction","ariob","typecode","transactiontype","code"))
+
     def facctransaction(self):
         cursor.execute("""create table if not exists facctransaction(
             transaction_id bigint not null,

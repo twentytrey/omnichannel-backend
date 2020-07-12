@@ -26,6 +26,7 @@ class InstallCatalogs:
             df['language_id']=pd.Series([self.defaultlang()]*df.shape[0])
             df['member_id']=pd.Series([self.member_id]*df.shape[0])
             catalogs=df.values
+            # name,desc,lang,member
             catalogids=[Catalog(catalogs[i][3],catalogs[i][0],catalogs[i][1]).save() for i in range(len(catalogs))]
             [Catalogdsc(catalogids[i],catalogs[i][2],catalogs[i][0],shortdescription=catalogs[i][1]).save()
             for i in range(len(catalogs))]
@@ -54,13 +55,12 @@ class InstallCatgroups:
             df['language_id']=pd.Series([self.defaultlang()]*df.shape[0])
             df['member_id']=pd.Series([self.member_id]*df.shape[0])
             catgroups=df.values
-            print(catgroups)
+            # name,catalog,language,member
             categoryids=[Catgroup(catgroups[i][3],catgroups[i][0]).save() for i in range(len(catgroups))]
             [Catgrpdesc(catgroups[i][2],categoryids[i],catgroups[i][0],1,shortdescription=catgroups[i][0]).save() 
             for i in range(len(catgroups))]
             [Cattogrp(self.getcatalogid(catgroups[i][1]),categoryids[i],datetimestamp_now(),).save() 
             for i in range(len(categoryids)) ]
-
 
 class InstallCatentries:
     def __init__(self,fname,member_id,catenttype_id='Item',currency='NGN',published=1):
@@ -96,7 +96,8 @@ class InstallCatentries:
             df['catenttype_id']=pd.Series([self.catenttype_id]*df.shape[0])
             df['currency']=pd.Series([self.currency]*df.shape[0])
             df['published']=pd.Series([self.published]*df.shape[0])
-            df.dropna(subset=['Price'],inplace=True)
+            # df.dropna(subset=['Price'],inplace=True)
+            df['Price'].fillna(0,inplace=True)
             # product,price,catalog,category,language_id,member_id,catenttype_id,currency,published
             catentries=df.values
             for entry in catentries:
@@ -113,4 +114,6 @@ class InstallCatentries:
                         Listprice(catentry_id,entry[7],entry[1]).save()
                 except EntryException as e:
                     print( {"msg":"Error {}".format(e.message)} )
+                    print(entry)
+                    # con.rollback()
                     continue

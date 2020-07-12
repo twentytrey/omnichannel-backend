@@ -421,9 +421,6 @@ class Catalog:
         cursor.execute("create index i005529 on catalogtpc(catalog_id)")
         cursor.execute("create index i005530 on catalogtpc(tradeposcn_id)")
         cursor.execute("create index i005531 on catalogtpc(store_id)")
-        #cursor.execute(build_constraint("catalogtpc","f_5529","catalog_id","catalog","catalog_id"))
-        #cursor.execute(build_constraint("catalogtpc","f_5530","tradeposcn_id","tradeposcn","tradeposcn_id"))
-        #cursor.execute(build_constraint("catalogtpc","f_5531","store_id","store","store_id"))
     
     def catgrptpc(self):
         """this table relates master catalogs with trading position containers.
@@ -737,8 +734,6 @@ class Catentry:
         cursor.execute("create unique index i0000363 on versionspc(versionspc_id,itemspc_id)")
         cursor.execute("create index i0001293 on versionspc(itemversn_id)")
         # CONSTRAINT
-        cursor.execute(build_constraint("versionspc","f_905","itemspc_id","itemspc","itemspc_id"))
-        cursor.execute(build_constraint("versionspc","f_906","itemversn_id","itemversn","itemversn_id"))
     
     def itemversn(self):
         """each row of this table represents an item version for a base item
@@ -755,7 +750,6 @@ class Catentry:
         cursor.execute("create unique index i0000140 on itemversn(baseitem_id,expirationdate)")
         cursor.execute("create unique index i0000141 on itemversn(baseitem_id,versionname)")
         # CONSTRAINT
-        cursor.execute(build_constraint("itemversn","f_408","baseitem_id","baseitem","baseitem_id"))
 
     def enter_itemtype(self):
         itemtypes=[{'itemtype_id':'ITEM','description':'An item is a tangible unit of merchandise that has a specific name, part number, and price. For example, a small black shirt is an item while a shirt is a product. '},
@@ -1138,7 +1132,6 @@ if __name__=="__main__":
     p=Productset()
     p.prodsetdsc()
     p.prsetcerel()
-    p.psetadjmnt()
 
     d=DynamicKit()
     d.oicomprel()
@@ -1201,11 +1194,9 @@ if __name__=="__main__":
     a.operatrdsc()
     a.operator()
     a.attrvalue()
-    a.attrtype()
     a.attribute()
 
     a=Attachment()
-    a.attachusg()
     a.atchtgtdsc()
     a.atchtgt()
     a.atchrlusds()

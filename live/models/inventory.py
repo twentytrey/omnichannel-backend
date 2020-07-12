@@ -655,10 +655,10 @@ if __name__=="__main__":
     a=ATPFulfillment()
     a.manifest()
     a.orderitems()
-    a.orders()
+    # a.orders()
     a.ordpickhst()
     a.ordrelease()
-    a.ordshiphst()
+    # a.ordshiphst()
     a.pickbatch()
 
     a=ATPExpectedInventory()
@@ -673,7 +673,7 @@ if __name__=="__main__":
 
     a=ATPInventory()
     a.storeitem()
-    a.rtnrcptdsp()
+    ## a.rtnrcptdsp()
     a.receipt()
     a.rcptstvw()
     a.rcptstffvw()

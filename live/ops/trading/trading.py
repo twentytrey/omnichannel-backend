@@ -228,8 +228,9 @@ class Trading:
         trading_timeupdated=textualize_datetime(res[8]),updated_on=humanize_date(res[8]),contract_name=res[9],
         contract_member_id=res[10],owner=res[11],deployed_store_id=res[12],store=res[13],contract_state=res[14],
         stage=[x['text'] for x in accountstate if x['value']==res[14]][0],currency=res[15],approved_on=humanize_date(res[19]),
-        contract_timeapproved=textualize_datetime(res[19]),contract_timeactivated=textualize_datetime(res[20]),activated_on=res[20],
-        participant_id=res[21],participant=Trading.particpantname(res[21]),partrole_id=res[22],participant_role=res[23])
+        contract_timeapproved=textualize_datetime(res[19]),contract_timeactivated=textualize_datetime(res[20]),
+        activated_on=humanize_date(res[20]),participant_id=res[21],participant=Trading.particpantname(res[21]),
+        partrole_id=res[22],participant_role=res[23])
     
     @staticmethod
     def readcontract(tid,lid):
@@ -979,6 +980,140 @@ class ExcludedItems:
         res=cursor.fetchall()
         if len(res)<=0:return list()
         elif len(res)>0:return [x for (x,)in res]
+
+class ApproveContract:
+    def __init__(self,trading_id,timeapproved):
+        self.trading_id=trading_id
+        self.timeapproved=timeapproved
+    
+    def approve_contract(self):
+        try:
+            cursor.execute("update contract set state=2,timeapproved=%s where contract_id=%s",
+            (self.timeapproved,self.trading_id,));con.commit()
+        except (Exception,psycopg2.DatabaseError) as e:
+            if con is not None:con.rollback()
+            raise EntryException(str(e).strip().split('\n')[0])
+    
+class DeployContract:
+    def __init__(self,trading_id,timeactivated):
+        self.trading_id=trading_id
+        self.timeactivated=timeactivated
+    
+    def activate_account(self):
+        try:
+            cursor.execute("update account set state=3,timeactivated=%s where account_id=%s",
+            (self.timeactivated,self.trading_id,));con.commit()
+        except(Exception,psycopg2.DatabaseError) as e:
+            if con is not None:con.rollback()
+            raise EntryException(str(e).strip().split('\n')[0])
+
+    def activate_trading(self):
+        try:
+            cursor.execute("update trading set state=1 where trading_id=%s",(self.trading_id,))
+            con.commit()
+        except (Exception,psycopg2.DatabaseError) as e:
+            if con is not None:con.rollback()
+            raise EntryException(str(e).strip().split('\n')[0])
+    
+    def activate_contract(self):
+        try:
+            cursor.execute("update contract set state=3,timeactivated=%s,timedeployed=%s where contract_id=%s",
+            (self.timeactivated,self.timeactivated,self.trading_id,));con.commit()
+        except(Exception,psycopg2.DatabaseError) as e:
+            if con is not None:con.rollback()
+            raise EntryException(str(e).strip().split('\n')[0])
+
+class SuspendContract:
+    def __init__(self,trading_id):
+        self.trading_id=trading_id
+
+    def suspend_trading(self):
+        try:
+            cursor.execute("update trading set state=0 where trading_id=%s",(self.trading_id,))
+            con.commit()
+        except(Exception,psycopg2.DatabaseError) as e:
+            if con is not None:con.rollback()
+            raise EntryException(str(e).strip().split('\n')[0])
+    
+    def suspend_account(self):
+        try:
+            cursor.execute("update account set state=0 where account_id=%s",(self.trading_id,))
+            con.commit()
+        except(Exception,psycopg2.DatabaseError) as e:
+            if con is not None:con.rollback()
+            raise EntryException(str(e).strip().split('\n')[0])
+    
+    def suspend_contract(self):
+        try:
+            cursor.execute("update contract set state=7 where contract_id=%s",(self.trading_id,))
+        except(Exception,psycopg2.DatabaseError) as e:
+            if con is not None:con.rollback()
+            raise EntryException(str(e).strip().split('\n')[0])
+
+psettypes=[dict(value=0,text="Category Inclusion"),dict(value=1,text="Category Exclusion"),
+dict(value=2,text="Product Inclusion"),dict(value=3,text="Product Exclusion"),dict(value=4,text="Browsable Inclusion")]
+
+class ReadCategoryExclusion:
+    def __init__(self,trading_id,tcsubtype_id,member_id):
+        self.trading_id=trading_id
+        self.tcsubtype_id=tcsubtype_id
+        self.member_id=member_id
+        self.termcond_id=self.get_termcond()
+        self.productset_id=self.getpset()
+        self.catgroup_id=self.get_catgroup_productset()
+    
+    def get_termcond(self):
+        cursor.execute("select termcond_id from termcond where tcsubtype_id=%s and trading_id=%s",
+        (self.tcsubtype_id,self.trading_id,));res=cursor.fetchone()
+        if res==None:return None
+        elif res!=None:return res[0]
+    
+    def getpset(self):
+        cursor.execute("select productset_id from psetadjmnt where termcond_id=%s and type=1",(self.termcond_id,))
+        res=cursor.fetchone()
+        if res==None:return None
+        elif res!=None:return res[0]
+    
+    def get_catgroup_productset(self):
+        cursor.execute("select catgroup_id from catgrpps where productset_id=%s",
+        (self.productset_id,));res=cursor.fetchone()
+        if res==None:return None
+        elif res!=None:return res[0]
+
+    def get_items(self):
+        cursor.execute("""select prsetcerel.catentry_id from prsetcerel inner join productset on 
+        prsetcerel.productset_id=productset.productset_id where productset.productset_id=%s and
+        productset.member_id=%s""",(self.productset_id,self.member_id,));res=cursor.fetchall()
+        if len(res) <= 0:return list()
+        elif len(res) > 0:return [x for (x,) in res]
+
+class IncludeItem:
+    def __init__(self,trading_id,tcsubtype_id,catentry_id):
+        self.trading_id=trading_id
+        self.tcsubtype_id=tcsubtype_id
+        self.catentry_id=catentry_id
+        self.termcond_id=self.get_termcond()
+        self.productset_id,self.psettype=self.get_productset()
+    
+    def get_termcond(self):
+        cursor.execute("select termcond_id from termcond where tcsubtype_id=%s and trading_id=%s",
+        (self.tcsubtype_id,self.trading_id,));res=cursor.fetchone()
+        if res==None:return None
+        elif res!=None:return res[0]
+    
+    def get_productset(self):
+        cursor.execute("select productset_id,type from psetadjmnt where termcond_id=%s",(self.termcond_id,))
+        res=cursor.fetchone()
+        if res==None:return None
+        elif res!=None:return res
+    
+    def include_item(self):
+        try:
+            cursor.execute("delete from prsetcerel where productset_id=%s and catentry_id=%s",
+            (self.productset_id,self.catentry_id,));con.commit()
+        except(Exception,psycopg2.DatabaseError) as e:
+            if con is not None:con.rollback()
+            raise EntryException(str(e).strip().split('\n')[0])
 
 class InstallTradetypes:
     def __init__(self,fname):

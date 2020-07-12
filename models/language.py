@@ -77,6 +77,7 @@ class Language:
 
 if __name__=="__main__":
     l=Language()
+    # drop prvious implementation of language table
     l.language()
     l.languageds()
     l.langpair()

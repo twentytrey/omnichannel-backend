@@ -1152,6 +1152,14 @@ class Catencalcd:
         self.calcode_id=calcode_id
         self.calflags=calflags
     
+    def remove(self):
+        try:
+            cursor.execute("""delete from catencalcd where store_id=%s and trading_id=%s and catentry_id=%s
+            and calcode_id=%s""",(self.store_id,self.trading_id,self.catentry_id,self.calcode_id,));con.commit()
+        except(Exception,psycopg2.DatabaseError) as e:
+            if con is not None:con.rollback()
+            raise EntryException(str(e).strip().split('\n')[0])
+    
     def save(self):
         try:
             cursor.execute("""insert into catencalcd(store_id,trading_id,catentry_id,calcode_id,calflags)
@@ -1162,3 +1170,35 @@ class Catencalcd:
         except(Exception,psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
+
+class ReadItemDiscounts:
+    def __init__(self,store_id,trading_id):
+        self.store_id=store_id
+        self.trading_id=trading_id
+    
+    def getitems(self):
+        cursor.execute("""select catencalcd.catentry_id,catencalcd.calcode_id,calcodedesc.description from
+        catencalcd inner join calcodedesc on catencalcd.calcode_id=calcodedesc.calcode_id where catencalcd.store_id=%s
+        and catencalcd.trading_id=%s""",(self.store_id,self.trading_id,));res=cursor.fetchall()
+        if len(res) <= 0:return None
+        elif len(res) > 0:return [dict(catentry_id=r[0],calcode_id=r[1],discount=r[2])for r in res]
+
+class ItemDiscount:
+    def __init__(self,catentry_id,store_id,trading_id=None,):
+        self.catentry_id=catentry_id
+        self.store_id=store_id
+        self.trading_id=trading_id
+        self.calcode=self.getcalcode()
+    
+    def namecalcode(self,calcode_id):
+        cursor.execute("select description from calcodedesc where calcode_id=%s",(calcode_id,))
+        res=cursor.fetchone()
+        if res==None:return res
+        elif res!=None:return res[0]
+    
+    def getcalcode(self):
+        cursor.execute("""select catencalcd.calcode_id,calcodedesc.description from catencalcd inner join calcodedesc 
+        on catencalcd.calcode_id=calcodedesc.calcode_id where catencalcd.store_id=%s and catencalcd.trading_id=%s and 
+        catencalcd.catentry_id=%s""",(self.store_id,self.trading_id,self.catentry_id,));res=cursor.fetchone()
+        if res==None:return dict(calcode_id=None,discount=None)
+        elif res!=None:return dict(calcode_id=res[0],discount=res[1])

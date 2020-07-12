@@ -146,5 +146,6 @@ if __name__=="__main__":
     c.numbrusg()
     c.numbrusgds()
     c.curcvlist()
-    c.setccurr()
+    ## c.setccurr()
     c.setcurrdsc()
+    

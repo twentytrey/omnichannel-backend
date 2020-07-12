@@ -47,8 +47,8 @@ class create_default_contract(Resource):
         comment=data["comment"]
         cstate=data["cstate"]
         endtime=data["endtime"]
-        language_id=data["language_id"]
-        member_id=data["member_id"]
+        language_id=int(data["language_id"])
+        member_id=int(data["member_id"])
         name=data["name"]
         origin=data["origin"]
         participant_id=data["participant_id"]
@@ -71,7 +71,7 @@ class create_default_contract(Resource):
             Participnt(participant_id,1,contract_id,timecreated=starttime).save()
             contracts=Trading.readcontracts(language_id);contracts.extend(Trading.readaccounts(language_id))
             Storedef(store_id,contract_id).save();Storecntr(contract_id,store_id).save()
-            defaultcontracts=Trading.readdefaultcontracts(language_id)
+            defaultcontracts=Trading.readdefaultcontracts(language_id,member_id)
             return {"msg":"Successfully saved contract information","defaultcontracts":defaultcontracts},200
         except EntryException as e:
             return {"msg":"Error saving contract information. Error {0}".format(e.message)},422
@@ -199,13 +199,15 @@ class read_default_contracts(Resource):
     def __init__(self):
         self.parser=reqparse.RequestParser()
         self.parser.add_argument("language_id",required=True,help="required field")
+        self.parser.add_argument("member_id",required=True,help="required field")
         super(read_default_contracts,self).__init__()
     
     @jwt_required
     def post(self):
         data=self.parser.parse_args()
         language_id=data['language_id']
-        return Trading.readdefaultcontracts(language_id),200
+        member_id=data["member_id"]
+        return Trading.readdefaultcontracts(language_id,member_id),200
 
 class read_all_trading(Resource):
     def __init__(self):
@@ -243,12 +245,10 @@ class create_accounts(Resource):
         self.parser.add_argument("store_id",help="required field",required=True)
         self.parser.add_argument("timecreated",help="required field",required=True)
         self.parser.add_argument("trdtype_id",help="required field",required=True)
-
         self.parser.add_argument("origin",required=True,help="required field")
         self.parser.add_argument("cstate",required=True,help="required field")
         self.parser.add_argument("usage",required=True,help="required field")
         self.parser.add_argument("timedeployed",required=True,help="required field")
-
         super(create_accounts,self).__init__()
     
     @jwt_required
@@ -456,7 +456,7 @@ class excluded_items(Resource):
         self.parser.add_argument("trading_id",help="required field",required=True)
         self.parser.add_argument("tcsubtype_id",help="required field",required=True)
         super(excluded_items,self).__init__()
-    
+
     @jwt_required
     def post(self):
         data=self.parser.parse_args()
@@ -611,6 +611,7 @@ class create_payment_tc(Resource):
         tcsubtype_id=data["tcsubtype_id"]
         trading_id=data["trading_id"]
         items=[json.loads(x.replace("\'", "\"").replace("None", "null")) for x in items]
+        # return data,200
         try:
             termcond_id=Termcond(tcsubtype_id,trading_id,mandatory,changeable,datetimestamp_now(),datetimestamp_now()).save()
             [Policytc(termcond_id,items[i]['policy_id']).save() for i in range(len(items))]
@@ -668,6 +669,7 @@ class item_price_default_trading(Resource):
     def __init__(self):
         self.parser=reqparse.RequestParser()
         self.parser.add_argument("language_id",help="required field",required=True)
+        self.parser.add_argument("member_id",help="required field",required=True)
         self.parser.add_argument("name")
         self.parser.add_argument("catentry_id")
         super(item_price_default_trading,self).__init__()
@@ -676,9 +678,10 @@ class item_price_default_trading(Resource):
     def post(self):
         data=self.parser.parse_args()
         language_id=data["language_id"]
+        member_id=data["member_id"]
         name=data["name"]
         catentry_id=data["catentry_id"]
-        return ItemPriceDefaultContract(language_id,name,catentry_id).prices,200
+        return ItemPriceDefaultContract(language_id,member_id,name,catentry_id).prices,200
 
 class approve_contract(Resource):
     def __init__(self):
@@ -780,3 +783,83 @@ class include_item(Resource):
                 return {"msg":"Item successfully included"},200
             except EntryException as e:
                 return {"ERROR {}".format(e.message)},422
+
+class select_list_contracts(Resource):
+    @jwt_required
+    def get(self):return Trading.list_contracts(),200
+
+from ops.trading.trading import Creditline
+from ops.helpers.functions import dateplusdelta
+from requester import PaystackRequests
+class create_creditline(Resource):
+    def __init__(self):
+        self.parser=reqparse.RequestParser()
+        self.parser.add_argument("account_id",help="required field",required=True)
+        self.parser.add_argument("creditlimit",help="required field",required=True)
+        self.parser.add_argument("decimalfield1",help="required field",required=True)
+        self.parser.add_argument("decimalfield2",help="required field",required=True)
+        self.parser.add_argument("n",help="required field",required=True)
+        self.parser.add_argument("rate",help="required field",required=True)
+        self.parser.add_argument("setccurr",help="required field",required=True)
+        self.parser.add_argument("state",help="required field",required=True)
+        self.parser.add_argument("timecreated",help="required field",required=True)
+        self.parser.add_argument("timeupdated",help="required field",required=True)
+        self.parser.add_argument("name",help="required field",required=True)
+        super(create_creditline,self).__init__()
+    
+    @jwt_required
+    def post(self):
+        data=self.parser.parse_args()
+        account_id=int(data["account_id"])
+        creditlimit=float(data["creditlimit"])
+        decimalfield1=float(data["decimalfield1"])
+        decimalfield2=float(data["decimalfield2"])
+        n=int(data["n"])
+        rate=float(data["rate"])
+        setccurr=data["setccurr"]
+        state=data["state"]
+        timecreated=data["timecreated"]
+        timeupdated=data["timeupdated"]
+        name=data["name"]
+        # nextduedate=dateplusdelta(timecreated,30)
+        try:
+            creditline_id=Creditline(n,rate,timeupdated,setccurr,account_id,timecreated,timeupdated,creditlimit,
+            decimalfield1,decimalfield2).save();amount=round(decimalfield2*100,2)
+            name="{} / C{} / Standard Monthly Repayment / {}".format(name,creditline_id,timecreated)
+            payload={ "name": name, "interval": "monthly", "amount": amount }
+            p=PaystackRequests("https://api.paystack.co/plan",payload,"POST")._execute()
+            if p["status"]==True:
+                plan_integration=p["data"]["integration"];plan_code=p["data"]["plan_code"];plan_id=p["data"]["id"]
+                Creditline.updateplan(creditline_id,plan_integration,plan_code,plan_id)
+
+                # create customer and subscribe to plan
+                customerdata=Creditline.customerdata(account_id)
+                if customerdata !=None:
+                    payload={"email":customerdata["email"],"first_name":customerdata["first_name"],"phone":customerdata["phone"]}
+                    p=PaystackRequests("https://api.paystack.co/customer",payload,"POST")._execute()
+                    if p["status"]==True:
+                        return {"msg":"Successfully initialized line of credit"},200
+                    else:return {"msg":p["message"]},422
+
+                    # if p["status"]==True:
+                    #     integration=p["data"]["integration"];customer_code=p["data"]["customer_code"];id=p["data"]["id"]
+                    #     payload={"customer":customer_code,"plan":plan_code}
+                    #     p=PaystackRequests("https://api.paystack.co/subscription",payload,"POST")._execute()
+                    #     print(" hook response ",p,"\n")
+
+        except EntryException as e:
+            return {"msg":"Error creating credit line. ERROR {}".format(e.message)},422
+
+class read_creditline(Resource):
+    def __init__(self):
+        self.parser=reqparse.RequestParser()
+        self.parser.add_argument("account_id",help="required field",required=True)
+        self.parser.add_argument("language_id",help="required field",required=True)
+        super(read_creditline,self).__init__()
+    
+    @jwt_required
+    def post(self):
+        data=self.parser.parse_args()
+        account_id=data["account_id"]
+        language_id=data["language_id"]
+        return Creditline.read(account_id,language_id),200

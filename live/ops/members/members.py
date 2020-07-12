@@ -384,14 +384,14 @@ class Userreg:
         except (Exception, psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
-    
+
     @staticmethod
     def getusersid(logonid):
         cursor.execute("select users_id from userreg where logonid=%s",(logonid,))
         res=cursor.fetchone()
         if res==None:return None
         elif res != None:return res[0]
-        
+
     @staticmethod
     def getsalt(logonid):
         cursor.execute("select salt from userreg where users_id=%s",(logonid,))
@@ -1002,3 +1002,23 @@ class ListAllMembers:
         data.update(dict(ismaster=self.findmaster(data["mbrrole"])));return data
 
 # print(ListAllMembers().data())
+
+class UserProfile:
+    def __init__(self,user_id):
+        self.user_id=user_id
+        self.type=self.getusertype()
+    
+    def getusertype(self):
+        cursor.execute("select type from member where member_id=%s",(self.user_id,))
+        return cursor.fetchone()[0]
+    
+    def getname(self):
+        if self.type=='O':
+            cursor.execute("select orgentityname from orgentity where orgentity_id=%s",(self.user_id,))
+            return cursor.fetchone()[0]
+        elif self.type=='U':
+            cursor.execute("select field1,field3 from users where users_id=%s",(self.user_id,))
+            res=cursor.fetchone();return "{} {}".format(res[0],res[1])
+    
+    # def getlogonid(self):
+    #     cursor.execute("select logonid from ")

@@ -6,10 +6,11 @@ from ops.members.members import Member,Orgentity,Users,Userreg,Mbrrole,Busprof,E
 from ops.helpers.functions import timestamp_forever,timestamp_now,defaultlanguage,datetimestamp_now,datetimestamp_forever
 from ops.authentication.authentication import Plcyacct,Plcypasswd
 from ops.members.members import ListAllMembers
+from ops.accounting.accounting import InstallAccounts, InstallAccountClasses,transaction_types
+from ops.filehandlers.filehandlers import InstallCatalogs,InstallCatgroups
 import json,urllib.request
 from ops.mailer.mailer import Mailer
 from ops.sms.sms import Sms
-
 
 class create_organization(Resource):
     def __init__(self):
@@ -43,9 +44,18 @@ class create_organization(Resource):
             if exists:return {"msg":"User {0} already exists. Choose another identity".format(logonid)},200
             elif exists==False:
                 member_id=member.save()
+
+                InstallCatalogs("catalogtemplates.csv",member_id).save()
+                InstallCatgroups("categorytemplates.csv",member_id).save()
+
+                InstallAccountClasses('accountclasses.csv',1,member_id).save()
+                InstallAccounts("faccount_templates.csv",member_id,1).save()
+                [t.save() for t in transaction_types]
+
                 orgentity_id=Orgentity(member_id,orgentitytype,orgentityname,dn=logonid).save()
                 users_id=Users(orgentity_id,registertype,dn=logonid,profiletype=profiletype,language_id=defaultlanguage(),registration=timestamp_now()).save()
-                userreg_id=Userreg(users_id,logonid,plcyacct_id=Plcyacct.read_default()['plcyacct_id'],logonpassword=self.generate_hash(logonpassword),passwordcreation=timestamp_now()).save()
+                salt='M{}{}{}{}'.format(member_id,registertype,profiletype,logonid[-1])
+                userreg_id=Userreg(users_id,logonid,salt=salt,plcyacct_id=Plcyacct.read_default()['plcyacct_id']).save()
                 roles=Role.read_roles(defaultlanguage());rid=[x for x in roles if x['name']=='permission_editor'][0]['role_id']
                 Mbrrole(userreg_id,rid,orgentity_id).save()
                 users_id=Busprof(member_id,org_id=orgentity_id).save()
@@ -53,14 +63,41 @@ class create_organization(Resource):
                 RolePermDefaults(orgentity_id).save()
                 addrbook_id=Addrbook(member_id,orgentityname,description="{}: Address Book".format(orgentityname)).save()
                 Address(addrbook_id,member_id,orgentityname,phone1=logonid).save()
-                if userreg_id==users_id:
-                    access_token=create_access_token(identity=usersign);refresh_token=create_refresh_token(identity=usersign)
-                    return {"access_token":access_token,"refresh_token":refresh_token,
-                    "msg":"Successfully initialized organization: {0}".format(orgentityname),
-                    "user_id":usersign.member_id,"employer":usersign.employer,"roles":usersign.roles,
-                    "language_id":usersign.language_id,"profile":usersign.profiletype},200
+
+                sms=Sms(logonid[1:].replace(" ",""),"Your PronovApp token is: "+salt,sms_from="PronovApp",dnd="2")
+                sms_status,sms_message=sms.send()
+                if sms_status=="success":return {"status":"OK","msg":"Enter next with the One-Time Password sent to your phone."},200
+                else:return {"status":"OK","msg":"Call SysAdmin to receive your token."},200
+                    # access_token=create_access_token(identity=usersign);refresh_token=create_refresh_token(identity=usersign)
+                    # return {"access_token":access_token,"refresh_token":refresh_token,
+                    # "msg":"Successfully initialized organization: {0}".format(orgentityname),
+                    # "user_id":usersign.member_id,"employer":usersign.employer,"roles":usersign.roles,
+                    # "language_id":usersign.language_id,"profile":usersign.profiletype},200
         except EntryException as e:
             return {"msg":"Error initializing organization {0}. Error {1}".format(orgentityname,e.message)},422
+
+class o_verify_token(Resource):
+    def __init__(self):
+        self.parser=reqparse.RequestParser()
+        self.parser.add_argument("logonid",help='compulsory field',required=True)
+        self.parser.add_argument("otp",help='compulsory field',required=True)
+        super(o_verify_token,self).__init__()
+    
+    def post(self):
+        data=self.parser.parse_args()
+        logonid=data["logonid"]
+        otp=data["otp"]
+        users_id=Userreg.getusersid(logonid)
+        salt=Userreg.getsalt(users_id)
+        if salt==otp:
+            usersign=UserSign(logonid)
+            Member.approve_member(users_id)
+            access_token=create_access_token(identity=usersign);refresh_token=create_refresh_token(identity=usersign)
+            return {"status":"OK","access_token":access_token,"refresh_token":refresh_token,
+                    "msg":"Successfully verified access token",
+                    "user_id":usersign.member_id,"employer":usersign.employer,"roles":usersign.roles,
+                    "language_id":usersign.language_id,"profile":usersign.profiletype},200
+        else:return {"status":"ERR","msg":"Token (or mobile) entered was not recognized"},422
 
 class login_organization(Resource):
     def __init__(self):
@@ -636,8 +673,8 @@ class verify_token(Resource):
             usersign=UserSign(logonid)
             Member.approve_member(users_id)
             access_token=create_access_token(identity=usersign);refresh_token=create_refresh_token(identity=usersign)
-            return {"access_token":access_token,"refresh_token":refresh_token,
+            return {"status":"OK","access_token":access_token,"refresh_token":refresh_token,
                     "msg":"Successfully verified",
                     "user_id":usersign.member_id,"employer":usersign.employer,"roles":usersign.roles,
                     "language_id":usersign.language_id,"profile":usersign.profiletype},200
-        else:return {"msg":"Token entered was unrecognizable"},422
+        else:return {"status":"ERR","msg":"Token (or mobile) entered was not recognized"},422

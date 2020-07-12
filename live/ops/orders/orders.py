@@ -5,6 +5,8 @@ con,cursor=createcon("retail","pronov","localhost","5432")
 import  importlib
 import pandas as pd
 import numpy as np
+from ops.helpers.functions import textualize_datetime,humanize_date,CurrencyHelper
+from ops.inventory.inventory import orderstatuses,inventorystatuses,ffmstatuses
 
 class EntryException(Exception):
     def __init__(self,message):
@@ -51,6 +53,51 @@ class Orders:
         self.totalshipping=totalshipping
         self.description=description
     
+    @staticmethod
+    def membername(mid):
+        cursor.execute("select type::text from member where member_id=%s",(mid,))
+        res=cursor.fetchone();mtype=None;mname=None
+        if res==None:mtype=res
+        elif res!=None:mtype=res[0]
+        if mtype=="O":
+            cursor.execute("select orgentityname from orgentity where orgentity_id=%s",(mid,))
+            mname=cursor.fetchone()[0]
+        elif mtype=="U":
+            cursor.execute("select field1,field3 from users where users_id=%s",(mid,))
+            mname=" ".join(cursor.fetchone())
+        return mname
+    
+    @staticmethod
+    def buschname(bid):
+        cursor.execute("select name::text from buschn where buschn_id=%s",(bid,))
+        return cursor.fetchone()[0]
+    
+    @staticmethod
+    def read(language_id):
+        cursor.execute("""select orders.orgentity_id,orders.totalproduct::float,
+        orders.totaltax::float,orders.totalshipping::float,orders.totaltaxshipping::float,orders.description,
+        orders.storeent_id,storeent.identifier,orders.currency::text,orders.locked,orders.timeplaced,
+        orders.lastupdate,orders.sequence,orders.status,orders.member_id,orders.field1,orders.address_id,
+        orders.field2,orders.providerordernum,orders.shipascomplete,orders.field3,orders.totaladjustment::float,
+        orders.ordchnltyp_id,orders.comments,orders.notificationid,orders.type::text,orders.editor_id,orders.buschn_id,
+        orders.sourceid,orders.expiredate,orders.blocked,orders.opsystem_id,orders.transferstatus,orders.buyerpo_id,orders.orders_id 
+        from orders inner join storeent on orders.storeent_id=storeent.storeent_id""");res=cursor.fetchall()
+        ch=CurrencyHelper(language_id)
+        if len(res)<=0:return [dict(orgentity_id=None,totalproduct=None,gross=None,totaltax=None,totalshipping=None,
+        totaltaxshipping=None,description=None,storeent_id=None,store=None,currency=None,locked=None,
+        timeplaced=None,ordered=None,lastupdate=None,sequence=None,status=None,member_id=None,customer=None,field1=None,address_id=None,
+        field2=None,providerordernum=None,shipascomplete=None,field3=None,totaladjustment=None,ordchnltyp_id=None,comments=None,
+        notificationid=None,type=None,editor_id=None,buschn_id=None,channel=None,sourceid=None,expiredate=None,blocked=None,opsystem_id=None,
+        transferstatus=None,buyerpo_id=None,orders_id=None)]
+        elif len(res) > 0:return [dict(orgentity_id=r[0],totalproduct=r[1],gross=ch.formatamount(r[1]),totaltax=r[2],totalshipping=ch.formatamount(r[3]),
+        totaltaxshipping=r[4],description=r[5],storeent_id=r[5],store=r[7],currency=r[8],symbol=ch.currsymbol,locked=r[9],
+        timeplaced=textualize_datetime(r[10]),ordered=humanize_date(r[10]),lastupdate=textualize_datetime(r[11]),sequence=r[12],
+        status=[x["text"] for x in orderstatuses if str(x["value"])==r[13]][0],member_id=r[14],customer=Orders.membername(r[14]),
+        field1=r[15],address_id=r[16],field2=r[17],
+        providerordernum=r[18],shipascomplete=r[19],field3=r[20],totaladjustment=ch.formatamount(r[21]),ordchnltyp_id=r[22],comments=r[23],
+        notificationid=r[24],type=r[25],editor_id=r[26],buschn_id=r[27],channel=Orders.buschname(r[27]),sourceid=r[28],
+        expiredate=r[29],blocked=r[30],opsystem_id=r[31],transferstatus=r[32],buyerpo_id=r[33],orders_id=r[34]) for r in res]
+    
     def save(self):
         try:
             cursor.execute("""insert into orders(ormorder,orgentity_id,totalproduct,totaltax,totalshipping,
@@ -96,6 +143,37 @@ class Orderitems:
         self.itemspc_id=itemspc_id;self.catentry_id=catentry_id;self.partnum=partnum;self.shipmode_id=shipmode_id
         self.ffmcenter_id=ffmcenter_id;self.comments=comments
     
+    @staticmethod
+    def read(language_id,orders_id):
+        cursor.execute("""select orderitems.storeent_id,storeent.identifier,orderitems.orders_id,orderitems.termcond_id,
+        orderitems.trading_id,contract.name,orderitems.itemspc_id,orderitems.catentry_id,catentdesc.name,orderitems.partnum,
+        orderitems.shipmode_id,orderitems.ffmcenter_id,ffmcenter.name,orderitems.member_id,orderitems.address_id,
+        orderitems.allocaddress_id,address.address1,orderitems.price::float,orderitems.timereleased,orderitems.timeshipped,
+        orderitems.currency::text,orderitems.comments,orderitems.totalproduct::float,orderitems.quantity,orderitems.taxamount,
+        orderitems.totaladjustment::float,orderitems.shiptaxamount,orderitems.estavailtime,orderitems.field1,
+        orderitems.description,orderitems.field2,orderitems.allocationgroup,orderitems.shipcharge,orderitems.baseprice,
+        orderitems.basecurrency,orderitems.tracknumber,orderitems.trackdate,orderitems.prepareflags,orderitems.correlationgroup,
+        orderitems.promisedavailtime,orderitems.shippingoffset,orderitems.neededquantity,orderitems.allocquantity,
+        orderitems.allocffmc_id,orderitems.ordreleasenum,orderitems.configurationid,orderitems.supplierdata,
+        orderitems.supplierpartnumber,orderitems.availaquantity,orderitems.isexpedited,orderitems.requestedshipdate 
+        
+        from orderitems inner join storeent on orderitems.storeent_id=storeent.
+        storeent_id left join contract on orderitems.trading_id=contract.contract_id inner join catentdesc on orderitems.catentry_id=
+        catentdesc.catentry_id inner join ffmcenter on orderitems.ffmcenter_id=ffmcenter.ffmcenter_id left join address on orderitems.
+        address_id=address.address_id where orderitems.orders_id=%s""",(orders_id,));res=cursor.fetchall()
+        if len(res) <= 0:return None
+        elif len(res)>0:return [dict(storeent_id=r[0],store=r[1],orders_id=r[2],termcond_id=r[3],trading_id=r[4],
+        contract=r[5],itemspc_id=r[6],catentry_id=r[7],product=r[8],SKU=r[9],shipmode_id=r[10],ffmcenter_id=r[11],
+        warehouse=r[12],member_id=r[13],customer=Orders.membername(r[13]),address_id=r[14],allocaddress_id=r[15],
+        address=r[16],price=CurrencyHelper(language_id).formatamount(r[17]),timereleased=textualize_datetime(r[18]),
+        released=humanize_date(r[18]),timeshipped=textualize_datetime(r[19]),currency=r[20],comments=r[21],
+        symbol=CurrencyHelper(language_id).getcurrsymbol(),
+        totalproduct=CurrencyHelper(language_id).formatamount(r[22]),quantity=r[23],taxamount=r[24],totaladjustment=CurrencyHelper(language_id).formatamount(r[25]),shiptaxamount=r[26],estavailtime=r[27],
+        field1=r[28],description=r[29],field2=r[30],allocationgroup=r[31],shipcharge=r[32],baseprice=r[33],basecurrency=r[34],
+        tracknumber=r[35],trackdate=r[36],prepareflags=r[37],correlationgroup=r[38],promisedavailtime=r[39],shippingoffset=r[40],
+        neededquantity=r[41],allocquantity=r[42],allocffmc_id=r[43],ordreleasenum=r[44],configurationid=r[45],supplierdata=r[46],
+        supplierpartnumber=r[47],availaquantity=r[48],isexpedited=r[49],requestedshipdate=r[50]) for r in res]
+    
     def save(self):
         try:
             cursor.execute("""insert into orderitems(storeent_id,orders_id,termcond_id,trading_id,itemspc_id,
@@ -106,7 +184,7 @@ class Orderitems:
             prepareflags,correlationgroup,promisedavailtime,shippingoffset,neededquantity,allocquantity,allocffmc_id,
             ordreleasenum,configurationid,supplierdata,supplierpartnumber,availaquantity,isexpedited,requestedshipdate,
             tiecode)values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,
-            %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)returning orderitems_id""",
+            %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)returning orderitems_id""",
             (self.storeent_id,self.orders_id,self.termcond_id,self.trading_id,self.itemspc_id,self.catentry_id,
             self.partnum,self.shipmode_id,self.ffmcenter_id,self.member_id,self.address_id,self.allocaddress_id,
             self.price,self.lineitemtype,self.status,self.outputq_id,self.inventorystatus,self.lastcreate,
@@ -115,7 +193,8 @@ class Orderitems:
             self.field1,self.description,self.field2,self.allocationgroup,self.shipcharge,self.baseprice,self.basecurrency,
             self.tracknumber,self.trackdate,self.prepareflags,self.correlationgroup,self.promisedavailtime,self.shippingoffset,
             self.neededquantity,self.allocquantity,self.allocffmc_id,self.ordreleasenum,self.configurationid,self.supplierdata,
-            self.supplierpartnumber,self.availaquantity,self.isexpedited,self.requestedshipdate,self.tiecode,))
+            self.supplierpartnumber,self.availaquantity,self.isexpedited,self.requestedshipdate,self.tiecode,));con.commit()
+            return cursor.fetchone()[0]
         except(Exception,psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])

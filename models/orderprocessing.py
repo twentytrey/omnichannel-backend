@@ -16,6 +16,7 @@ class Order:
             totalproduct decimal(20,5)default 0,
             totaltax decimal(20,5)default 0,
             totalshipping decimal(20,5)default 0,
+            totaltaxshipping decimal(20,5)default 0,
             description varchar(254),
             storeent_id integer not null,
             currency char(10),
@@ -127,15 +128,21 @@ class Order:
             account_id integer default 0,
             timecreated timestamp,
             timeupdated timestamp,
+            nextduedate timestamp,
+            n integer not null,
+            rate decimal(20,1) not null,
             creditlimit decimal(20,5),
             decimalfield1 decimal(20,5),
             decimalfield2 decimal(20,5),
+            plan_integration bigint,
+            plan_code varchar(254),
+            plan_id bigint,
             primary key(creditline_id)
         )""")
         cursor.execute("create index i0000549 on creditline(account_id)")
+        cursor.execute("create index a8dpb2 on creditline(plan_integration,plan_code,plan_id)")
+        cursor.execute("create index a3vd0w on creditline(n,rate,decimalfield2)")
         # CONSTRAINTS
-        # cursor.execute(build_constraint("creditline","f_278","setccurr","setcurr","setccurr"))
-        # cursor.execute(build_constraint("creditline","f_279","account_id","account","account_id"))
 
     def orcomment(self):
         """this table stores the comments for an order entered
@@ -506,7 +513,7 @@ class OrderManagementAdjustmentAndTax:
             orgentity_id bigint,
             policy_id bigint,
             member_id bigint not null,
-            trading_id bigint,i
+            trading_id bigint,
             ffmcenter_id integer,
             rmadate timestamp not null,
             totalcredit decimal(20,5)default 0,
@@ -969,7 +976,6 @@ class OrderItem:
 if __name__=="__main__":
     o=OrderItem()
     o.orditemconf()
-    # o.fill_buyerpotyp()
 
     o=OrderRelease()
     o.ordrlsttls()
@@ -1027,7 +1033,7 @@ if __name__=="__main__":
 
     o=Order()
     o.ordusers()
-    o.ordtax()
+    ## o.ordtax()
     o.ordshiphst()
     o.ordpaymthd()
     o.creditline()
