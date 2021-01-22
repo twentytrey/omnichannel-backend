@@ -3,3 +3,5 @@ config.py
 dbexport.pgsql
 pronovserver.wsgi
 setup.sh
+/live
+/models

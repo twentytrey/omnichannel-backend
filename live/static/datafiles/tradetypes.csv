@@ -1,9 +1,0 @@
-trdtype_id,description,language_id
-0,Account,1
-1,Contract,1
-2,RFQRequest,1
-3,RFQResponse,1
-4,RFQResult,1
-5,Exchange,1
-6,Auction,1
-7,ReverseAuction,1
