@@ -14,7 +14,6 @@ class EntryException(Exception):
     def __init__(self,message):
         self.message=message
 
-
 class CC:
     def __init__(self):
         pass

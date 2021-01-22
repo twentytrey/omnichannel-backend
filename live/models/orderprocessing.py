@@ -1,6 +1,4 @@
-from db_con import createcon
-con,cursor=createcon("retail","pronov","localhost","5432")
-con.autocommit=True
+from db_con import con,cursor
 from functions import build_constraint
 
 class Order:
@@ -16,6 +14,7 @@ class Order:
             totalproduct decimal(20,5)default 0,
             totaltax decimal(20,5)default 0,
             totalshipping decimal(20,5)default 0,
+            totaltaxshipping decimal(20,5)default 0,
             description varchar(254),
             storeent_id integer not null,
             currency char(10),
@@ -127,12 +126,24 @@ class Order:
             account_id integer default 0,
             timecreated timestamp,
             timeupdated timestamp,
+            nextduedate timestamp,
+            n integer not null,
+            rate decimal(20,1) not null,
             creditlimit decimal(20,5),
             decimalfield1 decimal(20,5),
             decimalfield2 decimal(20,5),
+            plan_integration bigint,
+            plan_code varchar(254),
+            plan_id bigint,
+            customer_code varchar(254),
+            subscription_code varchar(254),
+            email_token varchar(254),
             primary key(creditline_id)
         )""")
         cursor.execute("create index i0000549 on creditline(account_id)")
+        cursor.execute("create index a8dpb2 on creditline(plan_integration,plan_code,plan_id)")
+        cursor.execute("create index a3vd0w on creditline(n,rate,decimalfield2)")
+        cursor.execute("create index afjf92 on creditline(customer_code,subscription_code,email_token)")
         # CONSTRAINTS
 
     def orcomment(self):

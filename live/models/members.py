@@ -1,6 +1,4 @@
-from db_con import createcon
-con,cursor=createcon("retail","pronov","localhost","5432")
-con.autocommit=True
+from db_con import con,cursor
 from functions import build_constraint
 
 class Members:
@@ -125,7 +123,7 @@ class Members:
         a member group is a group of members. membership is restricted
         to users within the member group."""
         cursor.execute("""create table mbrgrp(
-            mbrgrp_id bigserial not null,
+            mbrgrp_id bigint not null,
             owner_id bigint not null,
             field1 varchar(254),
             description varchar(512),
@@ -180,7 +178,7 @@ class Members:
             conditions text,
             field1 varchar(254),
             field2 varchar(254),
-            primary key(mbrgrp_id)
+            primary key(mbrgrp_id,field1)
         )""")
         # CONSTRAINT:
     
@@ -560,8 +558,8 @@ if __name__=="__main__":
     m.attrtype()
     m.mbrattr()
     m.mbrattrval()
-    ## m.storeent()
-    m.language()
+    # m.storeent()
+    # m.language()
     m.setcurr()
     m.orgcode()
     m.orgentity()

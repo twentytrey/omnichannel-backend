@@ -1,1 +1,1 @@
-psql -U pronov retail < dbexport.pgsql
+psql -U jmso retail < dbexport.pgsql

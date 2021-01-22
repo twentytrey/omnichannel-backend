@@ -66,6 +66,9 @@ class InstallCatgroups:
             [Cattogrp(self.getcatalogid(catgroups[i][1]),categoryids[i],datetimestamp_now(),).save() 
             for i in range(len(categoryids)) ]
 
+from ops.catalog.catalog import AddItemToContract
+from ops.trading.trading import Tradeposcn,Tdpscncntr
+from ops.offers.offers import Offer,Offerdesc,Offerprice
 class InstallCatentries:
     def __init__(self,fname,member_id,catenttype_id='Item',currency='NGN',published=1):
         self.fname=fname
@@ -124,9 +127,19 @@ class InstallCatentries:
                         itemspc_id=Itemspc(entry[5],newpart,baseitem_id=catentry_id,lastupdate=datetimestamp_now()).save()
                         c.update_itemspc(itemspc_id,catentry_id)
                         Catentdesc(catentry_id,entry[4],entry[8],name=entry[0],shortdescription=entry[0]).save()
+                        
                         catgroup_id=Catgpenrel(self.getcatgroupid(entry[3],entry[5]),self.getcatalogid(entry[2],entry[5]),catentry_id).save()
                         print(catgroup_id)
                         Listprice(catentry_id,entry[7],entry[1]).save()
+                        a=AddItemToContract(catentry_id,entry[5],entry[1])
+                        contract_id=a.getcontract()
+                        # product,price,catalog,category,language_id,member_id,catenttype_id,currency,published
+                        tradeposcn_id=Tradeposcn(entry[5],'Offer Price',description='Offer Price',ttype='S').save()
+                        Tdpscncntr(tradeposcn_id,contract_id).save()
+                        offer_id=Offer(tradeposcn_id,catentry_id,published=1,lastupdate=datetimestamp_now()).save()
+                        Offerdesc(offer_id,entry[4],"Offer Price").save()
+                        Offerprice(offer_id,entry[7],entry[1]).save()
+
                         time.sleep(3)
                 except EntryException as e:
                     print( {"msg":"Error {}".format(e.message)} )

@@ -35,6 +35,13 @@ class Storeent:
         self.markfordelete=markfordelete
     
     @staticmethod
+    def root_store_exists(owner_id):
+        cursor.execute("select storeent_id from storeent where member_id=1")
+        res=cursor.fetchone()
+        if res==None:return None
+        elif res!=None:return res[0]
+    
+    @staticmethod
     def get_image(store_id):
         cursor.execute("select staddress_id_loc from storeentds where storeent_id=%s",(store_id,))
         res=cursor.fetchone();staddress_id=None
@@ -422,6 +429,41 @@ class VendorsForMember:
 from ops.trading.trading import Trading,Trddesc,Contract,Cntrname,Participnt,Storedef,Storecntr
 from ops.helpers.functions import datetimestamp_forever,datetimestamp_now
 
+class MDefaultContractOrg:
+    def __init__(self,owner_id):
+        # self.store_id=store_id
+        self.trdtype_id=1
+        self.state=1
+        self.starttime=datetimestamp_now()
+        self.endtime=datetimestamp_forever()
+        self.timecreated=self.starttime
+        self.member_id=owner_id
+        self.origin=0
+        self.cstate=3
+        self.usage=0
+        self.timedeployed=self.starttime
+        self.member_id=owner_id
+        self.participant_id=owner_id
+        self.language_id=1
+        self.storename=self.getstorename()
+        self.name="{}, ID-{}, Default Trading Agreement".format(self.storename,self.member_id)
+        self.comment="A unilateral arrangement between the owner and the participant allowing customers to purchase products from the store at a specified price for a specified time under specific conditions."
+    
+    def getstorename(self):
+        cursor.execute("select orgentityname from orgentity where orgentity_id=%s",(self.member_id,))
+        res=cursor.fetchone()
+        if res==None:return res
+        elif res!=None:return res[0]
+    
+    def _execute(self):
+        trading_id=Trading(self.trdtype_id,state=self.state,starttime=self.starttime,endtime=self.endtime).save()
+        Trddesc(trading_id,self.language_id,longdescription=self.comment,timecreated=self.timecreated).save()
+        contract_id=Contract(trading_id,self.name,self.member_id,origin=self.origin,state=self.cstate,usage=self.usage,comments=self.comment,timecreated=self.starttime,timedeployed=self.starttime).save()
+        Cntrname(self.name,self.member_id,self.origin).save()
+        Participnt(self.participant_id,1,contract_id,timecreated=self.starttime).save()
+        # Storedef(self.store_id,contract_id).save()
+        # Storecntr(contract_id,self.store_id).save()
+
 class MDefaultContract:
     def __init__(self,owner_id,store_id):
         self.store_id=store_id
@@ -448,12 +490,19 @@ class MDefaultContract:
         if res==None:return res
         elif res!=None:return res[0]
     
+    def getcontract(self):
+        cursor.execute("select contract_id from contract where member_id=%s and usage=0",(self.member_id,))
+        res=cursor.fetchone()
+        if res==None:return None
+        elif res!=None:return res[0]
+    
     def _execute(self):
-        trading_id=Trading(self.trdtype_id,state=self.state,starttime=self.starttime,endtime=self.endtime).save()
-        Trddesc(trading_id,self.language_id,longdescription=self.comment,timecreated=self.timecreated).save()
-        contract_id=Contract(trading_id,self.name,self.member_id,origin=self.origin,state=self.cstate,usage=self.usage,comments=self.comment,timecreated=self.starttime,timedeployed=self.starttime).save()
-        Cntrname(self.name,self.member_id,self.origin).save()
-        Participnt(self.participant_id,1,contract_id,timecreated=self.starttime).save()
+        # trading_id=Trading(self.trdtype_id,state=self.state,starttime=self.starttime,endtime=self.endtime).save()
+        # Trddesc(trading_id,self.language_id,longdescription=self.comment,timecreated=self.timecreated).save()
+        # contract_id=Contract(trading_id,self.name,self.member_id,origin=self.origin,state=self.cstate,usage=self.usage,comments=self.comment,timecreated=self.starttime,timedeployed=self.starttime).save()
+        contract_id=self.getcontract()
+        # Cntrname(self.name,self.member_id,self.origin).save()
+        # Participnt(self.participant_id,1,contract_id,timecreated=self.starttime).save()
         Storedef(self.store_id,contract_id).save()
         Storecntr(contract_id,self.store_id).save()
 

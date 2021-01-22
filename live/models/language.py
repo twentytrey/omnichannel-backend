@@ -1,7 +1,4 @@
-# from .db_con import createcon
-from db_con import createcon
-con,cursor=createcon("retail","pronov","localhost","5432")
-con.autocommit=True
+from db_con import con,cursor
 from functions import build_constraint
 
 class Language:
@@ -77,7 +74,8 @@ class Language:
 
 if __name__=="__main__":
     l=Language()
-    ## l.language()
+    # drop prvious implementation of language table
+    l.language()
     l.languageds()
     l.langpair()
     l.country()

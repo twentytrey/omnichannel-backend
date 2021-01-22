@@ -59,14 +59,14 @@ class create_customer_organization(Resource):
 class _create_customer_organization(Resource):
     def __init__(self):
         self.parser=reqparse.RequestParser()
-        self.parser.add_argument("membertype",help='compulsory field',required=True)
-        self.parser.add_argument("memberstate",help="compulsory field",required=True)
-        self.parser.add_argument("orgentitytype",help="compulsory field",required=True)
-        self.parser.add_argument("registertype",help="compulsory field",required=True)
-        self.parser.add_argument("profiletype",help="compulsory field",required=True)
-        self.parser.add_argument("orgentityname",help="compulsory field",required=True)
         self.parser.add_argument("logonid",help="compulsory field",required=True)
-        self.parser.add_argument("logonpassword",help="compulsory field",required=True)
+        self.parser.add_argument("logonpassword")
+        self.parser.add_argument("memberstate",help="compulsory field",required=True)
+        self.parser.add_argument("membertype",help='compulsory field',required=True)
+        self.parser.add_argument("orgentityname",help="compulsory field",required=True)
+        self.parser.add_argument("orgentitytype",help="compulsory field",required=True)
+        self.parser.add_argument("profiletype",help="compulsory field",required=True)
+        self.parser.add_argument("registertype",help="compulsory field",required=True)
         super(_create_customer_organization,self).__init__()
 
     def post(self):
@@ -88,23 +88,14 @@ class _create_customer_organization(Resource):
                 orgentity_id=Orgentity(member_id,orgentitytype,orgentityname,dn=logonid).save()
                 users_id=Users(orgentity_id,registertype,dn=logonid,profiletype=profiletype,language_id=defaultlanguage(),registration=timestamp_now()).save()
                 salt='M{}{}{}{}'.format(member_id,registertype,profiletype,logonid[-1])
-                userreg_id=Userreg(users_id,logonid,salt=salt,plcyacct_id=Plcyacct.read_default()['plcyacct_id'],passwordcreation=None).save()
-                roles=Role.read_roles(defaultlanguage());rid=[x for x in roles if x['name']=='store_editor'][0]['role_id']
+                userreg_id=Userreg(users_id,logonid,salt=salt).save()
+                roles=Role.read_roles(defaultlanguage());rid=[x for x in roles if x['name']=='customer'][0]['role_id']
                 Mbrrole(userreg_id,rid,orgentity_id).save()
                 users_id=Busprof(member_id,org_id=orgentity_id).save()
                 usersign=UserSign(logonid)
                 addrbook_id=Addrbook(member_id,orgentityname,description="{}: Address Book".format(orgentityname)).save()
                 Address(addrbook_id,member_id,orgentityname,phone1=logonid).save()
-                # send SMS notification
-                sms=Sms(logonid[1:].replace(" ",""),"Your PronovApp token is: "+salt,sms_from="PronovApp",dnd="2")
-                sms_status,sms_message=sms.send()
-
-                if sms_status=="success":
-                    return {"msg":"Customer organization will receive SMS token to proceed",
-                    "storeorgs":Storeorgs().getdata()},200
-                else:
-                    return {"msg":"Unable to send SMS token to user. Error: {}.".format(sms_message),
-                    "storeorgs":Storeorgs().getdata()},200
+                return {"msg":"Successfully registered business customer","storeorgs":Storeorgs().getdata()},200
         except EntryException as e:
             return {"msg":"Error initializing organization {0}. Error {1}".format(orgentityname,e.message)},422
 

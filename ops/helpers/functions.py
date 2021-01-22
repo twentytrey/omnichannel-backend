@@ -20,6 +20,16 @@ def timestamp_now():
     formatted=datetime.datetime.fromtimestamp(now).strftime("%Y-%m-%d ")
     return formatted
 
+def reversedate(d):
+    if d==None:return None
+    elif d!=None:
+        splits=d.split('-')
+        if len(splits[0])==4:
+            return d
+        elif len(splits[0])==2:
+            splits.reverse()
+            return '-'.join(splits)
+
 def datetimestamp_now():
     now=time.time()
     formatted=datetime.datetime.fromtimestamp(now).strftime("%Y-%m-%d %H:%M:%S")

@@ -59,7 +59,6 @@ class items_for_organization_by_category(Resource):
         catgroup_id=int(data["catgroup_id"])
         return AllItemsByCategory(owner_id,language_id,catgroup_id).get(),200
 
-
 class items_by_store(Resource):
     def __init__(self):
         self.parser=reqparse.RequestParser()

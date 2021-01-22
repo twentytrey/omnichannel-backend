@@ -68,3 +68,33 @@ class SaveReference:
         except(Exception,psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
+
+class CardAuth:
+    def __init__(self,member_id,authorization_code,last4,expmonth,expyear,cardtype=None,bin=None,bank=None,channel=None,
+    signature=None,reusable=None,country_code=None):
+        self.member_id=member_id
+        self.authorization_code=authorization_code
+        self.last4=last4
+        self.expmonth=expmonth
+        self.expyear=expyear
+        self.cardtype=cardtype
+        self.bin=bin
+        self.bank=bank
+        self.channel=channel
+        self.signature=signature
+        self.reusable=reusable
+        self.country_code=country_code
+    
+    def save(self):
+        try:
+            cursor.execute("""insert into cardauth(member_id,authorization_code,cardtype,last4,expmonth,expyear,
+            bin,bank,channel,signature,reusable,country_code)values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)on conflict
+            (member_id)do update set authorization_code=%s,cardtype=%s,last4=%s,expmonth=%s,expyear=%s,
+            bin=%s,bank=%s,channel=%s,signature=%s,reusable=%s,country_code=%s returning member_id""",
+            (self.member_id,self.authorization_code,self.cardtype,self.last4,self.expmonth,self.expyear,
+            self.bin,self.bank,self.channel,self.signature,self.reusable,self.country_code,self.authorization_code,
+            self.cardtype,self.last4,self.expmonth,self.expyear,self.bin,self.bank,self.channel,self.signature,
+            self.reusable,self.country_code,));con.commit();return cursor.fetchone()[0]
+        except(Exception,psycopg2.DatabaseError) as e:
+            if con is not None:con.rollback()
+            raise EntryException(str(e).strip().split('\n')[0])

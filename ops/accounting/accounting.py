@@ -374,3 +374,23 @@ transaction_types=[
     Transactiontype("TRANSFR","Transfer","Represents a transfer you've made between two balance sheet registers"),
     Transactiontype("DISC","Discount","Identifies a discount given for early payment either to customers or vendors"),
     Transactiontype("GENJNRL","General Journal Entry","Stands for a general journal entry which you use when the other transaction types do not apply")]
+
+class ConfirmTransaction:
+    def __init__(self,holder_id,payee_id,referencenumber,transaction_id,status='N'):
+        self.holder_id=holder_id
+        self.payee_id=payee_id
+        self.transaction_id=transaction_id
+        self.referencenumber=referencenumber
+        self.status=status
+    
+    def save(self):
+        try:
+            cursor.execute("""insert into confirmtransaction(holder_id,payee_id,referencenumber,
+            status,transaction_id)values(%s,%s,%s,%s,%s)on conflict(holder_id,payee_id,referencenumber)
+            do update set holder_id=%s,payee_id=%s,referencenumber=%s,status=%s,transaction_id=%s returning 
+            payee_id""",(self.holder_id,self.payee_id,self.referencenumber,self.status,self.transaction_id,
+            self.holder_id,self.payee_id,self.referencenumber,self.status,self.transaction_id,));con.commit()
+            return cursor.fetchone()[0]
+        except(Exception,psycopg2.DatabaseError) as e:
+            if con is not None:con.rollback()
+            raise EntryException(str(e).strip().split('\n')[0])

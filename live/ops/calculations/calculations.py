@@ -1,7 +1,10 @@
-from .db_con import createcon
+# from .db_con import createcon
 # from db_con import createcon
 import psycopg2,json,math,os
-con,cursor=createcon("retail","pronov","localhost","5432")
+# con,cursor=createcon("retail","jmso","localhost","5432")
+from ops.connector.connector import evcon
+con,cursor=evcon()
+
 import  importlib
 import pandas as pd
 import numpy as np
@@ -279,7 +282,7 @@ class Calcode:
             cursor.execute("""insert into calcode(code,calusage_id,storeent_id,groupby,txcdclass_id,published,
             sequence,combination,lastupdate,calmethod_id,calmethod_id_app,calmethod_id_qfy,field1,description,
             displaylevel,startdate,enddate,flags,precedence)values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,
-            %s,%s,%s,%s,%s)on conflict(calusage_id,code,storeent_id)do update set code=%s,calusage_id=%s,
+            %s,%s,%s,%s,%s)on conflict(calusage_id,code,description,storeent_id)do update set code=%s,calusage_id=%s,
             storeent_id=%s,groupby=%s,txcdclass_id=%s,published=%s,sequence=%s,combination=%s,lastupdate=%s,
             calmethod_id=%s,calmethod_id_app=%s,calmethod_id_qfy=%s,field1=%s,description=%s,displaylevel=%s,
             startdate=%s,enddate=%s,flags=%s,precedence=%s returning calcode_id""",(self.code,self.calusage_id,
@@ -295,6 +298,7 @@ class Calcode:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
 # print(Calcode.read(1,1,[3,4,2]))
+
 class Calcodedesc:
     def __init__(self,calcode_id,language_id,description):
         self.calcode_id=calcode_id

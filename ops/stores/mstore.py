@@ -9,6 +9,7 @@ import pandas as pd
 import numpy as np
 import os,re
 from ops import CurrencyHelper,humanize_date,timestamp_forever,timestamp_now
+from ops.trading.trading import Contract
 
 class EntryException(Exception):
     def __init__(self,message):
@@ -25,3 +26,10 @@ class PrepareOrder:
     def vendorstore(self,vendor_id):
         cursor.execute("select storeent_id from storeent where member_id=%s",(vendor_id,))
         return cursor.fetchone()[0]
+
+class SaveInventoryItem:
+    def __init__(self,member_id):
+        self.member_id=member_id
+    
+    def get_contract_id(self):
+        return Contract.mydefaultcontract(self.member_id)

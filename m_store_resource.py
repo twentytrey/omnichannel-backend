@@ -2,7 +2,7 @@ from flask_restful import Resource,reqparse
 from passlib.hash import pbkdf2_sha256 as sha256
 from flask_jwt_extended import (create_access_token,create_refresh_token,jwt_required,jwt_refresh_token_required,get_jwt_identity,get_raw_jwt,get_jwt_claims)
 from flask_jwt_extended.exceptions import RevokedTokenError
-from ops.members.members import Member,Orgentity,Users,Userreg,Mbrrole,Busprof,EntryException,Role,UserSign,Userprof,Address,RolePermDefaults,Addrbook,Address,ListAllMembers,OTPLogin
+from ops.members.members import Member,Orgentity,Users,Userreg,Mbrrole,Busprof,EntryException,Role,UserSign,Userprof,Address,RolePermDefaults,Addrbook,Address,ListAllMembers,OTPLogin,get_random_string
 from ops.helpers.functions import timestamp_forever,timestamp_now,defaultlanguage,timesplits
 from ops.authentication.authentication import Plcyacct,Plcypasswd
 from ops.mailer.mailer import Mailer
@@ -14,7 +14,9 @@ from ops.calculations.calculations import InstallCalmethods,InstallStencal,Calco
 from ops.accounting.accounting import InstallAccounts, InstallAccountClasses,transaction_types
 from ops.filehandlers.filehandlers import InstallCatalogs,InstallCatgroups
 from ops.inventory.inventory import Ra,Radetail
+from ops.helpers.functions import reversedate
 
+from ops.stores.stores import MDefaultContractOrg
 class m_create_store_organization(Resource):
     def __init__(self):
         self.parser=reqparse.RequestParser()
@@ -63,8 +65,9 @@ class m_create_store_organization(Resource):
                 [t.save() for t in transaction_types]
 
                 orgentity_id=Orgentity(member_id,orgentitytype,orgentityname,dn=phone).save()
+                MDefaultContractOrg(member_id)._execute()
                 users_id=Users(orgentity_id,registertype,dn=phone,profiletype=profiletype,language_id=defaultlanguage(),registration=timestamp_now()).save()
-                salt='M{}{}{}{}'.format(member_id,registertype,profiletype,phone[-1])
+                salt=get_random_string(6)
                 userreg_id=Userreg(users_id,phone,salt=salt,plcyacct_id=Plcyacct.read_default()['plcyacct_id']).save()
                 roles=Role.read_roles(defaultlanguage());rid=[x for x in roles if x['name']=='store_editor'][0]['role_id']
                 Mbrrole(userreg_id,rid,orgentity_id).save()
@@ -88,7 +91,7 @@ class otp_login(Resource):
         self.parser=reqparse.RequestParser()
         self.parser.add_argument("phone",help="required field",required=True)
         super(otp_login,self).__init__()
-    
+
     def post(self):
         data=self.parser.parse_args()
         phone=data["phone"]
@@ -185,7 +188,9 @@ class m_create_store(Resource):
             language_id=Storelang(language_id,storeent_id,setccurr=setccurr).save()
             setccurr=Curlist(storeent_id,setccurr).save()
             store_id=Store(storeent_id,storegrp_id,language_id=language_id,inventoryopflag=1,storetype='B2C').save()
+
             MDefaultContract(member_id,store_id)._execute()
+
             InstallCalmethods('calmethods.csv',store_id).save()
             InstallStencal('stencalusg.csv',store_id).save()
             staddress_id_loc=Staddress(nickname,member_id,field1=photourl,address1=address1,city=city,state=state,country=country,
@@ -247,6 +252,159 @@ class create_po(Resource):
             lastupdate=datetimestamp_now(),externalid=timesplits()).save()
             openindicator=Ra.open_or_closed(ra_id)
             if openindicator==None or openindicator==0:Ra.close_ra(ra_id)
-            return {"status":"OK","msg":"Successfully initialized purchase order","radata":Ra.read()},200
+            return {"status":"OK","msg":"Successfully initialized purchase order","radata":Ra.read(member_id)},200
         except EntryException as e:
             return {"status":"ERR","msg":"Error initializing purchase order. Error: {}".format(e.message)},422
+
+from ops.catalog.catalog import Listprice,Catentry,Itemspc,Catentdesc,AddItemToContract,Catgpenrel
+from ops.trading.trading import Tradeposcn
+from ops.offers.offers import Offerprice,Offer,Offerdesc
+class m_create_catentry(Resource):
+    def __init__(self):
+        self.parser=reqparse.RequestParser()
+        self.parser.add_argument("member_id",help="required field",required=True)
+        self.parser.add_argument("language_id",help="required field",required=True)
+        self.parser.add_argument("salesprice",help="required field",required=True)
+        self.parser.add_argument("itemspc_id")
+        self.parser.add_argument("catenttype_id")
+        self.parser.add_argument("partnumber")
+        self.parser.add_argument("mfpartnumber")
+        self.parser.add_argument("mfname")
+        self.parser.add_argument("currency")
+        self.parser.add_argument("listprice")
+        self.parser.add_argument("catalog_id")
+        self.parser.add_argument("catgroup_id")
+        self.parser.add_argument("lastupdate")
+        self.parser.add_argument("endofservicedate")
+        self.parser.add_argument("name")
+        self.parser.add_argument("shortdescription")
+        self.parser.add_argument("fullimage")
+        self.parser.add_argument("available")
+        self.parser.add_argument("published")
+        self.parser.add_argument("availabilitydate")
+        super(m_create_catentry,self).__init__()
+    
+    @jwt_required
+    def post(self):
+        data=self.parser.parse_args()
+        member_id=data["member_id"]
+        language_id=data["language_id"]
+        itemspc_id=data["itemspc_id"]
+        catenttype_id=data["catenttype_id"]
+        partnumber=data["partnumber"]
+        mfpartnumber=data["mfpartnumber"]
+        mfname=data["mfname"]
+        currency=data["currency"]
+        listprice=data["listprice"]
+        catalog_id=data["catalog_id"]
+        catgroup_id=data["catgroup_id"]
+        lastupdate=data["lastupdate"]
+        endofservicedate=data["endofservicedate"]
+        name=data["name"]
+        shortdescription=data["shortdescription"]
+        fullimage=data["fullimage"]
+        available=data["available"]
+        published=data["published"]
+        availabilitydate=data["availabilitydate"]
+        salesprice=data["salesprice"]
+        try:
+            c=Catentry(member_id,catenttype_id,partnumber,name,itemspc_id=itemspc_id,mfpartnumber=mfpartnumber,mfname=mfname,lastupdate=lastupdate,availabilitydate=availabilitydate,endofservicedate=endofservicedate)
+            nameexists=c.name_exists(name,member_id)
+            if nameexists:return {"status":"OK","msg":"A product with that name already exists."},200
+            elif nameexists==False:
+                oldpart=c.initialpart()
+                c.partnumber=oldpart
+                catentry_id=c.save()
+                newpart=c.updatepart(catentry_id,oldpart)
+                itemspc_id=Itemspc(member_id,newpart,baseitem_id=catentry_id,lastupdate=timestamp_now()).save()
+                c.update_itemspc(itemspc_id,catentry_id)
+                Catentdesc(catentry_id,language_id,published,name=name,shortdescription=shortdescription,fullimage=fullimage,availabilitydate=availabilitydate).save()
+                if catgroup_id != None and catalog_id != None:Catgpenrel(catgroup_id,catalog_id,catentry_id).save()
+                Listprice(catentry_id,currency,listprice).save()
+
+                a=AddItemToContract(catentry_id,member_id,listprice)
+                contract_id=a.getcontract()
+                if contract_id!=None:
+                    tradeposcn_id=a.gettradeposcn(contract_id)
+                    offer_id=Offer(tradeposcn_id,catentry_id,published=1,lastupdate=datetimestamp_now()).save()
+                    Offerdesc(offer_id,language_id,"Offer Price").save()
+                    Offerprice(offer_id,currency,salesprice).save()
+
+                return {"status":"OK","msg":"Successfully saved product item information","entries":Catentry.readcatentry(member_id,language_id),
+                "catentryitems":Catentry.read(member_id,language_id)},200
+        except EntryException as e:
+            return {"status":"ERR","msg":"Error saving item information. Error {0}".format(e.message)},422
+
+class m_update_catentry(Resource):
+    def __init__(self):
+        self.parser=reqparse.RequestParser()
+        self.parser.add_argument("member_id",help="required field",required=True)
+        self.parser.add_argument("catentry_id",help="required field",required=True)
+        self.parser.add_argument("language_id",help="required field",required=True)
+        self.parser.add_argument("salesprice",help="required field",required=True)
+        self.parser.add_argument("minoq")
+        self.parser.add_argument("itemspc_id")
+        self.parser.add_argument("catenttype_id")
+        self.parser.add_argument("partnumber")
+        self.parser.add_argument("mfpartnumber")
+        self.parser.add_argument("mfname")
+        self.parser.add_argument("currency")
+        self.parser.add_argument("listprice")
+        self.parser.add_argument("catalog_id")
+        self.parser.add_argument("catgroup_id")
+        self.parser.add_argument("lastupdate")
+        self.parser.add_argument("endofservicedate")
+        self.parser.add_argument("name")
+        self.parser.add_argument("shortdescription")
+        self.parser.add_argument("fullimage")
+        self.parser.add_argument("available")
+        self.parser.add_argument("published")
+        self.parser.add_argument("availabilitydate")
+        super(m_update_catentry,self).__init__()
+    
+    @jwt_required
+    def post(self):
+        data=self.parser.parse_args()
+        member_id=data["member_id"]
+        catentry_id=data["catentry_id"]
+        language_id=data["language_id"]
+        itemspc_id=data["itemspc_id"]
+        catenttype_id=data["catenttype_id"]
+        partnumber=data["partnumber"]
+        mfpartnumber=data["mfpartnumber"]
+        mfname=data["mfname"]
+        currency=data["currency"]
+        listprice=data["listprice"]
+        catalog_id=data["catalog_id"]
+        catgroup_id=data["catgroup_id"]
+        lastupdate=data["lastupdate"]
+        endofservicedate=reversedate(data["endofservicedate"])
+        name=data["name"]
+        shortdescription=data["shortdescription"]
+        fullimage=data["fullimage"]
+        available=data["available"]
+        published=data["published"]
+        availabilitydate=data["availabilitydate"]
+        minoq=data["minoq"]
+        salesprice=data["salesprice"]
+        try:
+            c=Catentry(member_id,catenttype_id,partnumber,name,itemspc_id=itemspc_id,mfpartnumber=mfpartnumber,
+            mfname=mfname,lastupdate=datetimestamp_now(),availabilitydate=availabilitydate,
+            endofservicedate=endofservicedate);c.update(catentry_id)
+            d=Catentdesc(catentry_id,language_id,published,name,shortdescription,None,None,
+            None,fullimage,None,available,availabilitydate);d.update()
+            Listprice.update(catentry_id,currency,listprice)
+            if catgroup_id != None and catalog_id != None:
+                Catgpenrel(catgroup_id,catalog_id,catentry_id,lastupdate=datetimestamp_now()).update()
+
+            a=AddItemToContract(catentry_id,member_id,listprice)
+            contract_id=a.getcontract()
+            if contract_id!=None:
+                tradeposcn_id=a.gettradeposcn(contract_id)
+                offer_id=Offer(tradeposcn_id,catentry_id,minimumquantity=minoq,published=1,lastupdate=datetimestamp_now()).save()
+                Offerdesc(offer_id,language_id,"Offer Price").save()
+                Offerprice(offer_id,currency,salesprice).save()
+
+            return {"status":"OK","msg":"Successfully updated item information"},200
+        except EntryException as e:
+            return {"status":"ERR","msg":"Error {}".format(e.message)},422

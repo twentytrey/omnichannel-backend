@@ -6,3 +6,6 @@ def createcon(dbname,user,host,port):
         print('Unable to connect to the database')
     cursor=con.cursor()
     return con,cursor
+
+con,cursor=createcon("retail","pronov","localhost","5432")
+con.autocommit=True

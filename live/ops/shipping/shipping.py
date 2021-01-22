@@ -1,7 +1,10 @@
-from .db_con import createcon
+# from .db_con import createcon
 # from db_con import createcon
 import psycopg2,json,math,os
-con,cursor=createcon("retail","pronov","localhost","5432")
+# con,cursor=createcon("retail","jmso","localhost","5432")
+from ops.connector.connector import evcon
+con,cursor=evcon()
+
 import  importlib
 from ops import textualize_datetime,humanize_date,CurrencyHelper
 
@@ -268,3 +271,31 @@ class ShippingPolicy:
         elif len(res)>0:return[dict(policy_id=r[0],name=r[1],type=r[2],storeent_id=r[3],store=r[4],
         properties=r[5],starttime=textualize_datetime(r[6]),endtime=textualize_datetime(r[7]),
         description=r[8],created=humanize_date(r[9]),updated=humanize_date(r[10])) for r in res]
+
+class ReadCharge:
+    def __init__(self,storeent_id,calusage_id):
+        self.storeent_id=storeent_id
+        self.calusage_id=calusage_id
+    
+    @staticmethod
+    def readcode(sid,jid):
+        cursor.execute("""select calcode.calcode_id,calcodedesc.description from 
+        calcode inner join calcodedesc on calcode.calcode_id=calcodedesc.calcode_id 
+        inner join calrule on calcode.calcode_id=calrule.calcode_id inner join shpjcrule 
+        on calrule.calrule_id=shpjcrule.calrule_id where shpjcrule.jurstgroup_id=%s and 
+        calcode.storeent_id=%s""",(jid,sid,));res=cursor.fetchall()
+        if len(res)<=0:return [dict(value=None,text=None)]
+        elif len(res) >0:return [dict(value=r[0],text=r[1])for r in res]
+    
+    def read(self):
+        cursor.execute("""select calcode.calcode_id,calcodedesc.description,shpjcrule.ffmcenter_id,
+        ffmcenter.name,shpjcrule.jurstgroup_id,jurstgroup.description from calcode inner join calcodedesc 
+        on calcode.calcode_id=calcodedesc.calcode_id inner join calrule on calcode.calcode_id=calrule.
+        calcode_id inner join shpjcrule on calrule.calrule_id=shpjcrule.calrule_id inner join ffmcenter 
+        on shpjcrule.ffmcenter_id=ffmcenter.ffmcenter_id inner join jurstgroup on shpjcrule.jurstgroup_id=
+        jurstgroup.jurstgroup_id where calcode.storeent_id=%s and calcode.calusage_id=%s""",
+        (self.storeent_id,self.calusage_id,));res=cursor.fetchall()
+        if len(res) <= 0:return [dict(calcode_id=None,charge=None,ffmcenter_id=None,warehouse=None,jurstgroup_id=None,
+        jurisdiction=None)]
+        elif len(res) > 0:return [dict(calcode_id=r[0],charge=r[1],ffmcenter_id=r[2],warehouse=r[3],jurstgroup_id=r[4],
+        jurisdiction=r[5]) for r in res]

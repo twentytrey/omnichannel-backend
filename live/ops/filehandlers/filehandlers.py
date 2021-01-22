@@ -1,12 +1,16 @@
 import pandas as pd
 import numpy as np
 import os
-from .db_con import createcon
+# from .db_con import createcon
 # from db_con import createcon
 import psycopg2
-con,cursor=createcon('retail','pronov','localhost','5432')
+# con,cursor=createcon('retail','jmso','localhost','5432')
+from ops.connector.connector import evcon
+con,cursor=evcon()
+
 from ops.catalog.catalog import Catalog,Catalogdsc,Catgroup,Catgrpdesc,Cattogrp,Catentry,Itemspc,Catentdesc,Catgpenrel,Listprice,EntryException
 from ops.helpers.functions import timestamp_forever,timestamp_now,datetimestamp_now
+import time
 
 
 class InstallCatalogs:
@@ -62,6 +66,9 @@ class InstallCatgroups:
             [Cattogrp(self.getcatalogid(catgroups[i][1]),categoryids[i],datetimestamp_now(),).save() 
             for i in range(len(categoryids)) ]
 
+from ops.catalog.catalog import AddItemToContract
+from ops.trading.trading import Tradeposcn,Tdpscncntr
+from ops.offers.offers import Offer,Offerdesc,Offerprice
 class InstallCatentries:
     def __init__(self,fname,member_id,catenttype_id='Item',currency='NGN',published=1):
         self.fname=fname
@@ -74,14 +81,14 @@ class InstallCatentries:
         cursor.execute("""select language_id from languageds where description='English (Nigeria)'""")
         return cursor.fetchone()[0]
     
-    def getcatalogid(self,name):
-        cursor.execute("select catalog_id from catalog where identifier=%s",(name,))
+    def getcatalogid(self,name,member_id):
+        cursor.execute("select catalog_id from catalog where identifier=%s and member_id=%s",(name,member_id,))
         res=cursor.fetchone()
         if res==None:return None
         elif res!=None:return res[0]
     
-    def getcatgroupid(self,name):
-        cursor.execute("select catgroup_id from catgroup where identifier=%s",(name,))
+    def getcatgroupid(self,name,member_id):
+        cursor.execute("select catgroup_id from catgroup where identifier=%s and member_id=%s",(name,member_id,))
         res=cursor.fetchone()
         if res==None:return None
         elif res!=None:return res[0]
@@ -103,15 +110,37 @@ class InstallCatentries:
             for entry in catentries:
                 try:
                     c=Catentry(entry[5],entry[6],None,entry[0],itemspc_id=None,lastupdate=datetimestamp_now())
-                    nameexists=c.name_exists(entry[0])
-                    if nameexists:print( {"msg":"A product with that name already exists."} )
+                    nameexists=c.name_exists(entry[0],entry[5])
+                    if nameexists:print( {"msg":"A product with that name already exists."} );continue
                     elif nameexists==False:
-                        oldpart=c.initialpart();c.partnumber=oldpart;catentry_id=c.save();newpart=c.updatepart(catentry_id)
+                        oldpart=c.initialpart()
+                        c.partnumber=oldpart
+                        catentry_id=c.save()
+                        newpart=c.updatepart(catentry_id,oldpart)
+
+                        print(oldpart,newpart)
+                        if oldpart==newpart:
+                            print("item seen before")
+                            print("member_id {}, catentry_id {}".format(entry[5],catentry_id))
+                            break
+
                         itemspc_id=Itemspc(entry[5],newpart,baseitem_id=catentry_id,lastupdate=datetimestamp_now()).save()
                         c.update_itemspc(itemspc_id,catentry_id)
                         Catentdesc(catentry_id,entry[4],entry[8],name=entry[0],shortdescription=entry[0]).save()
-                        catgroup_id=Catgpenrel(self.getcatgroupid(entry[3]),self.getcatalogid(entry[2]),catentry_id).save()
+                        
+                        catgroup_id=Catgpenrel(self.getcatgroupid(entry[3],entry[5]),self.getcatalogid(entry[2],entry[5]),catentry_id).save()
+                        print(catgroup_id)
                         Listprice(catentry_id,entry[7],entry[1]).save()
+                        a=AddItemToContract(catentry_id,entry[5],entry[1])
+                        contract_id=a.getcontract()
+                        # product,price,catalog,category,language_id,member_id,catenttype_id,currency,published
+                        tradeposcn_id=Tradeposcn(entry[5],'Offer Price',description='Offer Price',ttype='S').save()
+                        Tdpscncntr(tradeposcn_id,contract_id).save()
+                        offer_id=Offer(tradeposcn_id,catentry_id,published=1,lastupdate=datetimestamp_now()).save()
+                        Offerdesc(offer_id,entry[4],"Offer Price").save()
+                        Offerprice(offer_id,entry[7],entry[1]).save()
+
+                        time.sleep(3)
                 except EntryException as e:
                     print( {"msg":"Error {}".format(e.message)} )
                     print(entry)

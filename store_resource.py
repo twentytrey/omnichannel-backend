@@ -121,21 +121,27 @@ class create_host_warehouse(Resource):
         lastname=data["lastname"]
         persontitle=data["persontitle"]
         photourl=data['photourl']
-        try:
-            storeent_id=Storeent(member_id,stype,identifier,setccurr=setccurr).save()
-            storegrp_id=Storegrp(member_id,ownername).save()
-            language_id=Storelang(language_id,storeent_id,setccurr=setccurr).save()
-            setccurr=Curlist(storeent_id,setccurr).save()
-            store_id=Store(storeent_id,storegrp_id,language_id=language_id,inventoryopflag=1,storetype='B2C').save()
-            InstallCalmethods('calmethods.csv',store_id).save()
-            InstallStencal('stencalusg.csv',store_id).save()
-            staddress_id_loc=Staddress(nickname,member_id,field1=photourl,address1=address1,city=city,state=state,country=country,email1=email1,phone1=phone1,zipcode=zipcode,firstname=firstname,middlename=middlename,lastname=lastname,persontitle=persontitle).save()
-            Storeentds(language_id,storeent_id,identifier,staddress_id_loc=staddress_id_loc).save()
-            ffmcenter_id=Ffmcenter(member_id,name=identifier,inventoryopflags=1).save()
-            Ffmcentds(ffmcenter_id,language_id,staddress_id=staddress_id_loc,displayname=identifier).save()
-            return {"msg":"Successfully saved host warehouse","your_stores":Storeent.yourstore(member_id)},200
-        except EntryException as e:
-            return {"msg":"Error saving host warehouse. Error {0}".format(e.message)},422
+
+        if int(member_id)==1:
+            rootstore=Storeent.root_store_exists(member_id)
+            if rootstore!=None:return {"status":"ERR","msg":"Root Warehouse already exists.",
+            "your_stores":Storeent.yourstore(member_id)},200
+            elif rootstore==None:
+                try:
+                    storeent_id=Storeent(member_id,stype,identifier,setccurr=setccurr).save()
+                    storegrp_id=Storegrp(member_id,ownername).save()
+                    language_id=Storelang(language_id,storeent_id,setccurr=setccurr).save()
+                    setccurr=Curlist(storeent_id,setccurr).save()
+                    store_id=Store(storeent_id,storegrp_id,language_id=language_id,inventoryopflag=1,storetype='B2C').save()
+                    InstallCalmethods('calmethods.csv',store_id).save()
+                    InstallStencal('stencalusg.csv',store_id).save()
+                    staddress_id_loc=Staddress(nickname,member_id,field1=photourl,address1=address1,city=city,state=state,country=country,email1=email1,phone1=phone1,zipcode=zipcode,firstname=firstname,middlename=middlename,lastname=lastname,persontitle=persontitle).save()
+                    Storeentds(language_id,storeent_id,identifier,staddress_id_loc=staddress_id_loc).save()
+                    ffmcenter_id=Ffmcenter(member_id,name=identifier,inventoryopflags=1).save()
+                    Ffmcentds(ffmcenter_id,language_id,staddress_id=staddress_id_loc,displayname=identifier).save()
+                    return {"msg":"Successfully saved host warehouse","your_stores":Storeent.yourstore(member_id)},200
+                except EntryException as e:
+                    return {"msg":"Error saving host warehouse. Error {0}".format(e.message)},422
 
 class list_stores(Resource):
     def __init__(self):

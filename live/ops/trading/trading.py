@@ -1,7 +1,10 @@
-from .db_con import createcon
+# from .db_con import createcon
 # from db_con import createcon
 import psycopg2,json,math,os
-con,cursor=createcon("retail","pronov","localhost","5432")
+# con,cursor=createcon("retail","jmso","localhost","5432")
+from ops.connector.connector import evcon
+con,cursor=evcon()
+
 import  importlib
 import pandas as pd
 import numpy as np
@@ -111,6 +114,13 @@ class Trading:
         self.reftrading_id=reftrading_id
     
     @staticmethod
+    def list_contracts():
+        cursor.execute("select contract_id,name from contract")
+        res=cursor.fetchall()
+        if len(res)<=0:return [dict(text=None,value=None)]
+        elif len(res)>0:return [dict(text=x[1],value=x[0]) for x in res]
+    
+    @staticmethod
     def particpantname(mid):
         cursor.execute("select orgentityname from orgentity where orgentity_id=%s",(mid,))
         return cursor.fetchone()[0]
@@ -126,7 +136,11 @@ class Trading:
         inner join orgentity on account.member_id=orgentity.orgentity_id inner join participnt on trading.
         trading_id=participnt.trading_id where trddesc.language_id=%s and trading.trdtype_id=0""",(language_id,))
         res=cursor.fetchall()
-        if len(res) <= 0:return [dict()]
+        if len(res) <= 0:return [dict(trading_id=None,trdtype_id=None,tradingstate=None,tradingstarttime=None,
+        starting=None,ending=None,tradingendtime=None,creditallowed=None,longdescription=None,tradingtimecreated=None,
+        created=None,updated=None,tradingtimeupdated=None,type=None,state=None,credit=None,stage=None,contract_title=None,
+        contractmember_id=None,store_id=None,contractstate=None,currency=None,contractcomments=None,contracttimecreated=None,
+        contracttimeupdated=None,contracttimeapproved=None,contracttimeactivated=None,created_by=None,participant=None)]
         elif len(res) > 0:return [dict(trading_id=r[0],trdtype_id=r[1],tradingstate=r[2],
         tradingstarttime=textualize_datetime(r[3]),starting=humanize_date(r[3]),ending=humanize_date(r[4]),
         tradingendtime=textualize_datetime(r[4]),creditallowed=r[5],longdescription=r[6],
@@ -143,16 +157,16 @@ class Trading:
         created_by=r[19],participant=Trading.particpantname(r[20]))for r in res]
 
     @staticmethod
-    def readdefaultcontracts(language_id):
+    def readdefaultcontracts(language_id,member_id):
         cursor.execute("""select trading.trading_id,trading.trdtype_id,trading.state,trading.starttime,
         trading.endtime,trading.creditallowed,trddesc.longdescription,trddesc.timecreated,trddesc.timeupdated,
         contract.name,contract.member_id,contract.origin,contract.state,contract.usage,contract.comments,
         contract.timecreated,contract.timeapproved,contract.timeactivated,contract.timedeployed,
-        orgentity.orgentityname,participnt.member_id from trading inner join 
-        trddesc on trading.trading_id=trddesc.trading_id inner join contract on trading.trading_id=contract.contract_id
+        orgentity.orgentityname,participnt.member_id from trading inner join trddesc on trading.trading_id=
+        trddesc.trading_id inner join contract on trading.trading_id=contract.contract_id
         inner join orgentity on contract.member_id=orgentity.orgentity_id inner join participnt on trading.
-        trading_id=participnt.trading_id where trddesc.language_id=%s and trading.trdtype_id=1 and contract.usage<=0""",
-        (language_id,));res=cursor.fetchall()
+        trading_id=participnt.trading_id where trddesc.language_id=%s and trading.trdtype_id=1 and 
+        contract.usage<=0 and participnt.member_id=%s""",(language_id,member_id,));res=cursor.fetchall()
         if len(res) <= 0: return [dict(trading_id=None,trdtype_id=None,tradingstate=None,tradingstarttime=None,starting=None,
         ending=None,tradingendtime=None,creditallowed=None,longdescription=None,tradingtimecreated=None,created=None,
         updated=None,tradingtimeupdated=None,type=None,state=None,origin=None,credit=None,stage=None,contract_title=None,
@@ -374,6 +388,13 @@ class Contract:
         self.timeactivated=timeactivated
         self.timedeployed=timedeployed
         self.family_id=family_id
+    
+    @staticmethod
+    def mydefaultcontract(member_id):
+        cursor.execute("select contract.contract_id from contract where member_id=%s and contract.usage=0;",
+        (member_id,));res=cursor.fetchone()
+        if res==None:return None
+        elif res!=None:return res[0]
 
     @staticmethod
     def code():
@@ -1212,4 +1233,116 @@ class InstallPartroles:
             descriptions=df.values[:,[0,1,2]]
             [Partrole(*x).save() for x in roles]
             [Partroleds(*x).save() for x in descriptions]
+
+class Creditline:
+    def __init__(self,n,rate,nextduedate=None,setccurr=None,account_id=0,timecreated=None,timeupdated=None,creditlimit=None,decimalfield1=None,decimalfield2=None):
+        self.setccurr=setccurr
+        self.account_id=account_id
+        self.timecreated=timecreated
+        self.timeupdated=timeupdated
+        self.creditlimit=creditlimit
+        self.decimalfield1=decimalfield1
+        self.decimalfield2=decimalfield2
+        self.n=n
+        self.nextduedate=nextduedate
+        self.rate=rate
+    
+    @staticmethod
+    def getplancode(creditline_id):
+        cursor.execute("select plan_code from creditline where creditline_id=%s",(creditline_id,))
+        res=cursor.fetchone()
+        if res==None:return res
+        elif res!=None:return res[0]
+    
+    @staticmethod
+    def has_credit(user_id):
+        cursor.execute("""select account.account_id,account.name,participnt.member_id,
+        orgentity.orgentityname,creditline.creditline_id from account inner join participnt 
+        on account.account_id=participnt.trading_id inner join orgentity on participnt.
+        member_id=orgentity.orgentity_id inner join creditline on account.account_id=
+        creditline.account_id where participnt.member_id=%s""",(user_id,))
+        res=cursor.fetchone()
+        if res==None:return dict(account_id=None,account_name=None,member_id=None,
+        orgentity_name=None,creditline_id=None)
+        elif res!=None:return dict(account_id=res[0],account_name=res[1],member_id=res[2],
+        orgentity_name=res[3],creditline_id=res[4])
+
+    @staticmethod
+    def getcardauth(user_id):
+        try:
+            cursor.execute("select authorization_code from cardauth where member_id=%s",(user_id,))
+            res=cursor.fetchone()
+            if res==None:return None
+            elif res!=None:return res[0]
+        except(Exception,psycopg2.DatabaseError) as e:
+            if con is not None:con.rollback()
+            raise EntryException(str(e).strip().split('\n')[0])
+    
+    @staticmethod
+    def getcustomercode(creditline_id):
+        try:
+            cursor.execute("select customer_code from creditline where creditline_id=%s",(creditline_id,))
+            res=cursor.fetchone()
+            if res==None:return None
+            elif res!=None:return res[0]
+        except(Exception,psycopg2.DatabaseError) as e:
+            if con is not None:con.rollback()
+            raise EntryException(str(e).strip().split('\n')[0])    
+
+    @staticmethod
+    def customerdata(account_id):
+        cursor.execute("""select participnt.member_id,orgentity.orgentityname,
+        userreg.logonid from participnt inner join orgentity on participnt.member_id=
+        orgentity.orgentity_id inner join userreg on participnt.member_id=userreg.users_id 
+        where participnt.trading_id=%s;""",(account_id,));res=cursor.fetchone()
+        if res==None:return None
+        elif res!=None:return dict(member_id=res[0],first_name=res[1],phone=res[2],email="info@pronov.co")
+    
+    @staticmethod
+    def read(account_id,language_id):
+        cc=CurrencyHelper(language_id);fn=cc.formatamount;sym=cc.getcurrsymbol()
+        cursor.execute("""select creditline.creditline_id,creditline.setccurr,setcurrdsc.description,creditline.account_id,
+        account.name,creditline.timecreated,creditline.timeupdated,creditline.creditlimit::float,creditline.decimalfield1::float,
+        creditline.decimalfield2::float,creditline.nextduedate,creditline.n,creditline.rate::float,creditline.plan_integration,
+        creditline.plan_code,creditline.plan_id from creditline inner join setcurr on creditline.setccurr=setcurr.setccurr
+        inner join setcurrdsc on creditline.setccurr=setcurrdsc.setccurr inner join account on creditline.account_id=account.account_id 
+        where creditline.account_id=%s""",(account_id,));res=cursor.fetchall()
+        if len(res)<=0:return [dict(creditline_id=None,setccurr=None,currency=None,account_id=None,account=None,
+        timecreated=None,created=None,timeupdated=None,updated=None,creditlimit=None,limit=None,loan_amount=None,
+        repayment_amount=None,nextduedate=None,next_due=None,n=None,duration=None,rate=None,plan_integratio=None,
+        plan_code=None,plan_id=None,symbol=None)]
+        elif len(res)>0:return [dict(creditline_id=x[0],setccurr=x[1],currency=x[2],account_id=x[3],account=x[4],
+        timecreated=textualize_datetime(x[5]),created=humanize_date(x[5]),timeupdated=textualize_datetime(x[6]),
+        updated=humanize_date(x[6]),creditlimit=fn(x[7]),limit=fn(x[7]),loan_amount=fn(x[8]),repayment_amount=fn(x[9]),
+        nextduedate=textualize_datetime(x[10]),next_due=humanize_date(x[10]),n=x[11],duration=x[11],
+        rate=x[12],plan_integration=x[13],plan_code=x[14],plan_id=x[15],symbol=sym) for x in res]
+
+    def save(self):
+        try:
+            cursor.execute("""insert into creditline(setccurr,account_id,timecreated,timeupdated,creditlimit,
+            decimalfield1,decimalfield2,nextduedate,n,rate)values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)returning
+            creditline_id""",(self.setccurr,self.account_id,self.timecreated,self.timeupdated,self.creditlimit,
+            self.decimalfield1,self.decimalfield2,self.nextduedate,self.n,self.rate,));con.commit()
+            return cursor.fetchone()[0]
+        except(Exception,psycopg2.DatabaseError) as e:
+            if con is not None:con.rollback()
+            raise EntryException(str(e).strip().split('\n')[0])
+
+    @staticmethod
+    def updatecustomer(creditline_id,account_id,customer_code):
+        try:
+            cursor.execute("""update creditline set customer_code=%s where creditline_id=%s and
+            account_id=%s""",(customer_code,creditline_id,account_id,));con.commit()
+        except(Exception,psycopg2.DatabaseError) as e:
+            if con is not None:con.rollback()
+            raise EntryException(str(e).strip().split('\n')[0])
+
+    @staticmethod
+    def updateplan(creditline_id,plan_integration,plan_code,plan_id):
+        try:
+            cursor.execute("""update creditline set plan_integration=%s,plan_code=%s,plan_id=%s 
+            where creditline_id=%s""",(plan_integration,plan_code,plan_id,creditline_id,));con.commit()
+        except(Exception,psycopg2.DatabaseError) as e:
+            if con is not None:con.rollback()
+            raise EntryException(str(e).strip().split('\n')[0])
 

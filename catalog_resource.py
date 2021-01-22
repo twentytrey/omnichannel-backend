@@ -161,7 +161,9 @@ class update_catentry(Resource):
             None,fullimage,None,available,availabilitydate);d.update()
             Listprice.update(catentry_id,currency,listprice)
             Catgpenrel(catgroup_id,catalog_id,catentry_id,lastupdate=datetimestamp_now()).update()
-            return {"status":"OK","msg":"Successfully updated item information"},200
+            return {"status":"OK","msg":"Successfully updated item information",
+            "entries":Catentry.readcatentry(member_id,language_id),
+            "catentryitems":Catentry.read(member_id,language_id)},200
         except EntryException as e:
             return {"status":"ERR","msg":"Error {}".format(e.message)},422
 
@@ -225,7 +227,6 @@ class create_catentry(Resource):
                 catgroup_id=Catgpenrel(catgroup_id,catalog_id,catentry_id).save()
                 Listprice(catentry_id,currency,listprice).save()
 
-
                 a=AddItemToContract(catentry_id,member_id,listprice)
                 contract_id=a.getcontract()
                 if contract_id!=None:
@@ -236,7 +237,6 @@ class create_catentry(Resource):
                     offer_id=Offer(tradeposcn_id,catentry_id,published=1,lastupdate=datetimestamp_now()).save()
                     Offerdesc(offer_id,language_id,"Offer Price").save()
                     Offerprice(offer_id,currency,newprice).save()
-
 
                 return {"msg":"Successfully saved product item information","entries":Catentry.readcatentry(member_id,language_id),
                 "catentryitems":Catentry.read(member_id,language_id)},200
@@ -602,7 +602,7 @@ class upload_products(Resource):
     def __init__(self):
         self.parser=reqparse.RequestParser()
         self.parser.add_argument("photo",help="compulsory field",required=True)
-        self.parser.add_argument("orgname",help="compulsory field",required=True)
+        self.parser.add_argument("orgname")
         self.parser.add_argument("orgentity_id",help="compulsory field",required=True)
         super(upload_products,self).__init__()
     
@@ -614,3 +614,5 @@ class upload_products(Resource):
         orgentity_id=data["orgentity_id"]
         filename=photo.split('/')[-1]
         InstallCatentries(filename,orgentity_id).save()
+        #TODO receive completion notice and return 200. 422 otherwise
+

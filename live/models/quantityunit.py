@@ -1,6 +1,4 @@
-from db_con import createcon
-con,cursor=createcon("retail","pronov","localhost","5432")
-con.autocommit=True
+from db_con import con,cursor
 from functions import build_constraint
 
 class QuantityUnit:

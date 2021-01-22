@@ -591,7 +591,8 @@ class Catentry:
         catentdesc.avaialble,catentdesc.published,catentdesc.availabilitydate,listprice.currency,listprice.listprice::float,
         catgpenrel.catgroup_id,catgroup.identifier,catgpenrel.catalog_id from catentry inner join catentdesc on catentry.catentry_id=catentdesc.catentry_id 
         inner join listprice on catentry.catentry_id=listprice.catentry_id inner join catgpenrel on catentry.catentry_id=catgpenrel.
-        catentry_id inner join catgroup on catgroup.catgroup_id=catgpenrel.catgroup_id where catentry.member_id=%s and catentdesc.language_id=%s""",(mid,lid,))
+        catentry_id inner join catgroup on catgroup.catgroup_id=catgpenrel.catgroup_id where catentry.member_id=%s and catentdesc.language_id=%s
+        order by catentry.lastupdate desc""",(mid,lid,))
         res=cursor.fetchall()
         if len(res) <= 0:return [dict()]
         elif len(res) > 0:return [dict(catentry_id=r[0],member_id=r[1],itemspc_id=r[2],catenttype_id=r[3],type=r[3],
@@ -867,7 +868,7 @@ class Attrtype:
         res=cursor.fetchall()
         if len(res) <= 0:return [dict(text=None,value=None)]
         elif len(res) > 0:return [dict(value=x[0],text=x[1])for x in res]
-    
+
     def save(self):
         try:
             cursor.execute("""insert into attrtype(attrtype_id,description,oid)values(%s,%s,%s)on conflict(attrtype_id)

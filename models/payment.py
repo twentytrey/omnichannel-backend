@@ -1,6 +1,4 @@
-from db_con import createcon
-con,cursor=createcon("retail","jmso","localhost","5432")
-con.autocommit=True
+from db_con import con,cursor
 from functions import build_constraint
 
 class PaymentRules:
@@ -422,6 +420,28 @@ class PaymentMerchantSupport:
         cursor.execute("create index i0001108 on ppcbatch(state)")
         # CONSTRAINT
     
+    def cardauth(self):
+        """stores card authorization object for recurring payment such as is necessary
+        for for cooperatives equity contribution and servicing ammortized loans."""
+        cursor.execute("""create table cardauth(
+            member_id bigint not null,
+            authorization_code varchar(254) not null,
+            cardtype varchar(64),
+            last4 varchar(4) not null,
+            expmonth varchar(2)not null,
+            expyear varchar(4)not null,
+            bin varchar(64),
+            bank varchar(254),
+            channel varchar(64),
+            signature varchar(254),
+            reusable integer default 0,
+            country_code char(4),
+            primary key(member_id)
+        )""")
+        cursor.execute("create index alj23o on cardauth(authorization_code,last4,expmonth,expyear)")
+        cursor.execute("create index aib9b5 on cardauth(signature,reusable)")
+        # CONSTRAINTS
+    
 if __name__=="__main__":
     p=PaymentRules()
     p.edprma()
@@ -447,4 +467,5 @@ if __name__=="__main__":
     p.merchconfinfo()
     p.ppcbatch()
     p.storemerch()
+    p.cardauth()
 

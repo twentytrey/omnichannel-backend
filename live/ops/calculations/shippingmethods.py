@@ -1,7 +1,10 @@
-from .db_con import createcon
+# from .db_con import createcon
 # from db_con import createcon
 import psycopg2,json,math,os
-con,cursor=createcon("retail","pronov","localhost","5432")
+# con,cursor=createcon("retail","jmso","localhost","5432")
+from ops.connector.connector import evcon
+con,cursor=evcon()
+
 
 class ShippingMethods:
     def __init__(self,store_id,customer_id,gross):
@@ -12,11 +15,20 @@ class ShippingMethods:
         self.staddress_id,self.ffmcenter_id=self.getffmcenter()
         self.address_id,self.customercity,self.customerstate,self.customercountry=self.getcustomeraddress()
         self.jurstids,self.jurstgroupids=self.getjurst()
-        self.calrule_id,self.calcode_id,self.calrule_id,self.calrulecalculate,self.calrulequalify=self.code_rules()
-        self.calscale_id,self.calscalelookup_id=self.scale_rule()
-        self.calrange_id,self.calmethod_id,self.rangestart=self.range()
-        self.lookupvalue=self.lookup()
-    
+
+        # self.calrule_id,self.calcode_id,self.calrule_id,self.calrulecalculate,self.calrulequalify=self.code_rules()
+        self.rules=self.code_rules();self.calrules=[x[0] for x in self.rules]
+        self.scales=[self.scale_rule(x,self.store_id,self.calusage_id)for x in self.calrules]
+        self.ranges=[self.range(x) for x in self.scales]
+        self.calrange=[x for x in self.ranges if x!=None][-1]
+        self.lookupvalue=self.lookup(self.calrange)
+        # self.scales=[self.scale_rule(self.rules[i][0],self.store_id,self.calusage_id) for i in range(len(self.rules))]
+
+        # self.calscale_id,self.calscalelookup_id=self.scale_rule()
+        # self.calrange_id,self.calmethod_id,self.rangestart=self.range()
+        # self.lookupvalue=self.lookup()
+        # print(self.lookupvalue)
+
     def getffmcenter(self):
         cursor.execute("""select staddress_id from staddress inner join 
         storeentds on staddress.staddress_id=storeentds.staddress_id_loc 
@@ -49,27 +61,26 @@ class ShippingMethods:
         where shpjcrule.jurstgroup_id in %s and shpjcrule.ffmcenter_id=%s""",(tuple(self.jurstgroupids),
         self.ffmcenter_id,));res=cursor.fetchall()
         if len(res) <=0:return None
-        elif len(res) > 0:return res[0]
+        elif len(res) > 0:return res
 
-    def scale_rule(self):
-        cursor.execute("""select crulescale.calscale_id,calscale.calmethod_id from crulescale 
-        inner join calscale on crulescale.calscale_id=calscale.calscale_id where crulescale.calrule_id=%s 
-        and calscale.storeent_id=%s and calscale.calusage_id=%s""",(self.calrule_id,self.store_id,self.calusage_id,))
-        res=cursor.fetchall()
+    def scale_rule(self,calrule_id,store_id,calusage_id):
+        cursor.execute("""select crulescale.calscale_id from crulescale inner join 
+        calscale on crulescale.calscale_id=calscale.calscale_id where crulescale.calrule_id=%s 
+        and calscale.storeent_id=%s and calscale.calusage_id=%s""",
+        (calrule_id,store_id,calusage_id,));res=cursor.fetchone()
         if len(res) <=0:return None
         elif len(res) > 0:return res[0]
-    
-    def range(self):
-        cursor.execute("select calrange_id,calmethod_id,rangestart::float from calrange where calscale_id=%s",
-        (self.calscale_id,));res=cursor.fetchall();crange=None
+
+    def range(self,calscale_id):
+        cursor.execute("select calrange_id,rangestart::float from calrange where calscale_id=%s",
+        (calscale_id,));res=cursor.fetchone();crange=list()
         if len(res)<=0:return None
         elif len(res) > 0:
-            crange=[x for x in res if self.gross>=x[2]]
-            if len(crange)>0:return crange[-1]
-            return (None,None,None)
+            if self.gross>=res[1]:return res[0]
+            return None
     
-    def lookup(self):
-        cursor.execute("select value::float from calrlookup where calrange_id=%s",(self.calrange_id,))
-        res=cursor.fetchone()
+    def lookup(self,calrange_id):
+        cursor.execute("select value::float from calrlookup where calrange_id=%s",
+        (calrange_id,));res=cursor.fetchone()
         if res==None:return None
         elif res!=None:return res[0]

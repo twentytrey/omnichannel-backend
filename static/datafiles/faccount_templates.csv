@@ -9,3 +9,5 @@ accountnumber,name,currency,description,class
 6000,Transportation,NGN,Transportation Expenses Account,Expense
 4060,Interest Income,NGN,Interest Income Account,Revenue
 3020,Common Stock,NGN,Common Stock,Equity
+1060,Investments,NGN,Investments,Asset
+1069,Escrow,NGN,Escrow,Asset

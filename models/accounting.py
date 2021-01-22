@@ -1,6 +1,4 @@
-from db_con import createcon
-con,cursor=createcon("retail","jmso","localhost","5432")
-con.autocommit=True
+from db_con import con,cursor
 from functions import build_constraint
 
 class Accounting:
@@ -101,6 +99,19 @@ class Accounting:
         cursor.execute(build_constraint("transaction","adfkv","holder_id","member","member_id"))
         cursor.execute(build_constraint("transaction","ariob","typecode","transactiontype","code"))
 
+    def confirmtransaction(self):
+        cursor.execute("""create table if not exists confirmtransaction(
+            holder_id bigint not null,
+            payee_id bigint not null,
+            referencenumber varchar(254) not null,
+            transaction_id bigint not null,
+            status char(1) not null default 'N',
+            primary key(holder_id,payee_id,referencenumber)
+        )""")
+        cursor.execute(build_constraint("confirmtransaction","f_aek1","holder_id","member","member_id"))
+        cursor.execute(build_constraint("confirmtransaction","f_ajd8","payee_id","member","member_id"))
+        cursor.execute(build_constraint("confirmtransaction","f_aei29","transaction_id","transaction","transaction_id"))
+
     def facctransaction(self):
         cursor.execute("""create table if not exists facctransaction(
             transaction_id bigint not null,
@@ -123,3 +134,4 @@ if __name__=="__main__":
     a.transactiontype()
     a.transaction()
     a.facctransaction()
+    a.confirmtransaction()

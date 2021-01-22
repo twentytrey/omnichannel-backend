@@ -1,12 +1,15 @@
-from .db_con import createcon
-# from db_con import createcon
+# from .db_con import createcon
+# # from db_con import createcon
 import psycopg2,json,math,os
-con,cursor=createcon("retail","pronov","localhost","5432")
+# con,cursor=createcon("retail","jmso","localhost","5432")
 import  importlib
 import pandas as pd
 import numpy as np
 from ops.helpers.functions import textualize_datetime,humanize_date,CurrencyHelper
 from ops.inventory.inventory import orderstatuses,inventorystatuses,ffmstatuses
+
+from ops.connector.connector import evcon
+con,cursor=evcon()
 
 class EntryException(Exception):
     def __init__(self,message):
@@ -73,7 +76,7 @@ class Orders:
         return cursor.fetchone()[0]
     
     @staticmethod
-    def read(language_id):
+    def read(member_id,language_id):
         cursor.execute("""select orders.orgentity_id,orders.totalproduct::float,
         orders.totaltax::float,orders.totalshipping::float,orders.totaltaxshipping::float,orders.description,
         orders.storeent_id,storeent.identifier,orders.currency::text,orders.locked,orders.timeplaced,
@@ -81,7 +84,8 @@ class Orders:
         orders.field2,orders.providerordernum,orders.shipascomplete,orders.field3,orders.totaladjustment::float,
         orders.ordchnltyp_id,orders.comments,orders.notificationid,orders.type::text,orders.editor_id,orders.buschn_id,
         orders.sourceid,orders.expiredate,orders.blocked,orders.opsystem_id,orders.transferstatus,orders.buyerpo_id,orders.orders_id 
-        from orders inner join storeent on orders.storeent_id=storeent.storeent_id""");res=cursor.fetchall()
+        from orders inner join storeent on orders.storeent_id=storeent.storeent_id where orders.editor_id=%s order by orders.timeplaced desc""",
+        (member_id,));res=cursor.fetchall()
         ch=CurrencyHelper(language_id)
         if len(res)<=0:return [dict(orgentity_id=None,totalproduct=None,gross=None,totaltax=None,totalshipping=None,
         totaltaxshipping=None,description=None,storeent_id=None,store=None,currency=None,locked=None,
@@ -159,16 +163,16 @@ class Orderitems:
         
         from orderitems inner join storeent on orderitems.storeent_id=storeent.
         storeent_id left join contract on orderitems.trading_id=contract.contract_id inner join catentdesc on orderitems.catentry_id=
-        catentdesc.catentry_id inner join ffmcenter on orderitems.ffmcenter_id=ffmcenter.ffmcenter_id left join address on orderitems.
+        catentdesc.catentry_id left join ffmcenter on orderitems.ffmcenter_id=ffmcenter.ffmcenter_id left join address on orderitems.
         address_id=address.address_id where orderitems.orders_id=%s""",(orders_id,));res=cursor.fetchall()
         if len(res) <= 0:return None
         elif len(res)>0:return [dict(storeent_id=r[0],store=r[1],orders_id=r[2],termcond_id=r[3],trading_id=r[4],
         contract=r[5],itemspc_id=r[6],catentry_id=r[7],product=r[8],SKU=r[9],shipmode_id=r[10],ffmcenter_id=r[11],
         warehouse=r[12],member_id=r[13],customer=Orders.membername(r[13]),address_id=r[14],allocaddress_id=r[15],
-        address=r[16],price=CurrencyHelper(language_id).formatamount(r[17]),timereleased=textualize_datetime(r[18]),
+        address=r[16],price=CurrencyHelper(language_id).formatamount(r[17]),mprice=r[17],timereleased=textualize_datetime(r[18]),
         released=humanize_date(r[18]),timeshipped=textualize_datetime(r[19]),currency=r[20],comments=r[21],
         symbol=CurrencyHelper(language_id).getcurrsymbol(),
-        totalproduct=CurrencyHelper(language_id).formatamount(r[22]),quantity=r[23],taxamount=r[24],totaladjustment=CurrencyHelper(language_id).formatamount(r[25]),shiptaxamount=r[26],estavailtime=r[27],
+        totalproduct=CurrencyHelper(language_id).formatamount(r[22]),mtotalproduct=r[22],quantity=r[23],taxamount=r[24],mtotaladjustment=r[25],totaladjustment=CurrencyHelper(language_id).formatamount(r[25]),shiptaxamount=r[26],estavailtime=r[27],
         field1=r[28],description=r[29],field2=r[30],allocationgroup=r[31],shipcharge=r[32],baseprice=r[33],basecurrency=r[34],
         tracknumber=r[35],trackdate=r[36],prepareflags=r[37],correlationgroup=r[38],promisedavailtime=r[39],shippingoffset=r[40],
         neededquantity=r[41],allocquantity=r[42],allocffmc_id=r[43],ordreleasenum=r[44],configurationid=r[45],supplierdata=r[46],
@@ -449,26 +453,6 @@ class Ordpaymthd:
             self.paymentdata,self.stringfield1,self.stringfield2,self.stringfield3,self.stringfield4,
             self.status,self.bigintfield1,self.bigintfield2,self.bigintfield3,self.decimalfield1,self.decimalfield2,
             self.decimalfield3,));con.commit();return cursor.fetchone()[0]
-        except(Exception,psycopg2.DatabaseError) as e:
-            if con is not None:con.rollback()
-            raise EntryException(str(e).strip().split('\n')[0])
-
-class Creditline:
-    def __init__(self,setccurr=None,account_id=0,timecreated=None,timeupdated=None,creditlimit=None,decimalfield1=None,decimalfield2=None):
-        self.setccurr=setccurr
-        self.account_id=account_id
-        self.timecreated=timecreated
-        self.timeupdated=timeupdated
-        self.creditlimit=creditlimit
-        self.decimalfield1=decimalfield1
-        self.decimalfield2=decimalfield2
-    
-    def save(self):
-        try:
-            cursor.execute("""insert into creditline(setccurr,account_id,timecreated,timeupdated,creditlimit,
-            decimalfield1,decimalfield2)values(%s,%s,%s,%s,%s,%s,%s)returning creditline_id""",(self.setccurr,
-            self.account_id,self.timecreated,self.timeupdated,self.creditlimit,self.decimalfield1,self.decimalfield2,))
-            con.commit();return cursor.fetchone()[0]
         except(Exception,psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
@@ -1374,3 +1358,67 @@ class InstallBuschn:
             [Buschn(*v).save() for v in values ]
 
 
+########################################################################################################
+class BuildMobileRa:
+    def __init__(self,member_id,store_id,vendor_id,externalid=None):
+        self.member_id=member_id
+        self.store_id=store_id
+        self.vendor_id=vendor_id
+        self.externalid=externalid
+
+    def build(self):
+        payload={"member_id":self.member_id,"store_id":self.store_id,"vendor_id":self.vendor_id,
+        "openindicator":"N","externalid":self.externalid};return payload
+
+from ops.filehandlers.simpos import getffm,getitemspc,getname
+from ops.helpers.functions import datetimestamp_now
+class BuildMobileRadetail:
+    # catentry_id,owner_id,language_id,store_id,timeplaced,buschn_id,quantity,customer_id,price,costprice
+    def __init__(self,catentry_id,owner_id,customer_id,price,timeplaced,quantity,ra_id,po_store):
+        self.owner_id=owner_id
+        self.customer_id=customer_id
+        self.catentry_id=catentry_id
+        self.price=price
+        self.expecteddate=timeplaced
+        self.quantity=quantity
+        self.ra_id=ra_id
+        self.po_store=po_store
+        self.transposed_catentry_id=self.transposeitem(catentry_id,customer_id)
+
+    def transposeitem(self,catentry_id,newowner_id):
+        cursor.execute("""with itemname as (select catentdesc.name from catentdesc where
+        catentdesc.catentry_id=%s)select itemname.name,catentdesc.catentry_id from itemname inner 
+        join catentdesc on itemname.name=catentdesc.name inner join catentry on catentdesc.catentry_id=
+        catentry.catentry_id where catentry.member_id=%s and catentdesc.name=itemname.name""",
+        (catentry_id,newowner_id,));res=cursor.fetchone()
+        if res==None:return res
+        elif res!=None:return res[1]
+
+    def build(self):
+        detail={"catentry_id":self.transposed_catentry_id,"cost":self.price,"expecteddate":self.expecteddate,
+            "ffmcenter_id":getffm(self.customer_id),"itemspc_id":getitemspc(self.transposed_catentry_id),"lastupdate":datetimestamp_now(),
+            "qtyordered":self.quantity,"qtyreceived":self.quantity,"qtyremaining":self.quantity-self.quantity,"ra_id":self.ra_id,
+            "radetailcomment":"Ordered {} quantities of {} and received {}.".format(self.quantity,getname(self.catentry_id),self.quantity),
+            "setccurr":"NGN","store_id":self.po_store,"vendor_id":self.owner_id,"qtyallocated":0,"member_id":self.customer_id}
+        return detail
+
+class PayOrder:
+    def __init__(self,orders_id,customer_id,language_id):
+        self.orders_id=orders_id
+        self.customer_id=customer_id
+        self.cc=CurrencyHelper(language_id)
+        self.fn=self.cc.formatamount
+        self.symbol=self.cc.getcurrsymbol()
+    
+    def readorder(self):
+        cursor.execute("""select orgentity.orgentityname,orders.totalproduct::float,
+        orders.totaladjustment::float,orders.totalshipping::float,orders.timeplaced from orders inner join
+        orgentity on orders.member_id=orgentity.orgentity_id where orders.member_id=%s and 
+        orders.orders_id=%s""",(self.customer_id,self.orders_id,))
+        res=cursor.fetchone()
+        if res==None:return dict(customer=None,totalproduct=None,totalproduct_format=None,
+        totaladjustment=None,totaladjustment_format=None,totalshipping=None,totalshipping_format=None,
+        timeplaced=None,symbol=None)
+        if res!=None:return dict(customer=res[0],totalproduct=res[1],totalproduct_format=self.fn(res[1]),
+        totaladjustment=res[2],totaladjustment_format=self.fn(res[2]),totalshipping=res[3],
+        totalshipping_format=self.fn(res[3]),timeplaced=humanize_date(res[4]),symbol=self.symbol)

@@ -133,6 +133,7 @@ class list_vendors(Resource):
     def get(self):
         return {"vendors":Vendor.read(),"lastraid":Ra.lastraid()},200
 
+from ops.members.members import get_random_string
 class create_ra(Resource):
     def __init__(self):
         self.parser=reqparse.RequestParser()
@@ -159,7 +160,7 @@ class create_ra(Resource):
         lastupdate=data["lastupdate"]
         createtime=data["createtime"]
         externalid=data["externalid"]
-        if externalid==None:externalid=timesplits()
+        if externalid==None:externalid=get_random_string(6)
         try:
             ra_id=Ra(vendor_id,store_id,timestamp_now(),datetimestamp_now(),openindicator,dateclosed=dateclosed,
             lastupdate=datetimestamp_now(),externalid=externalid).save()

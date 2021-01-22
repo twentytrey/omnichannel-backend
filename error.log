@@ -1,0 +1,201 @@
+[Sat Aug 01 06:25:02.558632 2020] [mpm_event:notice] [pid 30892:tid 139815419685824] AH00489: Apache/2.4.29 (Ubuntu) OpenSSL/1.1.1 mod_wsgi/4.5.17 Python/3.6 configured -- resuming normal operations
+[Sat Aug 01 06:25:02.558658 2020] [core:notice] [pid 30892:tid 139815419685824] AH00094: Command line: '/usr/sbin/apache2'
+[Sat Aug 01 08:46:02.027019 2020] [mpm_event:notice] [pid 30892:tid 139815419685824] AH00491: caught SIGTERM, shutting down
+[Sat Aug 01 08:46:02.141675 2020] [mpm_event:notice] [pid 14996:tid 140249450515392] AH00489: Apache/2.4.29 (Ubuntu) OpenSSL/1.1.1 mod_wsgi/4.5.17 Python/3.6 configured -- resuming normal operations
+[Sat Aug 01 08:46:02.141761 2020] [core:notice] [pid 14996:tid 140249450515392] AH00094: Command line: '/usr/sbin/apache2'
+[Sat Aug 01 08:46:04.322425 2020] [mpm_event:notice] [pid 14996:tid 140249450515392] AH00491: caught SIGTERM, shutting down
+[Sat Aug 01 08:46:04.428294 2020] [mpm_event:notice] [pid 15084:tid 140133299379136] AH00489: Apache/2.4.29 (Ubuntu) OpenSSL/1.1.1 mod_wsgi/4.5.17 Python/3.6 configured -- resuming normal operations
+[Sat Aug 01 08:46:04.428373 2020] [core:notice] [pid 15084:tid 140133299379136] AH00094: Command line: '/usr/sbin/apache2'
+[Sat Aug 01 14:53:11.281047 2020] [mpm_event:notice] [pid 15084:tid 140133299379136] AH00491: caught SIGTERM, shutting down
+[Sat Aug 01 14:53:11.376909 2020] [mpm_event:notice] [pid 22058:tid 140311563692992] AH00489: Apache/2.4.29 (Ubuntu) OpenSSL/1.1.1 mod_wsgi/4.5.17 Python/3.6 configured -- resuming normal operations
+[Sat Aug 01 14:53:11.376995 2020] [core:notice] [pid 22058:tid 140311563692992] AH00094: Command line: '/usr/sbin/apache2'
+[Sat Aug 01 14:53:13.584793 2020] [mpm_event:notice] [pid 22058:tid 140311563692992] AH00491: caught SIGTERM, shutting down
+[Sat Aug 01 14:53:13.690794 2020] [mpm_event:notice] [pid 22144:tid 140631389858752] AH00489: Apache/2.4.29 (Ubuntu) OpenSSL/1.1.1 mod_wsgi/4.5.17 Python/3.6 configured -- resuming normal operations
+[Sat Aug 01 14:53:13.690906 2020] [core:notice] [pid 22144:tid 140631389858752] AH00094: Command line: '/usr/sbin/apache2'
+[Sat Aug 01 15:13:11.068896 2020] [mpm_event:notice] [pid 22144:tid 140631389858752] AH00491: caught SIGTERM, shutting down
+[Sat Aug 01 15:13:11.188704 2020] [mpm_event:notice] [pid 22741:tid 139641076558784] AH00489: Apache/2.4.29 (Ubuntu) OpenSSL/1.1.1 mod_wsgi/4.5.17 Python/3.6 configured -- resuming normal operations
+[Sat Aug 01 15:13:11.188784 2020] [core:notice] [pid 22741:tid 139641076558784] AH00094: Command line: '/usr/sbin/apache2'
+[Sat Aug 01 19:34:44.690125 2020] [mpm_event:notice] [pid 22741:tid 139641076558784] AH00491: caught SIGTERM, shutting down
+[Sat Aug 01 19:34:45.411294 2020] [mpm_event:notice] [pid 28721:tid 140487455497152] AH00489: Apache/2.4.29 (Ubuntu) OpenSSL/1.1.1 mod_wsgi/4.5.17 Python/3.6 configured -- resuming normal operations
+[Sat Aug 01 19:34:45.411377 2020] [core:notice] [pid 28721:tid 140487455497152] AH00094: Command line: '/usr/sbin/apache2'
+[Sat Aug 01 20:27:13.581736 2020] [mpm_event:notice] [pid 28721:tid 140487455497152] AH00491: caught SIGTERM, shutting down
+[Sat Aug 01 20:27:13.686284 2020] [mpm_event:notice] [pid 29868:tid 140122820279232] AH00489: Apache/2.4.29 (Ubuntu) OpenSSL/1.1.1 mod_wsgi/4.5.17 Python/3.6 configured -- resuming normal operations
+[Sat Aug 01 20:27:13.686372 2020] [core:notice] [pid 29868:tid 140122820279232] AH00094: Command line: '/usr/sbin/apache2'
+[Sat Aug 01 20:27:15.268523 2020] [mpm_event:notice] [pid 29868:tid 140122820279232] AH00491: caught SIGTERM, shutting down
+[Sat Aug 01 20:27:15.368546 2020] [mpm_event:notice] [pid 29955:tid 140653571021760] AH00489: Apache/2.4.29 (Ubuntu) OpenSSL/1.1.1 mod_wsgi/4.5.17 Python/3.6 configured -- resuming normal operations
+[Sat Aug 01 20:27:15.368621 2020] [core:notice] [pid 29955:tid 140653571021760] AH00094: Command line: '/usr/sbin/apache2'
+[Sun Aug 02 00:30:45.285783 2020] [mpm_event:notice] [pid 29955:tid 140653571021760] AH00491: caught SIGTERM, shutting down
+[Sun Aug 02 00:30:45.387228 2020] [mpm_event:notice] [pid 3498:tid 140021806574528] AH00489: Apache/2.4.29 (Ubuntu) OpenSSL/1.1.1 mod_wsgi/4.5.17 Python/3.6 configured -- resuming normal operations
+[Sun Aug 02 00:30:45.387310 2020] [core:notice] [pid 3498:tid 140021806574528] AH00094: Command line: '/usr/sbin/apache2'
+[Sun Aug 02 00:32:07.381867 2020] [wsgi:error] [pid 3502:tid 140021562599168] [client 102.89.2.219:9370] ERROR:__init__:Exception on /api/v1.0/user_identity [GET], referer: http://localhost:8080/
+[Sun Aug 02 00:32:07.381969 2020] [wsgi:error] [pid 3502:tid 140021562599168] [client 102.89.2.219:9370] Traceback (most recent call last):, referer: http://localhost:8080/
+[Sun Aug 02 00:32:07.381978 2020] [wsgi:error] [pid 3502:tid 140021562599168] [client 102.89.2.219:9370]   File "/usr/local/lib/python3.6/dist-packages/flask/app.py", line 1949, in full_dispatch_request, referer: http://localhost:8080/
+[Sun Aug 02 00:32:07.381986 2020] [wsgi:error] [pid 3502:tid 140021562599168] [client 102.89.2.219:9370]     rv = self.dispatch_request(), referer: http://localhost:8080/
+[Sun Aug 02 00:32:07.381995 2020] [wsgi:error] [pid 3502:tid 140021562599168] [client 102.89.2.219:9370]   File "/usr/local/lib/python3.6/dist-packages/flask/app.py", line 1935, in dispatch_request, referer: http://localhost:8080/
+[Sun Aug 02 00:32:07.382002 2020] [wsgi:error] [pid 3502:tid 140021562599168] [client 102.89.2.219:9370]     return self.view_functions[rule.endpoint](**req.view_args), referer: http://localhost:8080/
+[Sun Aug 02 00:32:07.382009 2020] [wsgi:error] [pid 3502:tid 140021562599168] [client 102.89.2.219:9370]   File "/usr/local/lib/python3.6/dist-packages/flask_restful/__init__.py", line 458, in wrapper, referer: http://localhost:8080/
+[Sun Aug 02 00:32:07.382017 2020] [wsgi:error] [pid 3502:tid 140021562599168] [client 102.89.2.219:9370]     resp = resource(*args, **kwargs), referer: http://localhost:8080/
+[Sun Aug 02 00:32:07.382022 2020] [wsgi:error] [pid 3502:tid 140021562599168] [client 102.89.2.219:9370]   File "/usr/local/lib/python3.6/dist-packages/flask/views.py", line 89, in view, referer: http://localhost:8080/
+[Sun Aug 02 00:32:07.382028 2020] [wsgi:error] [pid 3502:tid 140021562599168] [client 102.89.2.219:9370]     return self.dispatch_request(*args, **kwargs), referer: http://localhost:8080/
+[Sun Aug 02 00:32:07.382035 2020] [wsgi:error] [pid 3502:tid 140021562599168] [client 102.89.2.219:9370]   File "/usr/local/lib/python3.6/dist-packages/flask_restful/__init__.py", line 573, in dispatch_request, referer: http://localhost:8080/
+[Sun Aug 02 00:32:07.382042 2020] [wsgi:error] [pid 3502:tid 140021562599168] [client 102.89.2.219:9370]     resp = meth(*args, **kwargs), referer: http://localhost:8080/
+[Sun Aug 02 00:32:07.382048 2020] [wsgi:error] [pid 3502:tid 140021562599168] [client 102.89.2.219:9370]   File "/usr/local/lib/python3.6/dist-packages/flask_jwt_extended/view_decorators.py", line 107, in wrapper, referer: http://localhost:8080/
+[Sun Aug 02 00:32:07.382055 2020] [wsgi:error] [pid 3502:tid 140021562599168] [client 102.89.2.219:9370]     verify_jwt_in_request(), referer: http://localhost:8080/
+[Sun Aug 02 00:32:07.382062 2020] [wsgi:error] [pid 3502:tid 140021562599168] [client 102.89.2.219:9370]   File "/usr/local/lib/python3.6/dist-packages/flask_jwt_extended/view_decorators.py", line 32, in verify_jwt_in_request, referer: http://localhost:8080/
+[Sun Aug 02 00:32:07.382071 2020] [wsgi:error] [pid 3502:tid 140021562599168] [client 102.89.2.219:9370]     jwt_data, jwt_header = _decode_jwt_from_request(request_type='access'), referer: http://localhost:8080/
+[Sun Aug 02 00:32:07.382076 2020] [wsgi:error] [pid 3502:tid 140021562599168] [client 102.89.2.219:9370]   File "/usr/local/lib/python3.6/dist-packages/flask_jwt_extended/view_decorators.py", line 294, in _decode_jwt_from_request, referer: http://localhost:8080/
+[Sun Aug 02 00:32:07.382084 2020] [wsgi:error] [pid 3502:tid 140021562599168] [client 102.89.2.219:9370]     decoded_token = decode_token(encoded_token, csrf_token), referer: http://localhost:8080/
+[Sun Aug 02 00:32:07.382089 2020] [wsgi:error] [pid 3502:tid 140021562599168] [client 102.89.2.219:9370]   File "/usr/local/lib/python3.6/dist-packages/flask_jwt_extended/utils.py", line 118, in decode_token, referer: http://localhost:8080/
+[Sun Aug 02 00:32:07.382109 2020] [wsgi:error] [pid 3502:tid 140021562599168] [client 102.89.2.219:9370]     allow_expired=allow_expired, referer: http://localhost:8080/
+[Sun Aug 02 00:32:07.382115 2020] [wsgi:error] [pid 3502:tid 140021562599168] [client 102.89.2.219:9370]   File "/usr/local/lib/python3.6/dist-packages/flask_jwt_extended/tokens.py", line 140, in decode_jwt, referer: http://localhost:8080/
+[Sun Aug 02 00:32:07.382120 2020] [wsgi:error] [pid 3502:tid 140021562599168] [client 102.89.2.219:9370]     leeway=leeway, options=options, issuer=issuer), referer: http://localhost:8080/
+[Sun Aug 02 00:32:07.382127 2020] [wsgi:error] [pid 3502:tid 140021562599168] [client 102.89.2.219:9370]   File "/usr/local/lib/python3.6/dist-packages/jwt/api_jwt.py", line 92, in decode, referer: http://localhost:8080/
+[Sun Aug 02 00:32:07.382133 2020] [wsgi:error] [pid 3502:tid 140021562599168] [client 102.89.2.219:9370]     jwt, key=key, algorithms=algorithms, options=options, **kwargs, referer: http://localhost:8080/
+[Sun Aug 02 00:32:07.382139 2020] [wsgi:error] [pid 3502:tid 140021562599168] [client 102.89.2.219:9370]   File "/usr/local/lib/python3.6/dist-packages/jwt/api_jws.py", line 156, in decode, referer: http://localhost:8080/
+[Sun Aug 02 00:32:07.382145 2020] [wsgi:error] [pid 3502:tid 140021562599168] [client 102.89.2.219:9370]     key, algorithms), referer: http://localhost:8080/
+[Sun Aug 02 00:32:07.382150 2020] [wsgi:error] [pid 3502:tid 140021562599168] [client 102.89.2.219:9370]   File "/usr/local/lib/python3.6/dist-packages/jwt/api_jws.py", line 223, in _verify_signature, referer: http://localhost:8080/
+[Sun Aug 02 00:32:07.382156 2020] [wsgi:error] [pid 3502:tid 140021562599168] [client 102.89.2.219:9370]     raise InvalidSignatureError('Signature verification failed'), referer: http://localhost:8080/
+[Sun Aug 02 00:32:07.382164 2020] [wsgi:error] [pid 3502:tid 140021562599168] [client 102.89.2.219:9370] jwt.exceptions.InvalidSignatureError: Signature verification failed, referer: http://localhost:8080/
+[Sun Aug 02 00:32:07.382180 2020] [wsgi:error] [pid 3502:tid 140021562599168] [client 102.89.2.219:9370] , referer: http://localhost:8080/
+[Sun Aug 02 00:32:07.568860 2020] [wsgi:error] [pid 3502:tid 140021554206464] [client 102.89.3.48:55884] ERROR:__init__:Exception on /api/v1.0/user_identity [GET], referer: http://localhost:8080/
+[Sun Aug 02 00:32:07.568918 2020] [wsgi:error] [pid 3502:tid 140021554206464] [client 102.89.3.48:55884] Traceback (most recent call last):, referer: http://localhost:8080/
+[Sun Aug 02 00:32:07.568922 2020] [wsgi:error] [pid 3502:tid 140021554206464] [client 102.89.3.48:55884]   File "/usr/local/lib/python3.6/dist-packages/flask/app.py", line 1949, in full_dispatch_request, referer: http://localhost:8080/
+[Sun Aug 02 00:32:07.568924 2020] [wsgi:error] [pid 3502:tid 140021554206464] [client 102.89.3.48:55884]     rv = self.dispatch_request(), referer: http://localhost:8080/
+[Sun Aug 02 00:32:07.568927 2020] [wsgi:error] [pid 3502:tid 140021554206464] [client 102.89.3.48:55884]   File "/usr/local/lib/python3.6/dist-packages/flask/app.py", line 1935, in dispatch_request, referer: http://localhost:8080/
+[Sun Aug 02 00:32:07.568930 2020] [wsgi:error] [pid 3502:tid 140021554206464] [client 102.89.3.48:55884]     return self.view_functions[rule.endpoint](**req.view_args), referer: http://localhost:8080/
+[Sun Aug 02 00:32:07.568932 2020] [wsgi:error] [pid 3502:tid 140021554206464] [client 102.89.3.48:55884]   File "/usr/local/lib/python3.6/dist-packages/flask_restful/__init__.py", line 458, in wrapper, referer: http://localhost:8080/
+[Sun Aug 02 00:32:07.568935 2020] [wsgi:error] [pid 3502:tid 140021554206464] [client 102.89.3.48:55884]     resp = resource(*args, **kwargs), referer: http://localhost:8080/
+[Sun Aug 02 00:32:07.568937 2020] [wsgi:error] [pid 3502:tid 140021554206464] [client 102.89.3.48:55884]   File "/usr/local/lib/python3.6/dist-packages/flask/views.py", line 89, in view, referer: http://localhost:8080/
+[Sun Aug 02 00:32:07.568959 2020] [wsgi:error] [pid 3502:tid 140021554206464] [client 102.89.3.48:55884]     return self.dispatch_request(*args, **kwargs), referer: http://localhost:8080/
+[Sun Aug 02 00:32:07.568962 2020] [wsgi:error] [pid 3502:tid 140021554206464] [client 102.89.3.48:55884]   File "/usr/local/lib/python3.6/dist-packages/flask_restful/__init__.py", line 573, in dispatch_request, referer: http://localhost:8080/
+[Sun Aug 02 00:32:07.568964 2020] [wsgi:error] [pid 3502:tid 140021554206464] [client 102.89.3.48:55884]     resp = meth(*args, **kwargs), referer: http://localhost:8080/
+[Sun Aug 02 00:32:07.568966 2020] [wsgi:error] [pid 3502:tid 140021554206464] [client 102.89.3.48:55884]   File "/usr/local/lib/python3.6/dist-packages/flask_jwt_extended/view_decorators.py", line 107, in wrapper, referer: http://localhost:8080/
+[Sun Aug 02 00:32:07.568969 2020] [wsgi:error] [pid 3502:tid 140021554206464] [client 102.89.3.48:55884]     verify_jwt_in_request(), referer: http://localhost:8080/
+[Sun Aug 02 00:32:07.568971 2020] [wsgi:error] [pid 3502:tid 140021554206464] [client 102.89.3.48:55884]   File "/usr/local/lib/python3.6/dist-packages/flask_jwt_extended/view_decorators.py", line 32, in verify_jwt_in_request, referer: http://localhost:8080/
+[Sun Aug 02 00:32:07.568974 2020] [wsgi:error] [pid 3502:tid 140021554206464] [client 102.89.3.48:55884]     jwt_data, jwt_header = _decode_jwt_from_request(request_type='access'), referer: http://localhost:8080/
+[Sun Aug 02 00:32:07.568976 2020] [wsgi:error] [pid 3502:tid 140021554206464] [client 102.89.3.48:55884]   File "/usr/local/lib/python3.6/dist-packages/flask_jwt_extended/view_decorators.py", line 294, in _decode_jwt_from_request, referer: http://localhost:8080/
+[Sun Aug 02 00:32:07.568979 2020] [wsgi:error] [pid 3502:tid 140021554206464] [client 102.89.3.48:55884]     decoded_token = decode_token(encoded_token, csrf_token), referer: http://localhost:8080/
+[Sun Aug 02 00:32:07.568981 2020] [wsgi:error] [pid 3502:tid 140021554206464] [client 102.89.3.48:55884]   File "/usr/local/lib/python3.6/dist-packages/flask_jwt_extended/utils.py", line 118, in decode_token, referer: http://localhost:8080/
+[Sun Aug 02 00:32:07.568983 2020] [wsgi:error] [pid 3502:tid 140021554206464] [client 102.89.3.48:55884]     allow_expired=allow_expired, referer: http://localhost:8080/
+[Sun Aug 02 00:32:07.568985 2020] [wsgi:error] [pid 3502:tid 140021554206464] [client 102.89.3.48:55884]   File "/usr/local/lib/python3.6/dist-packages/flask_jwt_extended/tokens.py", line 140, in decode_jwt, referer: http://localhost:8080/
+[Sun Aug 02 00:32:07.568988 2020] [wsgi:error] [pid 3502:tid 140021554206464] [client 102.89.3.48:55884]     leeway=leeway, options=options, issuer=issuer), referer: http://localhost:8080/
+[Sun Aug 02 00:32:07.568990 2020] [wsgi:error] [pid 3502:tid 140021554206464] [client 102.89.3.48:55884]   File "/usr/local/lib/python3.6/dist-packages/jwt/api_jwt.py", line 92, in decode, referer: http://localhost:8080/
+[Sun Aug 02 00:32:07.568992 2020] [wsgi:error] [pid 3502:tid 140021554206464] [client 102.89.3.48:55884]     jwt, key=key, algorithms=algorithms, options=options, **kwargs, referer: http://localhost:8080/
+[Sun Aug 02 00:32:07.568995 2020] [wsgi:error] [pid 3502:tid 140021554206464] [client 102.89.3.48:55884]   File "/usr/local/lib/python3.6/dist-packages/jwt/api_jws.py", line 156, in decode, referer: http://localhost:8080/
+[Sun Aug 02 00:32:07.568997 2020] [wsgi:error] [pid 3502:tid 140021554206464] [client 102.89.3.48:55884]     key, algorithms), referer: http://localhost:8080/
+[Sun Aug 02 00:32:07.568999 2020] [wsgi:error] [pid 3502:tid 140021554206464] [client 102.89.3.48:55884]   File "/usr/local/lib/python3.6/dist-packages/jwt/api_jws.py", line 223, in _verify_signature, referer: http://localhost:8080/
+[Sun Aug 02 00:32:07.569001 2020] [wsgi:error] [pid 3502:tid 140021554206464] [client 102.89.3.48:55884]     raise InvalidSignatureError('Signature verification failed'), referer: http://localhost:8080/
+[Sun Aug 02 00:32:07.569008 2020] [wsgi:error] [pid 3502:tid 140021554206464] [client 102.89.3.48:55884] jwt.exceptions.InvalidSignatureError: Signature verification failed, referer: http://localhost:8080/
+[Sun Aug 02 00:32:07.569014 2020] [wsgi:error] [pid 3502:tid 140021554206464] [client 102.89.3.48:55884] , referer: http://localhost:8080/
+[Sun Aug 02 00:38:57.052572 2020] [wsgi:error] [pid 3502:tid 140021453494016] [client 102.89.3.48:28222] /var/www/pronovserver/ops/analytics/analytics.py:287: SettingWithCopyWarning: , referer: http://localhost:8080/
+[Sun Aug 02 00:38:57.052618 2020] [wsgi:error] [pid 3502:tid 140021453494016] [client 102.89.3.48:28222] A value is trying to be set on a copy of a slice from a DataFrame., referer: http://localhost:8080/
+[Sun Aug 02 00:38:57.052622 2020] [wsgi:error] [pid 3502:tid 140021453494016] [client 102.89.3.48:28222] Try using .loc[row_indexer,col_indexer] = value instead, referer: http://localhost:8080/
+[Sun Aug 02 00:38:57.052625 2020] [wsgi:error] [pid 3502:tid 140021453494016] [client 102.89.3.48:28222] , referer: http://localhost:8080/
+[Sun Aug 02 00:38:57.052628 2020] [wsgi:error] [pid 3502:tid 140021453494016] [client 102.89.3.48:28222] See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy, referer: http://localhost:8080/
+[Sun Aug 02 00:38:57.052630 2020] [wsgi:error] [pid 3502:tid 140021453494016] [client 102.89.3.48:28222]   df["monetary"]-=df["monetary"].min();df["monetary"]/=df["monetary"].max(), referer: http://localhost:8080/
+[Sun Aug 02 00:38:57.054562 2020] [wsgi:error] [pid 3502:tid 140021453494016] [client 102.89.3.48:28222] /var/www/pronovserver/ops/analytics/analytics.py:288: SettingWithCopyWarning: , referer: http://localhost:8080/
+[Sun Aug 02 00:38:57.054591 2020] [wsgi:error] [pid 3502:tid 140021453494016] [client 102.89.3.48:28222] A value is trying to be set on a copy of a slice from a DataFrame., referer: http://localhost:8080/
+[Sun Aug 02 00:38:57.054594 2020] [wsgi:error] [pid 3502:tid 140021453494016] [client 102.89.3.48:28222] Try using .loc[row_indexer,col_indexer] = value instead, referer: http://localhost:8080/
+[Sun Aug 02 00:38:57.054597 2020] [wsgi:error] [pid 3502:tid 140021453494016] [client 102.89.3.48:28222] , referer: http://localhost:8080/
+[Sun Aug 02 00:38:57.054599 2020] [wsgi:error] [pid 3502:tid 140021453494016] [client 102.89.3.48:28222] See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy, referer: http://localhost:8080/
+[Sun Aug 02 00:38:57.054602 2020] [wsgi:error] [pid 3502:tid 140021453494016] [client 102.89.3.48:28222]   df["recency"]-=df["recency"].min();df["recency"]/=df["recency"].max(), referer: http://localhost:8080/
+[Sun Aug 02 00:38:57.056209 2020] [wsgi:error] [pid 3502:tid 140021453494016] [client 102.89.3.48:28222] /var/www/pronovserver/ops/analytics/analytics.py:289: SettingWithCopyWarning: , referer: http://localhost:8080/
+[Sun Aug 02 00:38:57.056231 2020] [wsgi:error] [pid 3502:tid 140021453494016] [client 102.89.3.48:28222] A value is trying to be set on a copy of a slice from a DataFrame., referer: http://localhost:8080/
+[Sun Aug 02 00:38:57.056234 2020] [wsgi:error] [pid 3502:tid 140021453494016] [client 102.89.3.48:28222] Try using .loc[row_indexer,col_indexer] = value instead, referer: http://localhost:8080/
+[Sun Aug 02 00:38:57.056236 2020] [wsgi:error] [pid 3502:tid 140021453494016] [client 102.89.3.48:28222] , referer: http://localhost:8080/
+[Sun Aug 02 00:38:57.056239 2020] [wsgi:error] [pid 3502:tid 140021453494016] [client 102.89.3.48:28222] See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy, referer: http://localhost:8080/
+[Sun Aug 02 00:38:57.056241 2020] [wsgi:error] [pid 3502:tid 140021453494016] [client 102.89.3.48:28222]   df["frequency"]-=df["frequency"].min();df["frequency"]/=df["frequency"].max(), referer: http://localhost:8080/
+[Sun Aug 02 00:41:51.061905 2020] [mpm_event:notice] [pid 3498:tid 140021806574528] AH00491: caught SIGTERM, shutting down
+[Sun Aug 02 00:41:51.165250 2020] [mpm_event:notice] [pid 3867:tid 140675942292416] AH00489: Apache/2.4.29 (Ubuntu) OpenSSL/1.1.1 mod_wsgi/4.5.17 Python/3.6 configured -- resuming normal operations
+[Sun Aug 02 00:41:51.165334 2020] [core:notice] [pid 3867:tid 140675942292416] AH00094: Command line: '/usr/sbin/apache2'
+[Sun Aug 02 00:57:44.164834 2020] [mpm_event:notice] [pid 3867:tid 140675942292416] AH00491: caught SIGTERM, shutting down
+[Sun Aug 02 00:57:44.262326 2020] [mpm_event:notice] [pid 4443:tid 140471512943552] AH00489: Apache/2.4.29 (Ubuntu) OpenSSL/1.1.1 mod_wsgi/4.5.17 Python/3.6 configured -- resuming normal operations
+[Sun Aug 02 00:57:44.262417 2020] [core:notice] [pid 4443:tid 140471512943552] AH00094: Command line: '/usr/sbin/apache2'
+[Sun Aug 02 03:04:09.147000 2020] [mpm_event:notice] [pid 4443:tid 140471512943552] AH00491: caught SIGTERM, shutting down
+[Sun Aug 02 03:04:09.261104 2020] [mpm_event:notice] [pid 7112:tid 139863206517696] AH00489: Apache/2.4.29 (Ubuntu) OpenSSL/1.1.1 mod_wsgi/4.5.17 Python/3.6 configured -- resuming normal operations
+[Sun Aug 02 03:04:09.261179 2020] [core:notice] [pid 7112:tid 139863206517696] AH00094: Command line: '/usr/sbin/apache2'
+[Sun Aug 02 03:04:23.665240 2020] [wsgi:error] [pid 7116:tid 139862967568128] [client 102.89.2.27:45345] ERROR:__init__:Exception on /api/v1.0/user_identity [GET], referer: http://localhost:8080/
+[Sun Aug 02 03:04:23.665296 2020] [wsgi:error] [pid 7116:tid 139862967568128] [client 102.89.2.27:45345] Traceback (most recent call last):, referer: http://localhost:8080/
+[Sun Aug 02 03:04:23.665300 2020] [wsgi:error] [pid 7116:tid 139862967568128] [client 102.89.2.27:45345]   File "/usr/local/lib/python3.6/dist-packages/flask/app.py", line 1949, in full_dispatch_request, referer: http://localhost:8080/
+[Sun Aug 02 03:04:23.665303 2020] [wsgi:error] [pid 7116:tid 139862967568128] [client 102.89.2.27:45345]     rv = self.dispatch_request(), referer: http://localhost:8080/
+[Sun Aug 02 03:04:23.665306 2020] [wsgi:error] [pid 7116:tid 139862967568128] [client 102.89.2.27:45345]   File "/usr/local/lib/python3.6/dist-packages/flask/app.py", line 1935, in dispatch_request, referer: http://localhost:8080/
+[Sun Aug 02 03:04:23.665309 2020] [wsgi:error] [pid 7116:tid 139862967568128] [client 102.89.2.27:45345]     return self.view_functions[rule.endpoint](**req.view_args), referer: http://localhost:8080/
+[Sun Aug 02 03:04:23.665312 2020] [wsgi:error] [pid 7116:tid 139862967568128] [client 102.89.2.27:45345]   File "/usr/local/lib/python3.6/dist-packages/flask_restful/__init__.py", line 458, in wrapper, referer: http://localhost:8080/
+[Sun Aug 02 03:04:23.665314 2020] [wsgi:error] [pid 7116:tid 139862967568128] [client 102.89.2.27:45345]     resp = resource(*args, **kwargs), referer: http://localhost:8080/
+[Sun Aug 02 03:04:23.665317 2020] [wsgi:error] [pid 7116:tid 139862967568128] [client 102.89.2.27:45345]   File "/usr/local/lib/python3.6/dist-packages/flask/views.py", line 89, in view, referer: http://localhost:8080/
+[Sun Aug 02 03:04:23.665320 2020] [wsgi:error] [pid 7116:tid 139862967568128] [client 102.89.2.27:45345]     return self.dispatch_request(*args, **kwargs), referer: http://localhost:8080/
+[Sun Aug 02 03:04:23.665322 2020] [wsgi:error] [pid 7116:tid 139862967568128] [client 102.89.2.27:45345]   File "/usr/local/lib/python3.6/dist-packages/flask_restful/__init__.py", line 573, in dispatch_request, referer: http://localhost:8080/
+[Sun Aug 02 03:04:23.665325 2020] [wsgi:error] [pid 7116:tid 139862967568128] [client 102.89.2.27:45345]     resp = meth(*args, **kwargs), referer: http://localhost:8080/
+[Sun Aug 02 03:04:23.665328 2020] [wsgi:error] [pid 7116:tid 139862967568128] [client 102.89.2.27:45345]   File "/usr/local/lib/python3.6/dist-packages/flask_jwt_extended/view_decorators.py", line 107, in wrapper, referer: http://localhost:8080/
+[Sun Aug 02 03:04:23.665330 2020] [wsgi:error] [pid 7116:tid 139862967568128] [client 102.89.2.27:45345]     verify_jwt_in_request(), referer: http://localhost:8080/
+[Sun Aug 02 03:04:23.665341 2020] [wsgi:error] [pid 7116:tid 139862967568128] [client 102.89.2.27:45345]   File "/usr/local/lib/python3.6/dist-packages/flask_jwt_extended/view_decorators.py", line 32, in verify_jwt_in_request, referer: http://localhost:8080/
+[Sun Aug 02 03:04:23.665343 2020] [wsgi:error] [pid 7116:tid 139862967568128] [client 102.89.2.27:45345]     jwt_data, jwt_header = _decode_jwt_from_request(request_type='access'), referer: http://localhost:8080/
+[Sun Aug 02 03:04:23.665346 2020] [wsgi:error] [pid 7116:tid 139862967568128] [client 102.89.2.27:45345]   File "/usr/local/lib/python3.6/dist-packages/flask_jwt_extended/view_decorators.py", line 294, in _decode_jwt_from_request, referer: http://localhost:8080/
+[Sun Aug 02 03:04:23.665348 2020] [wsgi:error] [pid 7116:tid 139862967568128] [client 102.89.2.27:45345]     decoded_token = decode_token(encoded_token, csrf_token), referer: http://localhost:8080/
+[Sun Aug 02 03:04:23.665351 2020] [wsgi:error] [pid 7116:tid 139862967568128] [client 102.89.2.27:45345]   File "/usr/local/lib/python3.6/dist-packages/flask_jwt_extended/utils.py", line 118, in decode_token, referer: http://localhost:8080/
+[Sun Aug 02 03:04:23.665353 2020] [wsgi:error] [pid 7116:tid 139862967568128] [client 102.89.2.27:45345]     allow_expired=allow_expired, referer: http://localhost:8080/
+[Sun Aug 02 03:04:23.665356 2020] [wsgi:error] [pid 7116:tid 139862967568128] [client 102.89.2.27:45345]   File "/usr/local/lib/python3.6/dist-packages/flask_jwt_extended/tokens.py", line 140, in decode_jwt, referer: http://localhost:8080/
+[Sun Aug 02 03:04:23.665358 2020] [wsgi:error] [pid 7116:tid 139862967568128] [client 102.89.2.27:45345]     leeway=leeway, options=options, issuer=issuer), referer: http://localhost:8080/
+[Sun Aug 02 03:04:23.665360 2020] [wsgi:error] [pid 7116:tid 139862967568128] [client 102.89.2.27:45345]   File "/usr/local/lib/python3.6/dist-packages/jwt/api_jwt.py", line 92, in decode, referer: http://localhost:8080/
+[Sun Aug 02 03:04:23.665363 2020] [wsgi:error] [pid 7116:tid 139862967568128] [client 102.89.2.27:45345]     jwt, key=key, algorithms=algorithms, options=options, **kwargs, referer: http://localhost:8080/
+[Sun Aug 02 03:04:23.665365 2020] [wsgi:error] [pid 7116:tid 139862967568128] [client 102.89.2.27:45345]   File "/usr/local/lib/python3.6/dist-packages/jwt/api_jws.py", line 156, in decode, referer: http://localhost:8080/
+[Sun Aug 02 03:04:23.665367 2020] [wsgi:error] [pid 7116:tid 139862967568128] [client 102.89.2.27:45345]     key, algorithms), referer: http://localhost:8080/
+[Sun Aug 02 03:04:23.665369 2020] [wsgi:error] [pid 7116:tid 139862967568128] [client 102.89.2.27:45345]   File "/usr/local/lib/python3.6/dist-packages/jwt/api_jws.py", line 223, in _verify_signature, referer: http://localhost:8080/
+[Sun Aug 02 03:04:23.665372 2020] [wsgi:error] [pid 7116:tid 139862967568128] [client 102.89.2.27:45345]     raise InvalidSignatureError('Signature verification failed'), referer: http://localhost:8080/
+[Sun Aug 02 03:04:23.665376 2020] [wsgi:error] [pid 7116:tid 139862967568128] [client 102.89.2.27:45345] jwt.exceptions.InvalidSignatureError: Signature verification failed, referer: http://localhost:8080/
+[Sun Aug 02 03:04:23.665382 2020] [wsgi:error] [pid 7116:tid 139862967568128] [client 102.89.2.27:45345] , referer: http://localhost:8080/
+[Sun Aug 02 03:04:23.846752 2020] [wsgi:error] [pid 7115:tid 139862900426496] [client 102.89.2.27:36377] ERROR:__init__:Exception on /api/v1.0/user_identity [GET], referer: http://localhost:8080/
+[Sun Aug 02 03:04:23.847291 2020] [wsgi:error] [pid 7115:tid 139862900426496] [client 102.89.2.27:36377] Traceback (most recent call last):, referer: http://localhost:8080/
+[Sun Aug 02 03:04:23.847297 2020] [wsgi:error] [pid 7115:tid 139862900426496] [client 102.89.2.27:36377]   File "/usr/local/lib/python3.6/dist-packages/flask/app.py", line 1949, in full_dispatch_request, referer: http://localhost:8080/
+[Sun Aug 02 03:04:23.847301 2020] [wsgi:error] [pid 7115:tid 139862900426496] [client 102.89.2.27:36377]     rv = self.dispatch_request(), referer: http://localhost:8080/
+[Sun Aug 02 03:04:23.847312 2020] [wsgi:error] [pid 7115:tid 139862900426496] [client 102.89.2.27:36377]   File "/usr/local/lib/python3.6/dist-packages/flask/app.py", line 1935, in dispatch_request, referer: http://localhost:8080/
+[Sun Aug 02 03:04:23.847315 2020] [wsgi:error] [pid 7115:tid 139862900426496] [client 102.89.2.27:36377]     return self.view_functions[rule.endpoint](**req.view_args), referer: http://localhost:8080/
+[Sun Aug 02 03:04:23.847318 2020] [wsgi:error] [pid 7115:tid 139862900426496] [client 102.89.2.27:36377]   File "/usr/local/lib/python3.6/dist-packages/flask_restful/__init__.py", line 458, in wrapper, referer: http://localhost:8080/
+[Sun Aug 02 03:04:23.847320 2020] [wsgi:error] [pid 7115:tid 139862900426496] [client 102.89.2.27:36377]     resp = resource(*args, **kwargs), referer: http://localhost:8080/
+[Sun Aug 02 03:04:23.847322 2020] [wsgi:error] [pid 7115:tid 139862900426496] [client 102.89.2.27:36377]   File "/usr/local/lib/python3.6/dist-packages/flask/views.py", line 89, in view, referer: http://localhost:8080/
+[Sun Aug 02 03:04:23.847325 2020] [wsgi:error] [pid 7115:tid 139862900426496] [client 102.89.2.27:36377]     return self.dispatch_request(*args, **kwargs), referer: http://localhost:8080/
+[Sun Aug 02 03:04:23.847327 2020] [wsgi:error] [pid 7115:tid 139862900426496] [client 102.89.2.27:36377]   File "/usr/local/lib/python3.6/dist-packages/flask_restful/__init__.py", line 573, in dispatch_request, referer: http://localhost:8080/
+[Sun Aug 02 03:04:23.847330 2020] [wsgi:error] [pid 7115:tid 139862900426496] [client 102.89.2.27:36377]     resp = meth(*args, **kwargs), referer: http://localhost:8080/
+[Sun Aug 02 03:04:23.847332 2020] [wsgi:error] [pid 7115:tid 139862900426496] [client 102.89.2.27:36377]   File "/usr/local/lib/python3.6/dist-packages/flask_jwt_extended/view_decorators.py", line 107, in wrapper, referer: http://localhost:8080/
+[Sun Aug 02 03:04:23.847334 2020] [wsgi:error] [pid 7115:tid 139862900426496] [client 102.89.2.27:36377]     verify_jwt_in_request(), referer: http://localhost:8080/
+[Sun Aug 02 03:04:23.847337 2020] [wsgi:error] [pid 7115:tid 139862900426496] [client 102.89.2.27:36377]   File "/usr/local/lib/python3.6/dist-packages/flask_jwt_extended/view_decorators.py", line 32, in verify_jwt_in_request, referer: http://localhost:8080/
+[Sun Aug 02 03:04:23.847340 2020] [wsgi:error] [pid 7115:tid 139862900426496] [client 102.89.2.27:36377]     jwt_data, jwt_header = _decode_jwt_from_request(request_type='access'), referer: http://localhost:8080/
+[Sun Aug 02 03:04:23.847342 2020] [wsgi:error] [pid 7115:tid 139862900426496] [client 102.89.2.27:36377]   File "/usr/local/lib/python3.6/dist-packages/flask_jwt_extended/view_decorators.py", line 294, in _decode_jwt_from_request, referer: http://localhost:8080/
+[Sun Aug 02 03:04:23.847344 2020] [wsgi:error] [pid 7115:tid 139862900426496] [client 102.89.2.27:36377]     decoded_token = decode_token(encoded_token, csrf_token), referer: http://localhost:8080/
+[Sun Aug 02 03:04:23.847347 2020] [wsgi:error] [pid 7115:tid 139862900426496] [client 102.89.2.27:36377]   File "/usr/local/lib/python3.6/dist-packages/flask_jwt_extended/utils.py", line 118, in decode_token, referer: http://localhost:8080/
+[Sun Aug 02 03:04:23.847349 2020] [wsgi:error] [pid 7115:tid 139862900426496] [client 102.89.2.27:36377]     allow_expired=allow_expired, referer: http://localhost:8080/
+[Sun Aug 02 03:04:23.847351 2020] [wsgi:error] [pid 7115:tid 139862900426496] [client 102.89.2.27:36377]   File "/usr/local/lib/python3.6/dist-packages/flask_jwt_extended/tokens.py", line 140, in decode_jwt, referer: http://localhost:8080/
+[Sun Aug 02 03:04:23.847354 2020] [wsgi:error] [pid 7115:tid 139862900426496] [client 102.89.2.27:36377]     leeway=leeway, options=options, issuer=issuer), referer: http://localhost:8080/
+[Sun Aug 02 03:04:23.847356 2020] [wsgi:error] [pid 7115:tid 139862900426496] [client 102.89.2.27:36377]   File "/usr/local/lib/python3.6/dist-packages/jwt/api_jwt.py", line 92, in decode, referer: http://localhost:8080/
+[Sun Aug 02 03:04:23.847363 2020] [wsgi:error] [pid 7115:tid 139862900426496] [client 102.89.2.27:36377]     jwt, key=key, algorithms=algorithms, options=options, **kwargs, referer: http://localhost:8080/
+[Sun Aug 02 03:04:23.847365 2020] [wsgi:error] [pid 7115:tid 139862900426496] [client 102.89.2.27:36377]   File "/usr/local/lib/python3.6/dist-packages/jwt/api_jws.py", line 156, in decode, referer: http://localhost:8080/
+[Sun Aug 02 03:04:23.847367 2020] [wsgi:error] [pid 7115:tid 139862900426496] [client 102.89.2.27:36377]     key, algorithms), referer: http://localhost:8080/
+[Sun Aug 02 03:04:23.847370 2020] [wsgi:error] [pid 7115:tid 139862900426496] [client 102.89.2.27:36377]   File "/usr/local/lib/python3.6/dist-packages/jwt/api_jws.py", line 223, in _verify_signature, referer: http://localhost:8080/
+[Sun Aug 02 03:04:23.847372 2020] [wsgi:error] [pid 7115:tid 139862900426496] [client 102.89.2.27:36377]     raise InvalidSignatureError('Signature verification failed'), referer: http://localhost:8080/
+[Sun Aug 02 03:04:23.847377 2020] [wsgi:error] [pid 7115:tid 139862900426496] [client 102.89.2.27:36377] jwt.exceptions.InvalidSignatureError: Signature verification failed, referer: http://localhost:8080/
+[Sun Aug 02 03:04:23.847383 2020] [wsgi:error] [pid 7115:tid 139862900426496] [client 102.89.2.27:36377] , referer: http://localhost:8080/
+[Sun Aug 02 04:02:29.610011 2020] [mpm_event:notice] [pid 7112:tid 139863206517696] AH00491: caught SIGTERM, shutting down
+[Sun Aug 02 04:02:29.703544 2020] [mpm_event:notice] [pid 8429:tid 140594435525568] AH00489: Apache/2.4.29 (Ubuntu) OpenSSL/1.1.1 mod_wsgi/4.5.17 Python/3.6 configured -- resuming normal operations
+[Sun Aug 02 04:02:29.703619 2020] [core:notice] [pid 8429:tid 140594435525568] AH00094: Command line: '/usr/sbin/apache2'
+[Sun Aug 02 04:02:52.908202 2020] [wsgi:error] [pid 8432:tid 140594168964864] [client 102.89.2.25:58987] ERROR:__init__:Exception on /api/v1.0/cooperative_rules [POST]
+[Sun Aug 02 04:02:52.908628 2020] [wsgi:error] [pid 8432:tid 140594168964864] [client 102.89.2.25:58987] Traceback (most recent call last):
+[Sun Aug 02 04:02:52.908634 2020] [wsgi:error] [pid 8432:tid 140594168964864] [client 102.89.2.25:58987]   File "/usr/local/lib/python3.6/dist-packages/flask/app.py", line 1949, in full_dispatch_request
+[Sun Aug 02 04:02:52.908638 2020] [wsgi:error] [pid 8432:tid 140594168964864] [client 102.89.2.25:58987]     rv = self.dispatch_request()
+[Sun Aug 02 04:02:52.908640 2020] [wsgi:error] [pid 8432:tid 140594168964864] [client 102.89.2.25:58987]   File "/usr/local/lib/python3.6/dist-packages/flask/app.py", line 1935, in dispatch_request
+[Sun Aug 02 04:02:52.908643 2020] [wsgi:error] [pid 8432:tid 140594168964864] [client 102.89.2.25:58987]     return self.view_functions[rule.endpoint](**req.view_args)
+[Sun Aug 02 04:02:52.908645 2020] [wsgi:error] [pid 8432:tid 140594168964864] [client 102.89.2.25:58987]   File "/usr/local/lib/python3.6/dist-packages/flask_restful/__init__.py", line 458, in wrapper
+[Sun Aug 02 04:02:52.908648 2020] [wsgi:error] [pid 8432:tid 140594168964864] [client 102.89.2.25:58987]     resp = resource(*args, **kwargs)
+[Sun Aug 02 04:02:52.908650 2020] [wsgi:error] [pid 8432:tid 140594168964864] [client 102.89.2.25:58987]   File "/usr/local/lib/python3.6/dist-packages/flask/views.py", line 89, in view
+[Sun Aug 02 04:02:52.908653 2020] [wsgi:error] [pid 8432:tid 140594168964864] [client 102.89.2.25:58987]     return self.dispatch_request(*args, **kwargs)
+[Sun Aug 02 04:02:52.908655 2020] [wsgi:error] [pid 8432:tid 140594168964864] [client 102.89.2.25:58987]   File "/usr/local/lib/python3.6/dist-packages/flask_restful/__init__.py", line 573, in dispatch_request
+[Sun Aug 02 04:02:52.908658 2020] [wsgi:error] [pid 8432:tid 140594168964864] [client 102.89.2.25:58987]     resp = meth(*args, **kwargs)
+[Sun Aug 02 04:02:52.908661 2020] [wsgi:error] [pid 8432:tid 140594168964864] [client 102.89.2.25:58987]   File "/usr/local/lib/python3.6/dist-packages/flask_jwt_extended/view_decorators.py", line 108, in wrapper
+[Sun Aug 02 04:02:52.908676 2020] [wsgi:error] [pid 8432:tid 140594168964864] [client 102.89.2.25:58987]     return fn(*args, **kwargs)
+[Sun Aug 02 04:02:52.908679 2020] [wsgi:error] [pid 8432:tid 140594168964864] [client 102.89.2.25:58987]   File "/var/www/pronovserver/cooperatives_resource.py", line 272, in post
+[Sun Aug 02 04:02:52.908683 2020] [wsgi:error] [pid 8432:tid 140594168964864] [client 102.89.2.25:58987]     c=CooperativeRules(member_id,language_id)
+[Sun Aug 02 04:02:52.908687 2020] [wsgi:error] [pid 8432:tid 140594168964864] [client 102.89.2.25:58987]   File "/var/www/pronovserver/ops/coop/loan.py", line 16, in __init__
+[Sun Aug 02 04:02:52.908690 2020] [wsgi:error] [pid 8432:tid 140594168964864] [client 102.89.2.25:58987]     self.group=self.getcoop()
+[Sun Aug 02 04:02:52.908694 2020] [wsgi:error] [pid 8432:tid 140594168964864] [client 102.89.2.25:58987]   File "/var/www/pronovserver/ops/coop/loan.py", line 23, in getcoop
+[Sun Aug 02 04:02:52.908697 2020] [wsgi:error] [pid 8432:tid 140594168964864] [client 102.89.2.25:58987]     on mbrgrp.mbrgrp_id=mbrgrpmbr.mbrgrp_id where mbrgrpmbr.member_id=%s""",(self.member_id,))
+[Sun Aug 02 04:02:52.908704 2020] [wsgi:error] [pid 8432:tid 140594168964864] [client 102.89.2.25:58987] AttributeError: 'CooperativeRules' object has no attribute 'member_id'
+[Sun Aug 02 04:02:52.908717 2020] [wsgi:error] [pid 8432:tid 140594168964864] [client 102.89.2.25:58987] 

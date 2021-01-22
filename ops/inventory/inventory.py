@@ -494,7 +494,7 @@ class Ra:
     def getindicator(ra_id):
         cursor.execute("select openindicator::text from ra where ra_id=%s",(ra_id,))
         return cursor.fetchone()[0]
-    
+
     @staticmethod
     def open_or_closed(ra_id):
         cursor.execute("select sum(qtyremaining) from radetail where ra_id=%s",
@@ -510,7 +510,7 @@ class Ra:
         except(Exception,psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
-    
+
     @staticmethod
     def open_ra(ra_id):
         try:
@@ -519,7 +519,7 @@ class Ra:
         except(Exception,psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
-    
+
     @staticmethod
     def read(mid):
         cursor.execute("""select ra.vendor_id,vendor.vendorname,ra.store_id,storeent.identifier,ra.orderdate,
@@ -899,7 +899,7 @@ class InventoryItem:
         cursor.execute("""select catentry.member_id,orgentity.orgentityname,catentry.itemspc_id,
         catentry.catenttype_id::text,catentry.endofservicedate,catentdesc.name,catentdesc.shortdesciption,
         catentdesc.fullimage,catentdesc.avaialble,catentdesc.published,catgpenrel.catalog_id,catalog.identifier,
-        catgpenrel.catgroup_id,catgroup.identifier from catentry inner join catentdesc 
+        catgpenrel.catgroup_id,catgroup.identifier,catentry.partnumber from catentry inner join catentdesc 
         on catentry.catentry_id=catentdesc.catentry_id inner join orgentity on catentry.member_id=orgentity.
         orgentity_id left join catgpenrel on catentry.catentry_id=catgpenrel.catentry_id left join catalog
         on catgpenrel.catalog_id=catalog.catalog_id left join catgroup on catgpenrel.catgroup_id=catgroup.
@@ -907,10 +907,10 @@ class InventoryItem:
         (self.catentry_id,self.language_id,self.owner_id,));res=cursor.fetchone()
         if res==None:return dict(owner_id=None,owner=None,itemspc_id=None,catenttype_id=None,expirydate=None,name=None,
         shortdescription=None,fullimage=None,available=None,published=None,catalog_id=None,catalogname=None,
-        catgroup_id=None,catgroupname=None)
+        catgroup_id=None,catgroupname=None,partnumber=None)
         elif res!=None:return dict(owner_id=res[0],owner=res[1],itemspc_id=res[2],catenttype_id=res[3],
         expirydate=textualize_datetime(res[4]),name=res[5],shortdescription=res[6],fullimage=res[7],
-        available=res[8],published=res[9],catalog_id=res[10],catalogname=res[11],catgroup_id=res[12],catgroupname=res[13])
+        available=res[8],published=res[9],catalog_id=res[10],catalogname=res[11],catgroup_id=res[12],catgroupname=res[13],partnumber=res[14])
     
     def inventory(self):
         cursor.execute("""select inventory.quantity::float,inventory.ffmcenter_id,ffmcenter.name,

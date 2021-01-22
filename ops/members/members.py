@@ -7,12 +7,17 @@ con,cursor=evcon()
 
 import pandas as pd
 import numpy as np
-import os,re,random
+import os,re,random,string,numbers
 from ops import CurrencyHelper,humanize_date,timestamp_forever,timestamp_now,textualize_datetime
 
 class EntryException(Exception):
     def __init__(self,message):
         self.message=message
+
+def get_random_string(length):
+    letters=string.ascii_uppercase+'123456789'
+    result_str=''.join(random.choice(letters) for i in range(length))
+    return result_str
 
 class RevokedToken:
     def __init__(self,token):
@@ -54,7 +59,7 @@ class OTPLogin:
         (self.phone,));res=cursor.fetchone()
         if res==None:return None
         elif res!=None:
-            token="M{}{}{}{}".format(res[0],res[2],res[3],random.choice(self.phone[1:].split()))
+            token=get_random_string(6)
             cursor.execute("update userreg set salt=%s where logonid=%s",(token,self.phone,))
             con.commit();return token
 
@@ -74,7 +79,7 @@ class Member:
     def approve_member(mid):
         try:
             cursor.execute("update member set state=1 where member_id=%s returning member_id",
-            (mid,));con.commit();return cursor.fetchone()[0]
+            (mid,));con.commit()
             cursor.execute("update users set registertype='R' where users_id=%s",(mid,))
             con.commit()
         except(Exception,psycopg2.DatabaseError) as e:
@@ -314,7 +319,7 @@ class Userprof:
         except(Exception,psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
-    
+
     def save(self):
         try:
             cursor.execute("""insert into userprof(users_id,photo,description,displayname,preferredcomm,
@@ -344,7 +349,22 @@ class Mbrgrp:
         self.oid=oid
         self.lastupdate=lastupdate
         self.lastupdatedby=lastupdatedby
-    
+
+    @staticmethod
+    def listgroups():
+        cursor.execute("select mbrgrp_id,owner_id,mbrgrpname from mbrgrp");res=cursor.fetchall()
+        if len(res)>0:return [dict(group_id=x[0],owner_id=x[1],name=x[2]) for x in res]
+        elif len(res)<=0:return [dict(group_id=None,owner_id=None,name=None)]
+
+    @staticmethod
+    def read(owner_id):
+        cursor.execute("""select mbrgrp.mbrgrp_id,mbrgrp.owner_id,orgentity.orgentityname,mbrgrp.description,
+        mbrgrp.mbrgrpname,mbrgrp.lastupdate from mbrgrp inner join orgentity on orgentity.orgentity_id=mbrgrp.
+        owner_id where mbrgrp.owner_id=%s""",(owner_id,));res=cursor.fetchall()
+        if len(res)<=0:return dict()
+        elif len(res)>0:return [dict(mbrgrp_id=r[0],owner_id=r[1],owner=r[2],description=r[3],
+        name=r[4],created=humanize_date(r[5])) for r in res]
+
     def save(self):
         try:
             cursor.execute("""insert into mbrgrp(mbrgrp_id,owner_id,field1,description,field2,dn,mbrgrpname,
@@ -399,10 +419,10 @@ class Userreg:
             cursor.execute("""select status,plcyacct_id,logonid,logonpassword,passwordexpired,challengequestion,challengeanswer,
             timeout,salt,passwordcreation,passwordinvalid from userreg where users_id=%s""",(uid,));res=cursor.fetchone()
             if res==None:return dict(status=None,plcyacct_id=None,logonid=None,logonpassword=None,passwordexpired=None,
-            challengequestion=None,challengeanswer=None,timeout=None,salt=None,passwordcreation=None,passwordinvalid=None)
+            challengequestion=None,challengeanswer=None,timeout=None,token=None,passwordcreation=None,passwordinvalid=None)
             elif res!=None:
                 res=dict(zip(['status','plcyacct_id','logonid','logonpassword','passwordexpired','challengequestion',
-                'challengeanswer','timeout','salt','passwordcreation','passwordinvalid'],res))
+                'challengeanswer','timeout','token','passwordcreation','passwordinvalid'],res))
                 res['passwordcreation']=humanize_date(res['passwordcreation']);return res
         except (Exception, psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
@@ -469,9 +489,10 @@ class Mbrrole:
         except (Exception, psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
-# print(Mbrrole.read(1))
+
 class Role:
     def __init__(self,name,description=None):
+        """define and describe user roles within your organization"""
         self.name=name
         self.description=description
 
@@ -491,7 +512,7 @@ class Role:
         except (Exception, psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
-# print(Role.read_roles(1))
+
 class Roledesc:
     def __init__(self,role_id,language_id,displayname,description=None):
         self.role_id=role_id
@@ -683,11 +704,21 @@ class Mbrgrpcond:
         self.field1=field1
         self.field2=field2
     
+    @staticmethod
+    def read(group_id):
+        cursor.execute("""select mbrgrp.mbrgrpname,mbrgrpcond.field1,mbrgrpcond.field2 from mbrgrp
+        inner join mbrgrpcond on mbrgrp.mbrgrp_id=mbrgrpcond.mbrgrp_id where mbrgrpcond.mbrgrp_id=%s""",
+        (group_id,));res=cursor.fetchall()
+        if len(res)<=0:return [dict(mbrgrpname=None,field1=None,field2=None)]
+        elif len(res)>0:return [dict(mbrgrpname=r[0],field1=r[1],field2=r[2])
+        for r in res]
+    
     def save(self):
         try:
             cursor.execute("""insert into mbrgrpcond(mbrgrp_id,conditions,field1,field2)values(%s,%s,%s,%s)
-            on conflict(mbrgrp_id)do update set mbrgrp_id=%s,conditions=%s,field1=%s,field2=%s returning mbrgrp_id""",
-            (self.mbrgrp_id,self.conditions,self.field1,self.field2,self.mbrgrp_id,self.conditions,self.field1,self.field2,))
+            on conflict(mbrgrp_id,field1)do update set mbrgrp_id=%s,conditions=%s,field1=%s,field2=%s 
+            returning mbrgrp_id""",(self.mbrgrp_id,self.conditions,self.field1,self.field2,
+            self.mbrgrp_id,self.conditions,self.field1,self.field2,))
             con.commit();return cursor.fetchone()[0]
         except (Exception, psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
@@ -700,7 +731,16 @@ class Mbrgrpmbr:
         self.field1=field1
         self.customerid=customerid
         self.exclude=exclude
-    
+
+    @staticmethod
+    def read(mbrgrp_id):
+        cursor.execute("""select mbrgrpmbr.member_id,orgentity.orgentityname,mbrgrpmbr.mbrgrp_id,
+        mbrgrp.mbrgrpname from mbrgrpmbr inner join orgentity on mbrgrpmbr.member_id=orgentity.orgentity_id
+        inner join mbrgrp on mbrgrpmbr.mbrgrp_id=mbrgrp.mbrgrp_id where mbrgrpmbr.mbrgrp_id=%s""",(mbrgrp_id,))
+        res=cursor.fetchall()
+        if len(res)<=0:return [dict()]
+        elif len(res)>0:return [dict(member_id=r[0],member=r[1],mbrgrp_id=r[2],group=r[3]) for r in res]
+
     def save(self):
         try:
             cursor.execute("""insert into mbrgrpmbr(member_id,mbrgrp_id,field1,customerid,exclude)values(%s,%s,%s,%s,%s)
@@ -814,6 +854,14 @@ class Address:
         self.mobilephone1=mobilephone1
         self.mobilephone1cntry=mobilephone1cntry
         self.address_id=address_id
+    
+    @staticmethod
+    def updateemail(user_id,email):
+        try:
+            cursor.execute("update address set email1=%s where member_id=%s",(email,user_id,))
+            con.commit()
+        except (Exception,psycopg2.DatabaseError) as e:
+            raise EntryException(str(e).strip().split('\n')[0])
     
     @staticmethod
     def readaddress(mid):
@@ -1034,7 +1082,6 @@ class UserSign:
         res=cursor.fetchone()
         if res==None:return res
         elif res!=None:return res[0].strip()
-
 
 class ListAllMembers:
     def data(self):

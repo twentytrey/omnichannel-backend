@@ -245,7 +245,7 @@ def producttemplateuploads():
             return jsonify(url=file_url,name=filename,size=file_size)
 
 
-import resource,members_resource,catalog_resource,currency_resource,customer_resource,vendor_resource,store_resource
+import resource,members_resource,catalog_resource,currency_resource,customer_resource,vendor_resource,store_resource,cooperatives_resource
 import tax_resource,calculation_resource,shipping_resource,accounting_resource,trading_resource,payment_resource
 import m_store_resource,orders_resource,analytics_resource,inventory_resource
 api.add_resource(resource.default_password_policy,"/api/v1.0/default_password_policy",endpoint="default_password_policy")
@@ -425,6 +425,31 @@ api.add_resource(trading_resource.read_creditline,"/api/v1.0/read_creditline",en
 api.add_resource(orders_resource.pay_order,"/api/v1.0/pay_order",endpoint="pay_order")
 api.add_resource(catalog_resource.upload_products,"/api/v1.0/upload_products",endpoint="upload_products")
 api.add_resource(payment_resource.save_reference,"/api/v1.0/save_reference",endpoint="save_reference")
+api.add_resource(trading_resource.has_credit,"/api/v1.0/has_credit",endpoint="has_credit")
+api.add_resource(cooperatives_resource.initialize_cooperative,"/api/v1.0/initialize_cooperative",endpoint="initialize_cooperative")
+api.add_resource(cooperatives_resource.list_coops,"/api/v1.0/list_coops",endpoint="list_coops")
+api.add_resource(cooperatives_resource.signup_to_coop,"/api/v1.0/signup_to_coop",endpoint="signup_to_coop")
+api.add_resource(cooperatives_resource.list_subs,"/api/v1.0/list_subs",endpoint="list_subs")
+api.add_resource(trading_resource.loan_initialize_transaction,"/api/v1.0/loan_initialize_transaction",endpoint="loan_initialize_transaction")
+api.add_resource(trading_resource.loan_verify_transaction,"/api/v1.0/loan_verify_transaction",endpoint="loan_verify_transaction")
+api.add_resource(trading_resource.accept_loan_offer,"/api/v1.0/accept_loan_offer",endpoint="accept_loan_offer")
+api.add_resource(cooperatives_resource.deposit_contribution,"/api/v1.0/deposit_contribution",endpoint="deposit_contribution")
+api.add_resource(members_resource.select_list_groups,"/api/v1.0/select_list_groups",endpoint="select_list_groups")
+api.add_resource(cooperatives_resource.save_preferences,"/api/v1.0/save_preferences",endpoint="save_preferences")
+api.add_resource(cooperatives_resource.update_email,"/api/v1.0/update_email",endpoint="update_email")
+api.add_resource(cooperatives_resource.check_membership,"/api/v1.0/check_membership",endpoint="check_membership")
+api.add_resource(cooperatives_resource.fetch_members,"/api/v1.0/fetch_members",endpoint="fetch_members")
+api.add_resource(cooperatives_resource.fetch_pending_transactions,"/api/v1.0/fetch_pending_transactions",endpoint="fetch_pending_transactions")
+api.add_resource(cooperatives_resource.confirm_transactions,"/api/v1.0/confirm_transactions",endpoint="confirm_transactions")
+api.add_resource(cooperatives_resource.cooperative_rules,"/api/v1.0/cooperative_rules",endpoint="cooperative_rules")
+api.add_resource(cooperatives_resource.save_credit_request,"/api/v1.0/save_credit_request",endpoint="save_credit_request")
+api.add_resource(cooperatives_resource.save_guarantor,"/api/v1.0/save_guarantor",endpoint="save_guarantor")
+api.add_resource(cooperatives_resource.delete_guarantor,"/api/v1.0/delete_guarantor",endpoint="delete_guarantor")
+api.add_resource(cooperatives_resource.cash_balance,"/api/v1.0/cash_balance",endpoint="cash_balance")
+api.add_resource(cooperatives_resource.read_transaction_history,"/api/v1.0/read_transaction_history",endpoint="read_transaction_history")
+api.add_resource(cooperatives_resource.loan_history,"/api/v1.0/loan_history",endpoint="loan_history")
+api.add_resource(cooperatives_resource.guarantor_view,"/api/v1.0/guarantor_view",endpoint="guarantor_view")
+api.add_resource(cooperatives_resource.guarantees,"/api/v1.0/guarantees",endpoint="guarantees")
 
 # MOBILE INTEGRATION
 api.add_resource(m_store_resource.m_create_store_organization,"/api/v1.0/m_create_store_organization",endpoint="m_create_store_organization")
@@ -433,7 +458,8 @@ api.add_resource(m_store_resource.m_create_store,"/api/v1.0/m_create_store",endp
 api.add_resource(m_store_resource.otp_login,"/api/v1.0/otp_login",endpoint="otp_login")
 api.add_resource(m_store_resource.stores_for_member,"/api/v1.0/stores_for_member",endpoint="stores_for_member")
 api.add_resource(m_store_resource.create_po,"/api/v1.0/create_po",endpoint="create_po")
-
+api.add_resource(m_store_resource.m_create_catentry,"/api/v1.0/m_create_catentry",endpoint="m_create_catentry")
+api.add_resource(m_store_resource.m_update_catentry,"/api/v1.0/m_update_catentry",endpoint="m_update_catentry")
 
 
 if __name__=='__main__':

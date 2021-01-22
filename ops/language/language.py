@@ -75,7 +75,7 @@ class Langpair:
         except (Exception, psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
-    
+
 class LanguageDefault:
     def __init__(self,fname):
         self.fname=fname

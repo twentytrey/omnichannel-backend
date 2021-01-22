@@ -1,7 +1,10 @@
-from .db_con import createcon
+# from .db_con import createcon
 # from db_con import createcon
 import psycopg2,json,math,os
-con,cursor=createcon("retail","pronov","localhost","5432")
+# con,cursor=createcon("retail","jmso","localhost","5432")
+from ops.connector.connector import evcon
+con,cursor=evcon()
+
 import  importlib
 import pandas as pd
 import numpy as np
@@ -95,6 +98,15 @@ class Faccount:
         self.setccurr=setccurr
     
     @staticmethod
+    def credit_debit_balance(faccount_id,holder_id,crdr):
+        cursor.execute("""select sum(transaction.amount::float) from transaction inner join
+        facctransaction on transaction.transaction_id=facctransaction.transaction_id 
+        where transaction.holder_id=%s and facctransaction.crdr=%s and facctransaction.faccount_id=%s""",
+        (holder_id,crdr,faccount_id,));res=cursor.fetchone()[0]
+        if res==None:return 0
+        elif res!=None:return res
+    
+    @staticmethod
     def get_balance(faccount_id):
         cursor.execute("""select sum(transaction.amount)::float from faccount inner join facctransaction 
         on faccount.faccount_id=facctransaction.faccount_id inner join transaction on facctransaction.
@@ -104,8 +116,8 @@ class Faccount:
         elif res!=None:return res[0]
     
     @staticmethod
-    def getid(name):
-        cursor.execute("select faccount_id from faccount where identifier=%s",(name,))
+    def getid(name,member_id):
+        cursor.execute("select faccount_id from faccount where identifier=%s and member_id=%s",(name,member_id,))
         res=cursor.fetchone()
         if res==None:return res
         elif res!=None:return res[0]
@@ -114,10 +126,10 @@ class Faccount:
     def getclass(faccount_id):
         if faccount_id==None:return None
         elif faccount_id != None:
-            cursor.execute("""select acclass.name from accountclassrel inner join faccount on 
+            cursor.execute("""select acclass.acclass_id,acclass.name from accountclassrel inner join faccount on 
             accountclassrel.faccount_id=faccount.faccount_id inner join acclass on accountclassrel.
             acclass_id=acclass.acclass_id where faccount.faccount_id=%s""",(faccount_id,))
-            return cursor.fetchone()[0]
+            return cursor.fetchone()
         
     @staticmethod
     def readtransactions(faccount_id,member_id,language_id):
@@ -143,18 +155,32 @@ class Faccount:
         currency=None,description=None,account_type=None,balance=CurrencyHelper(lid).formatamount(0.00))
         elif res != None:return dict(faccount_id=res[0],account_number=res[1],identifier=res[2],routing_number=res[3],
         currency=res[4],description=Faccountdsc.read(res[0],lid),balance=CurrencyHelper(lid).formatamount(0.00),
-        account_class=Faccount.getclass(res[0]))
+        account_class=Faccount.getclass(res[0])[1])
 
     @staticmethod
     def read(mid,lid):
         cursor.execute("""select faccount_id,accountnumber,identifier,routingnumber,setccurr from faccount
-        where member_id=%s""",(mid,));res=cursor.fetchall()
-        if len(res) <= 0:return [dict(faccount_id=None,account_number=None,identifier=None,routing_number=None,
-        currency=None,description=None,account_type=None,balance=CurrencyHelper(lid).formatamount(0.00))]
-        elif len(res) > 0:return [dict(faccount_id=r[0],account_number=r[1],identifier=r[2],routing_number=r[3],
-        currency=r[4],description=Faccountdsc.read(r[0],lid),balance=CurrencyHelper(lid).formatamount
-        (Faccount.get_balance(r[0])),account_class=Faccount.getclass(r[0]))for r in res]
+        where member_id=%s order by faccount_id asc""",(mid,));res=cursor.fetchall()
+
+        if len(res) <= 0:return [dict(faccount_id=None,accountnumber=None,account_number=None,identifier=None,
+        routingnumber=None,routing_number=None,setccurr=None,currency=None,symbol=None,description=None,acclass_id=None,
+        account_type=None,balance=CurrencyHelper(lid).formatamount(0.00))]
+
+        elif len(res) > 0:return [dict(faccount_id=r[0],accountnumber=r[1],account_number=r[1],identifier=r[2],
+        routingnumber=r[3],routing_number=r[3],setccurr=r[4],currency=r[4],symbol=CurrencyHelper(lid).getcurrsymbol(),description=Faccountdsc.read(r[0],lid),
+        credit=CurrencyHelper(lid).formatamount(round(Faccount.credit_debit_balance(r[0],mid,'C'),2)),debit=CurrencyHelper(lid).
+        formatamount(round(Faccount.credit_debit_balance(r[0],mid,'D'),2)),acclass_id=Faccount.getclass(r[0])[0],
+        account_class=Faccount.getclass(r[0])[1])for r in res]
     
+    def update(self,faccount_id):
+        try:
+            cursor.execute("""update faccount set accountnumber=%s,identifier=%s,member_id=%s,routingnumber=%s,
+            setccurr=%s where faccount_id=%s and member_id=%s""",(self.accountnumber,self.identifier,self.member_id,
+            self.routingnumber,self.setccurr,faccount_id,self.member_id,));con.commit()
+        except(Exception,psycopg2.DatabaseError) as e:
+            if con is not None:con.rollback()
+            raise EntryException(str(e).strip().split('\n')[0])
+
     def save(self):
         try:
             cursor.execute("""insert into faccount(accountnumber,identifier,member_id,routingnumber,
@@ -180,6 +206,14 @@ class Faccountdsc:
         if res == None:return None
         elif res != None:return res[0]
     
+    def update(self):
+        try:
+            cursor.execute("update faccountdsc set description=%s where faccount_id=%s and language_id=%s",
+            (self.description,self.faccount_id,self.language_id,));con.commit()
+        except(Exception,psycopg2.DatabaseError) as e:
+            if con is not None:con.rollback()
+            raise EntryException(str(e).strip().split('\n')[0])
+    
     def save(self):
         try:
             cursor.execute("""insert into faccountdsc(faccount_id,language_id,description)
@@ -198,6 +232,14 @@ class Accountclassrel:
     def __init__(self,acclass_id,faccount_id):
         self.acclass_id=acclass_id
         self.faccount_id=faccount_id
+    
+    def update(self):
+        try:
+            cursor.execute("update accountclassrel set acclass_id=%s,faccount_id=%s where faccount_id=%s and acclass_id=%s",
+            (self.acclass_id,self.faccount_id,self.faccount_id,self.acclass_id,));con.commit()
+        except(Exception,psycopg2.DatabaseError) as e:
+            if con is not None:con.rollback()
+            raise EntryException(str(e).strip().split('\n')[0])
     
     def save(self):
         try:
@@ -226,18 +268,21 @@ class Transactiontype:
             raise EntryException(str(e).strip().split('\n')[0])
 
 class Transaction:
-    def __init__(self,typecode,amount,timecreated=None,timeupdated=None,memo=None):
+    def __init__(self,typecode,holder_id,amount,payee_id=None,timecreated=None,timeupdated=None,memo=None):
         self.typecode=typecode
+        self.holder_id=holder_id
         self.amount=amount
+        self.payee_id=payee_id
         self.timecreated=timecreated
         self.timeupdated=timeupdated
         self.memo=memo
     
     def save(self):
         try:
-            cursor.execute("""insert into transaction(typecode,amount,timecreated,timeupdated,memo)
-            values(%s,%s,%s,%s,%s)returning transaction_id""",(self.typecode,self.amount,self.timecreated,
-            self.timeupdated,self.memo,));con.commit();return cursor.fetchone()[0]
+            cursor.execute("""insert into transaction(typecode,holder_id,amount,payee_id,timecreated,
+            timeupdated,memo)values(%s,%s,%s,%s,%s,%s,%s)returning transaction_id""",(self.typecode,
+            self.holder_id,self.amount,self.payee_id,self.timecreated,self.timeupdated,self.memo,))
+            con.commit();return cursor.fetchone()[0]
         except(Exception,psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
@@ -329,3 +374,23 @@ transaction_types=[
     Transactiontype("TRANSFR","Transfer","Represents a transfer you've made between two balance sheet registers"),
     Transactiontype("DISC","Discount","Identifies a discount given for early payment either to customers or vendors"),
     Transactiontype("GENJNRL","General Journal Entry","Stands for a general journal entry which you use when the other transaction types do not apply")]
+
+class ConfirmTransaction:
+    def __init__(self,holder_id,payee_id,referencenumber,transaction_id,status='N'):
+        self.holder_id=holder_id
+        self.payee_id=payee_id
+        self.transaction_id=transaction_id
+        self.referencenumber=referencenumber
+        self.status=status
+    
+    def save(self):
+        try:
+            cursor.execute("""insert into confirmtransaction(holder_id,payee_id,referencenumber,
+            status,transaction_id)values(%s,%s,%s,%s,%s)on conflict(holder_id,payee_id,referencenumber)
+            do update set holder_id=%s,payee_id=%s,referencenumber=%s,status=%s,transaction_id=%s returning 
+            payee_id""",(self.holder_id,self.payee_id,self.referencenumber,self.status,self.transaction_id,
+            self.holder_id,self.payee_id,self.referencenumber,self.status,self.transaction_id,));con.commit()
+            return cursor.fetchone()[0]
+        except(Exception,psycopg2.DatabaseError) as e:
+            if con is not None:con.rollback()
+            raise EntryException(str(e).strip().split('\n')[0])

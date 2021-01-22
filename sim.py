@@ -20,9 +20,14 @@ from ops.accounting.accounting import Faccount
 from ops.trading.trading import Trading
 from ops.trading.trading import Creditline
 from ops.payment.payment import PaymentPolicy
+from ops.members.members import Mbrgrp,Mbrgrpmbr,Mbrgrpcond
+from requester import PaystackRequests
+from ops.helpers.functions import reversedate
+from ops.accounting.accounting import InstallAccounts
+from ops.stores.stores import Storeent
+from ops.coop.coop import CheckMember,FetchMembers,FetchPendingTransactions,ConfirmCTransaction
+from ops.coop.loan import CooperativeRules,TransactionHistory,LoanHistory,GuarantorView,GuarantorBalance
 
-# p=PaymentPolicy(1,'Payment')
-# print(p.read())
 
 class CustomerMarkupMod:
     def __init__(self,catalog_id,markup,customer_id,store_id):
@@ -89,10 +94,10 @@ def install_items(filename,member_id):
     v=InstallCatentries(filename,member_id,)
     v.save()
 
-# member_id=1
+member_id=16
 # install_items("instrumentspricelist.csv",member_id)
 # time.sleep(5)
-# install_items("drugspricelist.csv",member_id)
+install_items("drugspricelist.csv",member_id)
 
 class CashCustomer:
     def __init__(self):

@@ -1,15 +1,23 @@
-from .db_con import createcon
+# from .db_con import createcon
 # from db_con import createcon
 import psycopg2
-con,cursor=createcon('retail','pronov','localhost','5432')
+# con,cursor=createcon('retail','jmso','localhost','5432')
+from ops.connector.connector import evcon
+con,cursor=evcon()
+
 import pandas as pd
 import numpy as np
-import os,re
+import os,re,random,string,numbers
 from ops import CurrencyHelper,humanize_date,timestamp_forever,timestamp_now,textualize_datetime
 
 class EntryException(Exception):
     def __init__(self,message):
         self.message=message
+
+def get_random_string(length):
+    letters=string.ascii_uppercase+'123456789'
+    result_str=''.join(random.choice(letters) for i in range(length))
+    return result_str
 
 class RevokedToken:
     def __init__(self,token):
@@ -33,6 +41,28 @@ class RevokedToken:
         except (Exception, psycopg2.DatabaseError) as e:
             raise EntryException(str(e).strip().split('\n')[0])
 
+class OTPLogin:
+    def __init__(self,phone):
+        self.phone=phone
+    
+    def issignedon(self):
+        cursor.execute("""select member.state,users.registertype::text,users.profiletype::text from member
+        inner join users on member.member_id=users.users_id inner join userreg on member.member_id=
+        userreg.users_id where userreg.logonid=%s""",(self.phone,));res=cursor.fetchone()
+        if res==None:return (None,None,None)
+        elif res!=None:return res
+    
+    def _execute(self):
+        cursor.execute("""select member.member_id,member.type::text,users.registertype::text,
+        users.profiletype::text from member inner join users on member.member_id=users.users_id 
+        inner join userreg on member.member_id=userreg.users_id where userreg.logonid=%s""",
+        (self.phone,));res=cursor.fetchone()
+        if res==None:return None
+        elif res!=None:
+            token=get_random_string(6)
+            cursor.execute("update userreg set salt=%s where logonid=%s",(token,self.phone,))
+            con.commit();return token
+
 class Member:
     def __init__(self,membertype,memberstate=None):
         self.membertype=membertype
@@ -49,7 +79,7 @@ class Member:
     def approve_member(mid):
         try:
             cursor.execute("update member set state=1 where member_id=%s returning member_id",
-            (mid,));con.commit();return cursor.fetchone()[0]
+            (mid,));con.commit()
             cursor.execute("update users set registertype='R' where users_id=%s",(mid,))
             con.commit()
         except(Exception,psycopg2.DatabaseError) as e:
@@ -82,8 +112,12 @@ class Member:
     def readmember(mid):
         try:
             cursor.execute("select member_id,type::text,state from member where member_id=%s",(mid,))
-            res=cursor.fetchone();return dict(zip(['member_id','type','state','typestring','statestring'],
-            (res[0],res[1],res[2],Member.mapmembertypes(res[1]),Member.mapmemberstates(res[2]))))
+            res=cursor.fetchone()
+            if res==None:return dict(member_id=None,type=None,state=None,typestring=None,statestring=None)
+            elif res!=None:return dict(member_id=res[0],type=res[1],state=res[2],typestring=Member.mapmembertypes(res[1]),
+            statestring=Member.mapmemberstates(res[2]))
+            # return dict(zip(['member_id','type','state','typestring','statestring'],
+            # (res[0],res[1],res[2],Member.mapmembertypes(res[1]),Member.mapmemberstates(res[2]))))
         except (Exception, psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
@@ -143,7 +177,8 @@ class Orgentity:
             field2,dn,taxpayerid,field3,status from orgentity where orgentity_id=%s""",(oid,))
             res=cursor.fetchone()
             if res==None:
-                data=dict(zip(['orgentity_id','legalid','orgentitytype','orgentityname','businesscategory','description','adminfirstname','adminmiddlename','adminlastname','preferreddelivery','field1','field2','dn','taxpayerid','field3','status','orgtypestring'],[None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,]))
+                data=dict(orgentity_id=None,legalid=None,orgentitytype=None,orgentityname=None,businesscategory=None,description=None,adminfirstname=None,adminmiddlename=None,adminlastname=None,preferreddelivery=None,field1=None,field2=None,dn=None,taxpayerid=None,field3=None,status=None,orgtypestring=None)
+                # data=dict(zip(['orgentity_id','legalid','orgentitytype','orgentityname','businesscategory','description','adminfirstname','adminmiddlename','adminlastname','preferreddelivery','field1','field2','dn','taxpayerid','field3','status','orgtypestring'],[None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,]))
             elif res != None:
                 data=dict(zip(['orgentity_id','legalid','orgentitytype','orgentityname','businesscategory','description','adminfirstname','adminmiddlename','adminlastname','preferreddelivery','field1','field2','dn','taxpayerid','field3','status'],res))
                 data.update({"orgtypestring":Orgentity.maporgentitytype(res[2])})
@@ -198,9 +233,15 @@ class Busprof:
             cursor.execute("""select busprof.employeeid,busprof.org_id,orgentity.orgentityname,busprof.orgunit_id,
             busprof.employeetype,busprof.departmentnum,busprof.alternateid,busprof.manager,busprof.secretary,
             busprof.requisitionerid from busprof inner join orgentity on busprof.org_id=orgentity.orgentity_id
-            where busprof.users_id=%s""",(uid,));res=cursor.fetchone();return dict(zip(['employeeid','org_id',
-            'orgentityname','orgunit_id','employeetype','departmentnum','alternateid','manager','secretary',
-            'requisitionerid'],res))
+            where busprof.users_id=%s""",(uid,));res=cursor.fetchone()
+            if res==None:return dict(employeeid=None,org_id=None,orgentityname=None,orgunit_id=None,employeetype=None,
+            departmentnum=None,alternateid=None,manager=None,secretary=None,requisitionerid=None,)
+            elif res!=None:return dict(employeeid=res[0],org_id=res[1],orgentityname=res[2],orgunit_id=res[3],
+            employeetype=res[4],departmentnum=res[5],alternateid=res[6],manager=res[7],secretary=res[8],
+            requisitionerid=res[9],)
+            # return dict(zip(['employeeid','org_id',
+            # 'orgentityname','orgunit_id','employeetype','departmentnum','alternateid','manager','secretary',
+            # 'requisitionerid'],res))
         except (Exception, psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
@@ -253,24 +294,22 @@ class Userprof:
     
     @staticmethod
     def mappreferredcomm(pcid):
-        return {"P1":"First Phone Number","P2":"Second Phone Number","E1":"First Email Address",
+        if pcid==None:return None
+        else:return {"P1":"First Phone Number","P2":"Second Phone Number","E1":"First Email Address",
         "E2":"Second Email Address"}[pcid]
     
     @staticmethod
     def readuserprof(uid):
-        try:
-            cursor.execute("""select photo,description,displayname,preferredcomm,preferreddelivery,
-            preferredmeasure,field1,taxpayerid,field2,rcvsmsnotification from userprof where users_id=%s""",
-            (uid,));res=cursor.fetchone()
-            if res==None:return dict(photo=None,description=None,displayname=None,preferredcomm=None,
-            preferreddelivery=None,preferredmeasure=None,field1=None,taxpayerid=None,field2=None,
-            rcvsmsnotification=None,preferredcommstring=None)
-            elif res != None:return dict(photo=res[0],description=res[1],displayname=res[2],preferredcomm=res[3],
-            preferreddelivery=res[4],preferredmeasure=res[5],field1=res[6],taxpayerid=res[7],field2=res[8],
-            rcvsmsnotification=res[9],preferredcommstring=Userprof.mappreferredcomm(res[3]))
-        except (Exception, psycopg2.DatabaseError) as e:
-            if con is not None:con.rollback()
-            raise EntryException(str(e).strip().split('\n')[0])
+        cursor.execute("""select photo,description,displayname,preferredcomm,preferreddelivery,
+        preferredmeasure,field1,taxpayerid,field2,rcvsmsnotification from userprof where users_id=%s""",
+        (uid,));res=cursor.fetchone()
+        if res==None:return dict(photo=None,description=None,displayname=None,preferredcomm=None,
+        preferreddelivery=None,preferredmeasure=None,field1=None,taxpayerid=None,field2=None,
+        rcvsmsnotification=None,preferredcommstring=None)
+        
+        elif res != None:return dict(photo=res[0],description=res[1],displayname=res[2],preferredcomm=res[3],
+        preferreddelivery=res[4],preferredmeasure=res[5],field1=res[6],taxpayerid=res[7],field2=res[8],
+        rcvsmsnotification=res[9],preferredcommstring=Userprof.mappreferredcomm(res[3]))
 
     def update(self):
         try:
@@ -280,7 +319,7 @@ class Userprof:
         except(Exception,psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
-    
+
     def save(self):
         try:
             cursor.execute("""insert into userprof(users_id,photo,description,displayname,preferredcomm,
@@ -310,7 +349,22 @@ class Mbrgrp:
         self.oid=oid
         self.lastupdate=lastupdate
         self.lastupdatedby=lastupdatedby
-    
+
+    @staticmethod
+    def listgroups():
+        cursor.execute("select mbrgrp_id,owner_id,mbrgrpname from mbrgrp");res=cursor.fetchall()
+        if len(res)>0:return [dict(group_id=x[0],owner_id=x[1],name=x[2]) for x in res]
+        elif len(res)<=0:return [dict(group_id=None,owner_id=None,name=None)]
+
+    @staticmethod
+    def read(owner_id):
+        cursor.execute("""select mbrgrp.mbrgrp_id,mbrgrp.owner_id,orgentity.orgentityname,mbrgrp.description,
+        mbrgrp.mbrgrpname,mbrgrp.lastupdate from mbrgrp inner join orgentity on orgentity.orgentity_id=mbrgrp.
+        owner_id where mbrgrp.owner_id=%s""",(owner_id,));res=cursor.fetchall()
+        if len(res)<=0:return dict()
+        elif len(res)>0:return [dict(mbrgrp_id=r[0],owner_id=r[1],owner=r[2],description=r[3],
+        name=r[4],created=humanize_date(r[5])) for r in res]
+
     def save(self):
         try:
             cursor.execute("""insert into mbrgrp(mbrgrp_id,owner_id,field1,description,field2,dn,mbrgrpname,
@@ -364,9 +418,12 @@ class Userreg:
         try:
             cursor.execute("""select status,plcyacct_id,logonid,logonpassword,passwordexpired,challengequestion,challengeanswer,
             timeout,salt,passwordcreation,passwordinvalid from userreg where users_id=%s""",(uid,));res=cursor.fetchone()
-            res=dict(zip(['status','plcyacct_id','logonid','logonpassword','passwordexpired','challengequestion',
-            'challengeanswer','timeout','salt','passwordcreation','passwordinvalid'],res))
-            res['passwordcreation']=humanize_date(res['passwordcreation']);return res
+            if res==None:return dict(status=None,plcyacct_id=None,logonid=None,logonpassword=None,passwordexpired=None,
+            challengequestion=None,challengeanswer=None,timeout=None,token=None,passwordcreation=None,passwordinvalid=None)
+            elif res!=None:
+                res=dict(zip(['status','plcyacct_id','logonid','logonpassword','passwordexpired','challengequestion',
+                'challengeanswer','timeout','token','passwordcreation','passwordinvalid'],res))
+                res['passwordcreation']=humanize_date(res['passwordcreation']);return res
         except (Exception, psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
@@ -421,7 +478,8 @@ class Mbrrole:
         roledesc.displayname,orgentity.orgentityname from mbrrole left join userprof on mbrrole.member_id=
         userprof.users_id left join roledesc on roledesc.role_id=mbrrole.role_id left join orgentity on 
         orgentity.orgentity_id=mbrrole.orgentity_id where mbrrole.member_id=%s""",(mid,));res=cursor.fetchall()
-        return [dict(zip(['member_id','role_id','orgentity_id','username','rolename','organization'],r))for r in res]
+        if res==None:return [dict(member_id=None,role_id=None,orgentity_id=None,username=None,rolename=None,organization=None)]
+        if res!=None:return [dict(zip(['member_id','role_id','orgentity_id','username','rolename','organization'],r))for r in res]
 
     def save(self):
         try:
@@ -431,9 +489,10 @@ class Mbrrole:
         except (Exception, psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
-# print(Mbrrole.read(1))
+
 class Role:
     def __init__(self,name,description=None):
+        """define and describe user roles within your organization"""
         self.name=name
         self.description=description
 
@@ -441,7 +500,9 @@ class Role:
     def read_roles(language_id):
         cursor.execute("""select role.role_id,role.name,roledesc.displayname,roledesc.description from role 
         left join roledesc on role.role_id=roledesc.role_id where roledesc.language_id=%s""",(language_id,))
-        keys=['role_id','name','displayname','description'];return [dict(zip(keys,z)) for z in cursor.fetchall()]
+        keys=['role_id','name','displayname','description'];res=cursor.fetchall()
+        if len(res)<=0:return [dict(role_id=None,name=None,displayname=None,description=None)]
+        elif len(res) > 0:return [dict(zip(keys,z)) for z in res]
 
     def save(self):
         try:
@@ -451,7 +512,7 @@ class Role:
         except (Exception, psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
-# print(Role.read_roles(1))
+
 class Roledesc:
     def __init__(self,role_id,language_id,displayname,description=None):
         self.role_id=role_id
@@ -592,17 +653,21 @@ class Users:
             cursor.execute("""select dn,registertype::text,profiletype::text,language_id,field1,setccurr,field3,
             field2,lastorder,registration,lastsession,registrationupdate,registrationcancel,prevlastsession,
             personalizationid from users where users_id=%s""",(uid,));res=cursor.fetchone()
-            res=dict(zip(['dn','registertype','profiletype','language_id','field1',
-            'setccurr','field3','field2','lastorder','registration','lastsession',
-            'registrationupdate','registrationcancel','prevlastsession','personalizationid'],res))
-            res['registertypestring']=Users.mapregproftypes(res['registertype'])
-            res['profiletypestring']=Users.mapprofiletypes(res['profiletype'])
-            res['lastorder']=humanize_date(res['lastorder'])
-            res["registration"]=humanize_date(res["registration"])
-            res["lastsession"]=humanize_date(res["lastsession"])
-            res["registrationupdate"]=humanize_date(res["registrationupdate"])
-            res["registrationcancel"]=humanize_date(res["registrationcancel"])
-            return res
+            if res==None:return dict(dn=None,registertype=None,profiletype=None,language_id=None,field1=None,
+            setccurr=None,field3=None,field2=None,lastorder=None,registration=None,lastsession=None,registrationupdate=None,
+            registrationcancel=None,prevlastsession=None,personalizationid=None)
+            elif res!=None:
+                res=dict(zip(['dn','registertype','profiletype','language_id','field1','setccurr','field3',
+                'field2','lastorder','registration','lastsession','registrationupdate','registrationcancel',
+                'prevlastsession','personalizationid'],res))
+                res['registertypestring']=Users.mapregproftypes(res['registertype'])
+                res['profiletypestring']=Users.mapprofiletypes(res['profiletype'])
+                res['lastorder']=humanize_date(res['lastorder'])
+                res["registration"]=humanize_date(res["registration"])
+                res["lastsession"]=humanize_date(res["lastsession"])
+                res["registrationupdate"]=humanize_date(res["registrationupdate"])
+                res["registrationcancel"]=humanize_date(res["registrationcancel"])
+                return res
         except (Exception, psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
@@ -639,11 +704,21 @@ class Mbrgrpcond:
         self.field1=field1
         self.field2=field2
     
+    @staticmethod
+    def read(group_id):
+        cursor.execute("""select mbrgrp.mbrgrpname,mbrgrpcond.field1,mbrgrpcond.field2 from mbrgrp
+        inner join mbrgrpcond on mbrgrp.mbrgrp_id=mbrgrpcond.mbrgrp_id where mbrgrpcond.mbrgrp_id=%s""",
+        (group_id,));res=cursor.fetchall()
+        if len(res)<=0:return [dict(mbrgrpname=None,field1=None,field2=None)]
+        elif len(res)>0:return [dict(mbrgrpname=r[0],field1=r[1],field2=r[2])
+        for r in res]
+    
     def save(self):
         try:
             cursor.execute("""insert into mbrgrpcond(mbrgrp_id,conditions,field1,field2)values(%s,%s,%s,%s)
-            on conflict(mbrgrp_id)do update set mbrgrp_id=%s,conditions=%s,field1=%s,field2=%s returning mbrgrp_id""",
-            (self.mbrgrp_id,self.conditions,self.field1,self.field2,self.mbrgrp_id,self.conditions,self.field1,self.field2,))
+            on conflict(mbrgrp_id,field1)do update set mbrgrp_id=%s,conditions=%s,field1=%s,field2=%s 
+            returning mbrgrp_id""",(self.mbrgrp_id,self.conditions,self.field1,self.field2,
+            self.mbrgrp_id,self.conditions,self.field1,self.field2,))
             con.commit();return cursor.fetchone()[0]
         except (Exception, psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
@@ -656,7 +731,16 @@ class Mbrgrpmbr:
         self.field1=field1
         self.customerid=customerid
         self.exclude=exclude
-    
+
+    @staticmethod
+    def read(mbrgrp_id):
+        cursor.execute("""select mbrgrpmbr.member_id,orgentity.orgentityname,mbrgrpmbr.mbrgrp_id,
+        mbrgrp.mbrgrpname from mbrgrpmbr inner join orgentity on mbrgrpmbr.member_id=orgentity.orgentity_id
+        inner join mbrgrp on mbrgrpmbr.mbrgrp_id=mbrgrp.mbrgrp_id where mbrgrpmbr.mbrgrp_id=%s""",(mbrgrp_id,))
+        res=cursor.fetchall()
+        if len(res)<=0:return [dict()]
+        elif len(res)>0:return [dict(member_id=r[0],member=r[1],mbrgrp_id=r[2],group=r[3]) for r in res]
+
     def save(self):
         try:
             cursor.execute("""insert into mbrgrpmbr(member_id,mbrgrp_id,field1,customerid,exclude)values(%s,%s,%s,%s,%s)
@@ -692,8 +776,11 @@ class Addrbook:
     @staticmethod
     def readaddrbook(mid):
         cursor.execute("""select addrbook_id,type,displayname,description from addrbook where
-        member_id=%s""",(mid,));res=cursor.fetchone();return dict(zip(["addrbook_id","type","displayname",
-        "description"],res))
+        member_id=%s""",(mid,));res=cursor.fetchone()
+        if res==None:return dict(addrbook_id=None,type=None,displayname=None,description=None)
+        elif res!=None:return dict(addrbook_id=res[0],type=res[1],displayname=res[2],description=res[3])
+        # return dict(zip(["addrbook_id","type","displayname",
+        # "description"],res))
 
     def update(self):
         try:
@@ -767,6 +854,14 @@ class Address:
         self.mobilephone1=mobilephone1
         self.mobilephone1cntry=mobilephone1cntry
         self.address_id=address_id
+    
+    @staticmethod
+    def updateemail(user_id,email):
+        try:
+            cursor.execute("update address set email1=%s where member_id=%s",(email,user_id,))
+            con.commit()
+        except (Exception,psycopg2.DatabaseError) as e:
+            raise EntryException(str(e).strip().split('\n')[0])
     
     @staticmethod
     def readaddress(mid):
@@ -954,35 +1049,39 @@ class UserSign:
     
     def getmemberid(self):
         cursor.execute("select users_id from userreg where logonid=%s",(self.logonid,))
-        return cursor.fetchone()[0]
+        res=cursor.fetchone()
+        if res==None:return None
+        elif res!=None:return res[0]
     
     def getroles(self):
         cursor.execute("""with mbrrole as(select role_id from mbrrole where member_id=%s)
         select mbrrole.role_id,role.name,roledesc.displayname from role inner join mbrrole 
         on mbrrole.role_id=role.role_id inner join roledesc on mbrrole.role_id=roledesc.role_id""",
-        (self.member_id,));return [dict(zip(['role_id','rolename','roledisplayname'],x))for x in cursor.fetchall()]
+        (self.member_id,));res=cursor.fetchall()
+        if len(res)>0:return [dict(role_id=r[0],rolename=r[1],roledisplayname=r[2]) for r in res]
+        # if len(res) > 0:return [dict(zip(['role_id','rolename','roledisplayname'],x))for x in res]
+        elif len(res) <=0:return [dict(role_id=None,rolename=None,roledisplayname=None)]
     
     def getemployer(self):
         cursor.execute("""with org as(select org_id from busprof where users_id=%s)
         select org.org_id,orgentity.orgentityname from org inner join orgentity on
-        org.org_id=orgentity.orgentity_id""",(self.member_id,))
-        return dict(zip(['employer','employername'],cursor.fetchone()))
+        org.org_id=orgentity.orgentity_id""",(self.member_id,));res=cursor.fetchone()
+        if res==None:return dict(employer=None,employername=None)
+        elif res!=None:return dict(employer=res[0],employername=res[1])
+        # if res==None:return [dict(zip(['employer','employername'],(None,None)))]
+        # elif res!=None:return dict(zip(['employer','employername'],res))
     
     def getlangpref(self):
         cursor.execute("select language_id from users where users_id=%s",(self.member_id,))
-        return cursor.fetchone()[0]
+        res=cursor.fetchone()
+        if res==None:return res
+        elif res!=None:return res[0]
 
     def getprofiletype(self):
         cursor.execute("select profiletype from users where users_id=%s",(self.member_id,))
-        return cursor.fetchone()[0].strip()
-
-# u=UserSign('info@pronov.co')
-# print(u.logonid)
-# print(u.member_id)
-# print(u.roles)
-# print(u.employer)
-# print(u.language_id)
-# print(u.profiletype)
+        res=cursor.fetchone()
+        if res==None:return res
+        elif res!=None:return res[0].strip()
 
 class ListAllMembers:
     def data(self):

@@ -1,7 +1,4 @@
-# from .db_con import createcon
-from db_con import createcon
-con,cursor=createcon("retail","jmso","localhost","5432")
-con.autocommit=True
+from db_con import con,cursor
 from functions import build_constraint
 
 # LANGUAGE
@@ -155,6 +152,16 @@ cursor.execute(build_constraint("setcurrdsc","f_743","language_id","language","l
 # CONTRACTS
 cursor.execute(build_constraint("creditline","f_278","setccurr","setcurr","setccurr"))
 cursor.execute(build_constraint("creditline","f_279","account_id","trading","trading_id"))
+
+cursor.execute(build_constraint("credit","f_27a9","member_id","member","member_id"))
+cursor.execute(build_constraint("credit","f_27a8","mbrgrp_id","mbrgrp","mbrgrp_id"))
+cursor.execute(build_constraint("creditstatus","f_2t7a9","credit_id","credit","credit_id"))
+
+cursor.execute(build_constraint("guarantor","f_sdb2","guarantor_id","member","member_id"))
+cursor.execute(build_constraint("guarantor","f_2ak23","borrower_id","member","member_id"))
+cursor.execute(build_constraint("guarantor","f_sifi7","credit_id","credit","credit_id"))
+
+
 cursor.execute(build_constraint("trading","f_866","trdtype_id","trdtype","trdtype_id"))
 cursor.execute(build_constraint("trddesc","f_873","language_id","language","language_id"))
 cursor.execute(build_constraint("trddesc","f_874","trading_id","trading","trading_id"))
@@ -889,6 +896,7 @@ cursor.execute(build_constraint("merchconfinfo","f_3470","merchconf_id","merchco
 cursor.execute(build_constraint("storemerch","f_3467","store_id","store","store_id"))
 cursor.execute(build_constraint("storemerch","f_3468","merchant_id","merchant","merchant_id"))
 cursor.execute(build_constraint("ppcbatch","f_3477","merchconf_id","merchconf","merchconf_id"))
+cursor.execute(build_constraint("cardauth","fo9892","member_id","member","member_id"))
 
 # ATTRDICT
 cursor.execute(build_constraint("attr","f_3551","attrtype_id","attrtype","attrtype_id"))

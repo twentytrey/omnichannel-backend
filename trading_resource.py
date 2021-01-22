@@ -838,6 +838,7 @@ class create_creditline(Resource):
                     payload={"email":customerdata["email"],"first_name":customerdata["first_name"],"phone":customerdata["phone"]}
                     p=PaystackRequests("https://api.paystack.co/customer",payload,"POST")._execute()
                     if p["status"]==True:
+                        Creditline.updatecustomer(creditline_id,account_id,p["data"]["customer_code"])
                         return {"msg":"Successfully initialized line of credit"},200
                     else:return {"msg":p["message"]},422
 
@@ -863,3 +864,102 @@ class read_creditline(Resource):
         account_id=data["account_id"]
         language_id=data["language_id"]
         return Creditline.read(account_id,language_id),200
+
+class has_credit(Resource):
+    def __init__(self):
+        self.parser=reqparse.RequestParser()
+        self.parser.add_argument("user_id",help="required field",required=True)
+        super(has_credit,self).__init__()
+    
+    @jwt_required
+    def post(self):
+        data=self.parser.parse_args()
+        user_id=data["user_id"]
+        return Creditline.has_credit(user_id),200
+
+from ops.payment.payment import CardAuth
+class loan_initialize_transaction(Resource):
+    def __init__(self):
+        self.parser=reqparse.RequestParser()
+        self.parser.add_argument("user_id",help="compulsory field",required=True)
+        self.parser.add_argument("creditline_id",help="compulsory field",required=True)
+        self.parser.add_argument("email",help="compulsory field",required=True)
+        self.parser.add_argument("amount",help="compulsory field",required=True)
+        super(loan_initialize_transaction,self).__init__()
+    
+    @jwt_required
+    def post(self):
+        data=self.parser.parse_args()
+        user_id=data["user_id"]
+        creditline_id=data["creditline_id"]
+        email=data["email"]
+        amount=data["amount"]
+        plan_code=Creditline.getplancode(creditline_id)
+        payload={"email":email,"amount":amount,"plan":plan_code}
+        p=PaystackRequests("https://api.paystack.co/transaction/initialize",payload,"POST")._execute()
+        if p["status"]==True:
+            return {"status":"OK","msg":p["message"],"access_code":p["data"]["access_code"],"reference":p["data"]["reference"]},200
+        elif p["status"]==False:
+            return {"status":"ERR","msg":p["message"]},422
+
+class loan_verify_transaction(Resource):
+    def __init__(self):
+        self.parser=reqparse.RequestParser()
+        self.parser.add_argument("reference",help="required field",required=True)
+        self.parser.add_argument("user_id",help="required field",required=True)
+        super(loan_verify_transaction,self).__init__()
+    
+    def post(self):
+        data=self.parser.parse_args()
+        reference=data["reference"]
+        user_id=data["user_id"]
+        p2=PaystackRequests("https://api.paystack.co/transaction/verify/:"+reference,None,"GET")._execute()
+        if p2["status"]==True:
+            authorization=p2["data"]["authorization"]
+            authorization_code=authorization["authorization_code"]
+            card_type=authorization["card_type"]
+            last4=authorization["last4"]
+            exp_month=authorization["exp_month"]
+            exp_year=authorization["exp_year"]
+            bin=authorization["bin"]
+            bank=authorization["bank"]
+            channel=authorization["channel"]
+            signature=authorization["signature"]
+            reusable=authorization["reusable"]
+            country_code=authorization["country_code"]
+            if reusable==True:reusable=1
+            elif reusable==False:reusable=0
+            CardAuth(user_id,authorization_code,last4,exp_month,exp_year,card_type,bin,bank,channel,signature,reusable,country_code).save()
+            return {"status":"OK","msg":p2["message"]},200
+        elif p2["status"]==False:
+            return {"status":"ERR","msg":p2["message"]},422
+
+class accept_loan_offer(Resource):
+    def __init__(self):
+        self.parser=reqparse.RequestParser()
+        self.parser.add_argument("user_id",help="compulsory field",required=True)
+        self.parser.add_argument("creditline_id",help="compulsory field",required=True)
+        self.parser.add_argument("email",help="compulsory field",required=True)
+        self.parser.add_argument("amount",help="compulsory field",required=True)
+        super(accept_loan_offer,self).__init__()
+    
+    @jwt_required
+    def post(self):
+        data=self.parser.parse_args()
+        user_id=data["user_id"]
+        creditline_id=data["creditline_id"]
+        plan_code=Creditline.getplancode(creditline_id)
+        authorization_code=Creditline.getcardauth(user_id)
+        customer_code=Creditline.getcustomercode(creditline_id)
+        email=data["email"];amount=data["amount"]
+        # charge authorization
+        payload={ "email": email, "amount": amount, "authorization_code": authorization_code }
+        p2=PaystackRequests("https://api.paystack.co/transaction/charge_authorization",payload,"POST")._execute()
+        if p2["status"]==True:
+            # subscribe customer
+            payload={"customer":customer_code,"plan":plan_code}
+            p3=PaystackRequests("https://api.paystack.co/subscription",payload,"POST")._execute()
+            if p3["status"]==True:
+                return {"status":"OK","msg":p3["message"]},200
+            elif p3["status"]==False:return {"status":"ERR","msg":p3["message"]},422
+        elif p2["status"]==False:return {"status":"ERR","msg":p2["message"]},422

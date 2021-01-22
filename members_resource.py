@@ -2,10 +2,10 @@ from flask_restful import Resource,reqparse
 from passlib.hash import pbkdf2_sha256 as sha256
 from flask_jwt_extended import (create_access_token,create_refresh_token,jwt_required,jwt_refresh_token_required,get_jwt_identity,get_raw_jwt,get_jwt_claims)
 from flask_jwt_extended.exceptions import RevokedTokenError
-from ops.members.members import Member,Orgentity,Users,Userreg,Mbrrole,Busprof,EntryException,Role,UserSign,Userprof,Address,RolePermDefaults,Addrbook,Address
+from ops.members.members import Member,Orgentity,Users,Userreg,Mbrrole,Busprof,EntryException,Role,UserSign,Userprof,Address,RolePermDefaults,Addrbook,Address,Mbrgrp
 from ops.helpers.functions import timestamp_forever,timestamp_now,defaultlanguage,datetimestamp_now,datetimestamp_forever
 from ops.authentication.authentication import Plcyacct,Plcypasswd
-from ops.members.members import ListAllMembers
+from ops.members.members import ListAllMembers,get_random_string
 from ops.accounting.accounting import InstallAccounts, InstallAccountClasses,transaction_types
 from ops.filehandlers.filehandlers import InstallCatalogs,InstallCatgroups
 import json,urllib.request
@@ -54,7 +54,7 @@ class create_organization(Resource):
 
                 orgentity_id=Orgentity(member_id,orgentitytype,orgentityname,dn=logonid).save()
                 users_id=Users(orgentity_id,registertype,dn=logonid,profiletype=profiletype,language_id=defaultlanguage(),registration=timestamp_now()).save()
-                salt='M{}{}{}{}'.format(member_id,registertype,profiletype,logonid[-1])
+                salt=get_random_string(6)
                 userreg_id=Userreg(users_id,logonid,salt=salt,plcyacct_id=Plcyacct.read_default()['plcyacct_id']).save()
                 roles=Role.read_roles(defaultlanguage());rid=[x for x in roles if x['name']=='permission_editor'][0]['role_id']
                 Mbrrole(userreg_id,rid,orgentity_id).save()
@@ -132,6 +132,10 @@ class UserIdentity(Resource):
         current_user=get_jwt_identity()
         useridentity=get_jwt_claims()
         return dict(current_user=current_user,user=useridentity),200
+
+class select_list_groups(Resource):
+    @jwt_required
+    def get(self):return Mbrgrp.listgroups(),200
 
 class list_organizations(Resource):
     @jwt_required
@@ -556,7 +560,7 @@ class create_business_user(Resource):
             elif exists==False:
                 member_id=member.save()
                 users_id=Users(member_id,registertype,field1=firstname,field2=middlename,field3=lastname,dn=logonid,profiletype=profiletype,language_id=defaultlanguage(),registration=timestamp_now()).save()
-                salt='M{}{}{}{}'.format(member_id,registertype,profiletype,logonid[-1])
+                salt=get_random_string(6)
                 userreg_id=Userreg(users_id,logonid,plcyacct_id=Plcyacct.read_default()['plcyacct_id'],salt=salt).save()
                 Mbrrole(member_id,role_id,employerid).save()
                 Busprof(users_id,org_id=employerid).save()

@@ -1,6 +1,4 @@
-from db_con import createcon
-con,cursor=createcon("retail","jmso","localhost","5432")
-con.autocommit=True
+from db_con import con,cursor
 from functions import build_constraint
 
 class Order:
@@ -137,11 +135,15 @@ class Order:
             plan_integration bigint,
             plan_code varchar(254),
             plan_id bigint,
+            customer_code varchar(254),
+            subscription_code varchar(254),
+            email_token varchar(254),
             primary key(creditline_id)
         )""")
         cursor.execute("create index i0000549 on creditline(account_id)")
         cursor.execute("create index a8dpb2 on creditline(plan_integration,plan_code,plan_id)")
         cursor.execute("create index a3vd0w on creditline(n,rate,decimalfield2)")
+        cursor.execute("create index afjf92 on creditline(customer_code,subscription_code,email_token)")
         # CONSTRAINTS
 
     def orcomment(self):

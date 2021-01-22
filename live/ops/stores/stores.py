@@ -1,7 +1,10 @@
-from .db_con import createcon
+# from .db_con import createcon
 # from db_con import createcon
 import psycopg2
-con,cursor=createcon('retail','pronov','localhost','5432')
+# con,cursor=createcon('retail','jmso','localhost','5432')
+from ops.connector.connector import evcon
+con,cursor=evcon()
+
 import pandas as pd
 import numpy as np
 import os,re
@@ -23,8 +26,6 @@ class Storeorgs:
         if len(res) <= 0:return [dict(users_id=None,orgentityname=None)]
         elif len(res) > 0:return [dict(users_id=r[0],orgentityname=r[1])for r in res]
 
-# print( Storeorgs().getdata() )
-
 class Storeent:
     def __init__(self,member_id,stype,identifier,setccurr=None,markfordelete=0):
         self.member_id=member_id
@@ -32,6 +33,13 @@ class Storeent:
         self.identifier=identifier
         self.setccurr=setccurr
         self.markfordelete=markfordelete
+    
+    @staticmethod
+    def root_store_exists(owner_id):
+        cursor.execute("select storeent_id from storeent where member_id=1")
+        res=cursor.fetchone()
+        if res==None:return None
+        elif res!=None:return res[0]
     
     @staticmethod
     def get_image(store_id):
@@ -51,21 +59,22 @@ class Storeent:
     def addressinfo(staddress_id):
         st=Staddress.read(staddress_id)
         return dict(address=st['address1'],city=st['city'],state=st['state'],country=st['country'],
-        email=st['email1'],phone=st['phone1'],image=st['field1'],contact="{0} {1} {2}".format(st['firstname'],
+        email=st['email1'],phone=st['phone1'],image=st['field1'],contact="{0} {2}".format(st['firstname'],
         st['middlename'],st['lastname']))
 
     @staticmethod
     def readstores(owner_id):
-        cursor.execute("""select storeent.storeent_id,storeent.identifier,storeent.type,storeent.setccurr,
-        storeentds.staddress_id_loc,setcurrdsc.description from storeent inner join storeentds on storeent.
-        storeent_id=storeentds.storeent_id left join setcurrdsc on storeent.setccurr=setcurrdsc.setccurr
+        cursor.execute("""select storeent.member_id,storeent.storeent_id,storeent.identifier,storeent.type,
+        storeent.setccurr,storeentds.staddress_id_loc,setcurrdsc.description from storeent inner join storeentds 
+        on storeent.storeent_id=storeentds.storeent_id left join setcurrdsc on storeent.setccurr=setcurrdsc.setccurr
         where storeent.member_id != %s""",(owner_id,));res=cursor.fetchall()
-        if len(res) <= 0:return [dict(storeent_id=None,name=None,type=None,currency=None,staddress_id=None,staddress=None,
-        address=None,city=None,state=None,country=None,email=None,phone=None,image=None,firstname=None,middlename=None,
-        lastname=None)]
+        if len(res) <= 0:return [dict(member_id=None,storeent_id=None,name=None,type=None,currency=None,staddress_id=None,
+        staddress=None,address=None,city=None,state=None,country=None,email=None,phone=None,image=None,firstname=None,
+        middlename=None,lastname=None)]
         elif len(res) > 0:
-            data=[dict(storeent_id=r[0], name=r[1],type=Storeent.mapstoretype(r[2]),setccurr=r[3],staddress_id=r[4],
-            currency=r[5]) for r in res];[x.update(Storeent.addressinfo(x['staddress_id'])) for x in data ];return data
+            data=[dict(member_id=r[0],storeent_id=r[1], name=r[2],type=Storeent.mapstoretype(r[3]),setccurr=r[4],
+            staddress_id=r[5],currency=r[6]) for r in res]
+            [x.update(Storeent.addressinfo(x['staddress_id'])) for x in data ];return data
 
     @staticmethod
     def yourstore(owner_id):
@@ -399,3 +408,168 @@ class Ffmcentds:
         except(Exception,psycopg2.DatabaseError) as e:
             if con is not None:con.rollback()
             raise EntryException(str(e).strip().split('\n')[0])
+
+class StoresForMember:
+    def __init__(self,mid):
+        self.mid=mid
+    
+    def _execute(self):
+        cursor.execute("select storeent_id,identifier from storeent where member_id=%s",(self.mid,))
+        res=cursor.fetchall()
+        if len(res) <=0:return [dict(store_id=None,identifier=None)]
+        elif len(res) > 0:return [dict(store_id=x[0],identifier=x[1]) for x in res]
+
+class VendorsForMember:    
+    def _execute(self):
+        cursor.execute("select vendor_id,vendorname from vendor")
+        res=cursor.fetchall()
+        if len(res) <= 0:return [dict(vendor_id=None,name=None)]
+        elif len(res) > 0:return [dict(vendor_id=r[0],name=r[1]) for r in res]
+
+from ops.trading.trading import Trading,Trddesc,Contract,Cntrname,Participnt,Storedef,Storecntr
+from ops.helpers.functions import datetimestamp_forever,datetimestamp_now
+
+class MDefaultContractOrg:
+    def __init__(self,owner_id):
+        # self.store_id=store_id
+        self.trdtype_id=1
+        self.state=1
+        self.starttime=datetimestamp_now()
+        self.endtime=datetimestamp_forever()
+        self.timecreated=self.starttime
+        self.member_id=owner_id
+        self.origin=0
+        self.cstate=3
+        self.usage=0
+        self.timedeployed=self.starttime
+        self.member_id=owner_id
+        self.participant_id=owner_id
+        self.language_id=1
+        self.storename=self.getstorename()
+        self.name="{}, ID-{}, Default Trading Agreement".format(self.storename,self.member_id)
+        self.comment="A unilateral arrangement between the owner and the participant allowing customers to purchase products from the store at a specified price for a specified time under specific conditions."
+    
+    def getstorename(self):
+        cursor.execute("select orgentityname from orgentity where orgentity_id=%s",(self.member_id,))
+        res=cursor.fetchone()
+        if res==None:return res
+        elif res!=None:return res[0]
+    
+    def _execute(self):
+        trading_id=Trading(self.trdtype_id,state=self.state,starttime=self.starttime,endtime=self.endtime).save()
+        Trddesc(trading_id,self.language_id,longdescription=self.comment,timecreated=self.timecreated).save()
+        contract_id=Contract(trading_id,self.name,self.member_id,origin=self.origin,state=self.cstate,usage=self.usage,comments=self.comment,timecreated=self.starttime,timedeployed=self.starttime).save()
+        Cntrname(self.name,self.member_id,self.origin).save()
+        Participnt(self.participant_id,1,contract_id,timecreated=self.starttime).save()
+        # Storedef(self.store_id,contract_id).save()
+        # Storecntr(contract_id,self.store_id).save()
+
+class MDefaultContract:
+    def __init__(self,owner_id,store_id):
+        self.store_id=store_id
+        self.trdtype_id=1
+        self.state=1
+        self.starttime=datetimestamp_now()
+        self.endtime=datetimestamp_forever()
+        self.timecreated=self.starttime
+        self.member_id=owner_id
+        self.origin=0
+        self.cstate=3
+        self.usage=0
+        self.timedeployed=self.starttime
+        self.member_id=owner_id
+        self.participant_id=owner_id
+        self.language_id=1
+        self.storename=self.getstorename()
+        self.name="{}, ID-{}, Default Trading Agreement".format(self.storename,self.store_id)
+        self.comment="A unilateral arrangement between the owner and the participant allowing customers to purchase products from the store at a specified price for a specified time under specific conditions."
+    
+    def getstorename(self):
+        cursor.execute("select identifier from storeent where storeent_id=%s",(self.store_id,))
+        res=cursor.fetchone()
+        if res==None:return res
+        elif res!=None:return res[0]
+    
+    def getcontract(self):
+        cursor.execute("select contract_id from contract where member_id=%s and usage=0",(self.member_id,))
+        res=cursor.fetchone()
+        if res==None:return None
+        elif res!=None:return res[0]
+    
+    def _execute(self):
+        # trading_id=Trading(self.trdtype_id,state=self.state,starttime=self.starttime,endtime=self.endtime).save()
+        # Trddesc(trading_id,self.language_id,longdescription=self.comment,timecreated=self.timecreated).save()
+        # contract_id=Contract(trading_id,self.name,self.member_id,origin=self.origin,state=self.cstate,usage=self.usage,comments=self.comment,timecreated=self.starttime,timedeployed=self.starttime).save()
+        contract_id=self.getcontract()
+        # Cntrname(self.name,self.member_id,self.origin).save()
+        # Participnt(self.participant_id,1,contract_id,timecreated=self.starttime).save()
+        Storedef(self.store_id,contract_id).save()
+        Storecntr(contract_id,self.store_id).save()
+
+from ops.helpers.functions import textualize_datetime
+class MStoreent:
+    def __init__(self,owner_id,language_id):
+        self.owner_id=owner_id
+        self.language_id=language_id
+
+    def storeids(self):
+        cursor.execute("select storeent_id from storeent where member_id=%s",(self.owner_id,))
+        res=cursor.fetchall()
+        if res==None:return res
+        elif res!=None:return [x for (x,) in res]
+
+    def readstore(self,storeent_id):
+        cursor.execute("""select storeent.storeent_id,storeent.identifier,storeent.type::text,
+        storeent.setccurr,storeentds.staddress_id_loc,setcurrdsc.description from storeent inner join
+        storeentds on storeent.storeent_id=storeentds.storeent_id left join setcurrdsc on storeent.setccurr=
+        setcurrdsc.setccurr where storeent.member_id=%s and storeent.storeent_id=%s""",
+        (self.owner_id,storeent_id,));res=cursor.fetchone()
+        if res != None:
+            data=dict(owner_id=self.owner_id,storeent_id=res[0],identifier=res[1],storetype=res[2],
+            setccurr=res[3],staddress_id_loc=res[4],currency=res[5],type=Storeent.mapstoretype(res[2]))
+            data.update(Storeent.addressinfo(data['staddress_id_loc']));return data
+        elif res==None:return None
+
+    def radetail(self,ra_id):
+        cursor.execute("""select radetail.radetail_id,radetail.ffmcenter_id,ffmcenter.name,radetail.itemspc_id,
+        radetail.qtyordered,radetail.qtyreceived,radetail.qtyremaining,radetail.qtyallocated,radetail.expecteddate,
+        radetail.radetailcomment,radetail.lastupdate from radetail inner join ffmcenter on radetail.ffmcenter_id=
+        ffmcenter.ffmcenter_id where radetail.ra_id=%s""",(ra_id,));res=cursor.fetchall()
+        if len(res)<=0:return None
+        elif len(res)>0:return [dict(radetail_id=r[0],ffmcenter_id=r[1],name=r[2],itemspc_id=r[3],qtyordered=r[4],
+        qtyreceived=r[5],qtyremaining=r[6],qtyallocated=r[7],t_expecteddate=textualize_datetime(r[8]),
+        h_expecteddate=humanize_date(r[8]),radetailcomment=r[9],t_lastupdate=textualize_datetime(r[10]),
+        h_lastupdate=humanize_date(r[10])) for r in res]
+
+    # def receipt(self,radetail_id,store_id):
+    #     cursor.execute("""select receipt.receipt_id,receipt.versionspc_id,receipt.radetail_id,receipt.store_id,
+    #     receipt.setccurr,receipt.ffmcenter_id,receipt.vendor_id,receipt.receiptdate,receipt.qtyreceived,
+    #     receipt.qtyinprocess,receipt.qtyonhand,receipt,qtyinkits,receipt.cost,receipt.comment1,receipt.comment2,
+    #     receipt.lastupdate,receipt.createtime,receipt.receipttype,receipt.rtnrcptdsp_id where receipt.radetail_id=
+    #     %s and receipt.store_id=%s""",(radetail_id,store_id,));res=cursor.fetchall()
+    #     if len(res)<=0:return None
+    #     elif len(res) > 0:return [dict(receipt_id=r[0],versionspc_id=r[1],radetail_id=r[2],store_id=r[3],
+    #     setccurr=r[4],ffmcenter_id=r[5],vendor_id=r[6],receiptdate=humanize_date(r[7]), )]
+
+    def ra(self,store_id):
+        cursor.execute("""select ra.ra_id,ra.vendor_id,vendor.vendorname,ra.orderdate,ra.openindicator,
+        ra.dateclosed,ra.lastupdate,ra.externalid::text,ra.createtime from ra inner join vendor on ra.vendor_id=
+        vendor.vendor_id where ra.store_id=%s""",(store_id,));res=cursor.fetchone()
+        if res==None:return None
+        elif res!=None:return dict(ra_id=res[0],vendor_id=res[1],vendorname=res[2],
+        h_orderdate=humanize_date(res[3]),t_orderdate=textualize_datetime(res[3]),openindicator=res[4],
+        h_dateclosed=humanize_date(res[5]),t_dateclosed=textualize_datetime(res[5]),
+        t_lastupdate=textualize_datetime(res[6]),h_lastupdate=humanize_date(res[6]),externalid=res[7],
+        t_createtime=textualize_datetime(res[8]),h_createtime=humanize_date(res[8]),
+        radetail=self.radetail(res[0]))
+    
+    def inventory(self,store_id):
+        cursor.execute("""select inventory.catentry_id,catentdesc.name,inventory.quantity::float,inventory.store_id,
+        storeent.identifier,inventory.ffmcenter_id,ffmcenter.name from inventory inner join catentdesc on 
+        inventory.catentry_id=catentdesc.catentry_id inner join storeent on inventory.store_id=storeent.
+        storeent_id inner join ffmcenter on inventory.ffmcenter_id=ffmcenter.ffmcenter_id where inventory.
+        store_id=%s""",(store_id,));res=cursor.fetchall()
+        if len(res)<=0:return None
+        elif len(res) >0:return [dict(catentry_id=r[0],name=r[1],quantity=r[2],storeent_id=r[3],
+        store=r[4],ffmcenter_id=r[5],warehouse=r[6]) for r in res]
+
