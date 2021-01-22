@@ -1,1 +1,5 @@
 /venv
+config.py
+dbexport.pgsql
+pronovserver.wsgi
+setup.sh
